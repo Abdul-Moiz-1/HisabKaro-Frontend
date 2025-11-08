@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { NavigationProps } from '../../types';
 import { theme } from '../../constants/theme';
-import { Container, AILogo } from '../../components/common';
+import { Container, AILogo, HeaderNavigation } from '../../components/common';
 
 /**
  * Message interface for chat messages
@@ -276,16 +276,10 @@ const AIChatScreen: React.FC<NavigationProps<'AIChat'>> = ({ navigation, route }
   return (
     <Container safeArea edges={['top']} style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>‹</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI Chat</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <HeaderNavigation
+        title="AI Chat"
+        onBackPress={() => navigation.goBack()}
+      />
 
       {/* Chat Messages */}
       <KeyboardAvoidingView 
@@ -349,34 +343,6 @@ const AIChatScreen: React.FC<NavigationProps<'AIChat'>> = ({ navigation, route }
 const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.divider,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonText: {
-    fontSize: 24,
-    color: theme.colors.text.primary,
-    fontWeight: '300',
-  },
-  headerTitle: {
-    ...theme.typography.h3,
-    color: theme.colors.text.primary,
-    flex: 1,
-    textAlign: 'center',
-  },
-  headerSpacer: {
-    width: 40,
   },
   chatContainer: {
     flex: 1,

@@ -14,6 +14,7 @@ import AddTransactionScreen from '../screens/AddTransaction/AddTransactionScreen
 import AIAssistantScreen from '../screens/AIAssistant/AIAssistantScreen';
 import AIChatScreen from '../screens/AIAssistant/AIChatScreen';
 import MenuScreen from '../screens/Menu/MenuScreen';
+import ProfileManagementScreen from '../screens/Profile/ProfileManagementScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -38,6 +39,7 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen name={ROUTES.AI_ASSISTANT} component={AIAssistantScreen} />
         <Stack.Screen name={ROUTES.AI_CHAT} component={AIChatScreen} />
         <Stack.Screen name={ROUTES.MENU} component={MenuScreen} />
+        <Stack.Screen name={ROUTES.PROFILE} component={ProfileManagementScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

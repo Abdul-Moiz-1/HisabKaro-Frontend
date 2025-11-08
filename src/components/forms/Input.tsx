@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import {
   View,
   TextInput,
@@ -17,7 +17,7 @@ interface InputProps extends TextInputProps {
   showPasswordToggle?: boolean;
 }
 
-export const Input: React.FC<InputProps> = ({
+const InputComponent: React.FC<InputProps> = ({
   label,
   error,
   rightIcon,
@@ -30,9 +30,17 @@ export const Input: React.FC<InputProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-  const togglePasswordVisibility = () => {
-    setIsPasswordVisible(!isPasswordVisible);
-  };
+  const togglePasswordVisibility = useCallback(() => {
+    setIsPasswordVisible((prev) => !prev);
+  }, []);
+
+  const handleFocus = useCallback(() => {
+    setIsFocused(true);
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+  }, []);
 
   const displaySecureTextEntry = showPasswordToggle ? !isPasswordVisible && secureTextEntry : secureTextEntry;
 
@@ -48,8 +56,8 @@ export const Input: React.FC<InputProps> = ({
       >
         <TextInput
           style={[styles.input, style]}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           placeholderTextColor={theme.colors.text.disabled}
           secureTextEntry={displaySecureTextEntry}
           {...textInputProps}
@@ -123,5 +131,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
 });
+
+export const Input = memo(InputComponent);
 
 

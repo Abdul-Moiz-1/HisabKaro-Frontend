@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, TouchableOpacity, StyleSheet, Text, Animated } from 'react-native';
 import { theme } from '../../constants/theme';
 
 interface TabItem {
@@ -14,6 +14,43 @@ interface BottomTabBarProps {
   activeTab: string;
   onTabPress: (tabId: string) => void;
 }
+
+interface AnimatedTabIconProps {
+  tab: TabItem;
+  children: React.ReactNode;
+}
+
+const AnimatedTabIcon: React.FC<AnimatedTabIconProps> = ({ tab, children }) => {
+  const scaleAnim = useRef(new Animated.Value(tab.isActive ? 1.1 : 1)).current;
+  const opacityAnim = useRef(new Animated.Value(tab.isActive ? 1 : 0.7)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: tab.isActive ? 1.1 : 1,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 8,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: tab.isActive ? 1 : 0.7,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [tab.isActive]);
+
+  return (
+    <Animated.View
+      style={{
+        transform: [{ scale: scaleAnim }],
+        opacity: opacityAnim,
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+};
 
 export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabPress }) => {
   const tabs: TabItem[] = [
@@ -57,105 +94,156 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabPres
   const renderTabIcon = (tab: TabItem) => {
     if (tab.id === 'home') {
       return (
-        <View style={[
-          styles.homeIcon,
-          { backgroundColor: tab.isActive ? theme.colors.primary : theme.colors.surface }
-        ]}>
-          <Text style={[
-            styles.homeIconText,
-            { color: tab.isActive ? theme.colors.text.inverse : theme.colors.text.primary }
+        <AnimatedTabIcon tab={tab}>
+          <View style={[
+            styles.homeIcon,
+            { backgroundColor: tab.isActive ? theme.colors.primary : theme.colors.surface }
           ]}>
-            $
-          </Text>
-        </View>
+            <Text style={[
+              styles.homeIconText,
+              { color: tab.isActive ? theme.colors.text.inverse : theme.colors.text.primary }
+            ]}>
+              $
+            </Text>
+          </View>
+        </AnimatedTabIcon>
       );
     }
 
     if (tab.id === 'add') {
       return (
-        <View style={[
-          styles.addButton,
-          { backgroundColor: tab.isActive ? theme.colors.primary : theme.colors.primary }
-        ]}>
-          <View style={styles.addIcon}>
-            <View style={styles.addIconHorizontal} />
-            <View style={styles.addIconVertical} />
+        <AnimatedTabIcon tab={tab}>
+          <View style={[
+            styles.addButton,
+            { backgroundColor: theme.colors.primary }
+          ]}>
+            <View style={styles.addIcon}>
+              <View style={styles.addIconHorizontal} />
+              <View style={styles.addIconVertical} />
+            </View>
           </View>
-        </View>
+        </AnimatedTabIcon>
       );
     }
 
     if (tab.id === 'analytics') {
       return (
-        <View style={[
-          styles.regularIcon,
-          { 
-            backgroundColor: tab.isActive ? theme.colors.primary : 'transparent',
-            borderWidth: tab.isActive ? 0 : 1,
-            borderColor: theme.colors.text.secondary,
-          }
-        ]}>
-          <Text style={[
-            styles.regularIconText,
-            { color: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }
+        <AnimatedTabIcon tab={tab}>
+          <View style={[
+            styles.regularIcon,
+            { 
+              backgroundColor: tab.isActive ? theme.colors.primary : 'transparent',
+              borderWidth: tab.isActive ? 0 : 1,
+              borderColor: theme.colors.text.secondary,
+            }
           ]}>
-            📈
-          </Text>
-        </View>
+            <Text style={[
+              styles.regularIconText,
+              { color: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }
+            ]}>
+              📈
+            </Text>
+          </View>
+        </AnimatedTabIcon>
       );
     }
 
     if (tab.id === 'ai') {
       return (
-        <View style={[
-          styles.aiIcon,
-          { 
-            backgroundColor: tab.isActive ? theme.colors.primary : 'transparent',
-            borderWidth: tab.isActive ? 0 : 1,
-            borderColor: theme.colors.text.secondary,
-          }
-        ]}>
-          <Text style={[
-            styles.aiIconText,
-            { color: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }
+        <AnimatedTabIcon tab={tab}>
+          <View style={[
+            styles.aiIcon,
+            { 
+              backgroundColor: tab.isActive ? theme.colors.primary : 'transparent',
+              borderWidth: tab.isActive ? 0 : 1,
+              borderColor: theme.colors.text.secondary,
+            }
           ]}>
-            AI
-          </Text>
-        </View>
+            <Text style={[
+              styles.aiIconText,
+              { color: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }
+            ]}>
+              AI
+            </Text>
+          </View>
+        </AnimatedTabIcon>
       );
     }
 
     if (tab.id === 'menu') {
       return (
-        <View style={styles.menuIcon}>
-          <View style={styles.menuGrid}>
-            <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.primary : theme.colors.text.secondary }]} />
-            <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.primary : theme.colors.text.secondary }]} />
-            <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.primary : theme.colors.text.secondary }]} />
-            <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.primary : theme.colors.text.secondary }]} />
+        <AnimatedTabIcon tab={tab}>
+          <View style={[
+            styles.menuIcon,
+            { 
+              backgroundColor: tab.isActive ? theme.colors.primary : 'transparent',
+              borderRadius: 8,
+              borderWidth: tab.isActive ? 0 : 1,
+              borderColor: theme.colors.text.secondary,
+              padding: 8,
+            }
+          ]}>
+            <View style={styles.menuGrid}>
+              <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }]} />
+              <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }]} />
+              <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }]} />
+              <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }]} />
+            </View>
           </View>
-        </View>
+        </AnimatedTabIcon>
       );
     }
 
     return null;
   };
 
+  const TabButton: React.FC<{ tab: TabItem }> = ({ tab }) => {
+    const pressAnim = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+      Animated.spring(pressAnim, {
+        toValue: 0.9,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }).start();
+    };
+
+    const handlePressOut = () => {
+      Animated.spring(pressAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 10,
+      }).start();
+      tab.onPress();
+    };
+
+    return (
+      <Animated.View
+        style={[
+          styles.tab,
+          tab.id === 'add' && styles.addTab,
+          { transform: [{ scale: pressAnim }] },
+        ]}
+      >
+        <TouchableOpacity
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={1}
+          style={{ width: '100%', alignItems: 'center' }}
+        >
+          {renderTabIcon(tab)}
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.tabBar}>
         {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.id}
-            style={[
-              styles.tab,
-              tab.id === 'add' && styles.addTab
-            ]}
-            onPress={tab.onPress}
-            activeOpacity={0.7}
-          >
-            {renderTabIcon(tab)}
-          </TouchableOpacity>
+          <TabButton key={tab.id} tab={tab} />
         ))}
       </View>
     </View>
