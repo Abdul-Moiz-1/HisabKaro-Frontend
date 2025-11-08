@@ -5,6 +5,11 @@ export const ROUTES = {
   LOGIN: 'Login',
   SIGNUP: 'Signup',
   HOME: 'Home',
+  ANALYTICS: 'Analytics',
+  ADD_TRANSACTION: 'AddTransaction',
+  AI_ASSISTANT: 'AIAssistant',
+  AI_CHAT: 'AIChat',
+  MENU: 'Menu',
 } as const;
 
 export type RouteName = typeof ROUTES[keyof typeof ROUTES];

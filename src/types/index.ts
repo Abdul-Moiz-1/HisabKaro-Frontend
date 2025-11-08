@@ -12,6 +12,11 @@ export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
   Home?: { userId?: string };
+  Analytics: undefined;
+  AddTransaction: undefined;
+  AIAssistant: undefined;
+  AIChat?: { chatId?: string };
+  Menu: undefined;
 };
 
 export type NavigationProps<T extends keyof RootStackParamList> = {

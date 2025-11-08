@@ -45,30 +45,34 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
     return isValid;
   };
 
+  // ------------------------------------------------- TEMPORARY LOGIN FUNCTION JUST TO NAVIGATE TO HOME SCREEN---------------------------------------------
   const handleLogin = async () => {
     Keyboard.dismiss();
 
-    if (!validateForm()) {
+    // Basic front-end validation
+    if (!email.trim() || !password.trim()) {
       Toast.show({
         type: 'error',
-        text1: 'Validation Error',
-        text2: 'Please check your input fields',
+        text1: 'Missing Fields',
+        text2: 'Please enter both email and password',
       });
       return;
     }
 
+    // ✅ Hardcoded mock credentials
+    const MOCK_EMAIL = 'test@example.com';
+    const MOCK_PASSWORD = '123456';
+
     setLoading(true);
-    dispatch(setLoading(true));
 
-    try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+    // Simulate a short API delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Mock successful login
+    if (email === MOCK_EMAIL && password === MOCK_PASSWORD) {
       const mockUser = {
         id: '1',
-        email: email,
-        name: email.split('@')[0],
+        email: MOCK_EMAIL,
+        name: 'Test User',
       };
       const mockToken = 'mock_jwt_token_12345';
 
@@ -77,24 +81,21 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
 
       Toast.show({
         type: 'success',
-        text1: 'Welcome back!',
-        text2: 'Login successful',
+        text1: 'Login Successful',
+        text2: 'Welcome back, Test User!',
       });
 
-      // Navigate to home after a short delay
-      setTimeout(() => {
-        // navigation.replace(ROUTES.HOME);
-      }, 500);
-    } catch (error: any) {
+      // ✅ Navigate to Home screen
+      navigation.replace(ROUTES.HOME);
+    } else {
       Toast.show({
         type: 'error',
         text1: 'Login Failed',
-        text2: error?.message || 'Please check your credentials and try again',
+        text2: 'Invalid email or password',
       });
-    } finally {
-      setLoading(false);
-      dispatch(setLoading(false));
     }
+
+    setLoading(false);
   };
 
   const handleSocialLogin = (provider: 'facebook' | 'google' | 'linkedin') => {
