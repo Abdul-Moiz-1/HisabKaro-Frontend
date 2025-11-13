@@ -23,6 +23,11 @@ const userSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = true;
     },
+    updateProfile: (state, action: PayloadAction<Partial<User>>) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+      }
+    },
     setToken: (state, action: PayloadAction<string>) => {
       state.token = action.payload;
     },
@@ -43,6 +48,6 @@ const userSlice = createSlice({
   },
 });
 
-export const { setUser, setToken, setLoading, logout, clearUser } = userSlice.actions;
+export const { setUser, updateProfile, setToken, setLoading, logout, clearUser } = userSlice.actions;
 export default userSlice.reducer;
 

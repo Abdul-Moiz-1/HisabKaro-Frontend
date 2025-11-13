@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { NavigationProps } from '../../types';
 import { theme } from '../../constants/theme';
-import { Container, AILogo, Button } from '../../components/common';
+import { Container, AILogo, Button, Avatar } from '../../components/common';
+import { useAppSelector } from '../../store/hooks';
 import { ROUTES } from '../../constants/routes';
 
 interface ChatHistoryItem {
@@ -12,6 +13,8 @@ interface ChatHistoryItem {
 }
 
 const AIAssistantScreen: React.FC<NavigationProps<'AIAssistant'>> = ({ navigation }) => {
+  const user = useAppSelector((state) => state.user.user);
+  
   // Mock chat history data
   const chatHistory: ChatHistoryItem[] = [
     {
@@ -45,10 +48,16 @@ const AIAssistantScreen: React.FC<NavigationProps<'AIAssistant'>> = ({ navigatio
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.userInfo}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>F</Text>
-          </View>
-          <Text style={styles.userName}>Farida Orujova</Text>
+          <Avatar
+            firstName={user?.firstName || 'Farida'}
+            lastName={user?.lastName || 'Orujova'}
+            size={40}
+          />
+          <Text style={styles.userName}>
+            {user?.firstName && user?.lastName
+              ? `${user.firstName} ${user.lastName}`
+              : user?.name || 'Farida Orujova'}
+          </Text>
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton}>
@@ -118,20 +127,7 @@ const styles = StyleSheet.create({
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.sm,
-  },
-  avatarText: {
-    ...theme.typography.body,
-    color: theme.colors.text.inverse,
-    fontWeight: '600',
+    gap: theme.spacing.sm,
   },
   userName: {
     ...theme.typography.body,

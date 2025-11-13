@@ -3,6 +3,11 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  firstName?: string;
+  lastName?: string;
+  birthday?: string;
+  phone?: string;
+  avatar?: string;
 }
 
 export type RootStackParamList = {
@@ -17,6 +22,7 @@ export type RootStackParamList = {
   AIAssistant: undefined;
   AIChat?: { chatId?: string };
   Menu: undefined;
+  Profile: undefined;
 };
 
 export type NavigationProps<T extends keyof RootStackParamList> = {

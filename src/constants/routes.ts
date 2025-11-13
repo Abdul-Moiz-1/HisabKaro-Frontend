@@ -10,6 +10,7 @@ export const ROUTES = {
   AI_ASSISTANT: 'AIAssistant',
   AI_CHAT: 'AIChat',
   MENU: 'Menu',
+  PROFILE: 'Profile',
 } as const;
 
 export type RouteName = typeof ROUTES[keyof typeof ROUTES];
