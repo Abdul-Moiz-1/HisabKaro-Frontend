@@ -16,6 +16,7 @@ export type RootStackParamList = {
   Splash3: undefined;
   Login: undefined;
   Signup: undefined;
+  ForgotPassword: undefined;
   Home?: { userId?: string };
   Analytics: undefined;
   AddTransaction: undefined;
@@ -23,11 +24,20 @@ export type RootStackParamList = {
   AIChat?: { chatId?: string };
   Menu: undefined;
   Profile: undefined;
+  BiometricVerification: undefined;
+  Statistics: undefined;
+  BalanceAccounts: undefined;
+  TransactionHistory: undefined;
+  Budget: undefined;
+  Expenses: undefined;
+  ScheduledPayments: undefined;
+  Notifications: undefined;
+  BankAccountDetails: { accountId: string; accountName: string };
 };
 
 export type NavigationProps<T extends keyof RootStackParamList> = {
   navigation: {
-    navigate: (screen: T, params?: RootStackParamList[T]) => void;
+    navigate: <R extends keyof RootStackParamList>(screen: R, params?: RootStackParamList[R]) => void;
     goBack: () => void;
     replace: <R extends keyof RootStackParamList>(screen: R, params?: RootStackParamList[R]) => void;
   };

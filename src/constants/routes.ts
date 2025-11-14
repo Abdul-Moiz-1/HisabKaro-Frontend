@@ -4,6 +4,7 @@ export const ROUTES = {
   SPLASH3: 'Splash3',
   LOGIN: 'Login',
   SIGNUP: 'Signup',
+  FORGOT_PASSWORD: 'ForgotPassword',
   HOME: 'Home',
   ANALYTICS: 'Analytics',
   ADD_TRANSACTION: 'AddTransaction',
@@ -11,6 +12,15 @@ export const ROUTES = {
   AI_CHAT: 'AIChat',
   MENU: 'Menu',
   PROFILE: 'Profile',
+  BIOMETRIC_VERIFICATION: 'BiometricVerification',
+  STATISTICS: 'Statistics',
+  BALANCE_ACCOUNTS: 'BalanceAccounts',
+  TRANSACTION_HISTORY: 'TransactionHistory',
+  BUDGET: 'Budget',
+  EXPENSES: 'Expenses',
+  SCHEDULED_PAYMENTS: 'ScheduledPayments',
+  NOTIFICATIONS: 'Notifications',
+  BANK_ACCOUNT_DETAILS: 'BankAccountDetails',
 } as const;
 
 export type RouteName = typeof ROUTES[keyof typeof ROUTES];

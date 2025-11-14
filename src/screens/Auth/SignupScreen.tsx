@@ -7,8 +7,9 @@ import { Container, Button, Logo } from '../../components/common';
 import { Input } from '../../components/forms';
 import { isValidEmail, isValidPassword } from '../../utils';
 import { useAppDispatch } from '../../store/hooks';
-import { setUser, setToken, setLoading } from '../../store/slices/userSlice';
+import { setLoading } from '../../store/slices/userSlice';
 import Toast from 'react-native-toast-message';
+import { authService, AuthServiceError } from '../../services/authService';
 
 const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
   const dispatch = useAppDispatch();
@@ -20,7 +21,7 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [phoneError, setPhoneError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLocalLoading] = useState(false);
 
   const validateForm = (): boolean => {
     let isValid = true;
@@ -77,42 +78,39 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
       return;
     }
 
-    setLoading(true);
+    setLocalLoading(true);
     dispatch(setLoading(true));
 
+    const nameParts = fullName.trim().split(' ');
+    const firstNameValue = nameParts.shift() ?? '';
+    const lastNameValue = nameParts.length ? nameParts.join(' ') : 'User';
+    const usernameValue = email.includes('@') ? email.split('@')[0] : email;
+
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Mock successful signup
-      const mockUser = {
-        id: Date.now().toString(),
-        email: email,
-        name: fullName,
-      };
-      const mockToken = 'mock_jwt_token_' + Date.now();
-
-      dispatch(setUser(mockUser));
-      dispatch(setToken(mockToken));
+      await authService.signup({
+        username: usernameValue,
+        email: email.trim(),
+        password,
+        firstName: firstNameValue,
+        lastName: lastNameValue,
+      });
 
       Toast.show({
         type: 'success',
-        text1: 'Account Created!',
-        text2: 'Welcome to Fintrack',
+        text1: 'Account created',
+        text2: 'You can now sign in',
       });
 
-      // Navigate to home after a short delay
-      setTimeout(() => {
-        // navigation.replace(ROUTES.HOME);
-      }, 500);
-    } catch (error: any) {
+      navigation.replace(ROUTES.LOGIN);
+    } catch (error) {
+      const apiError = error as AuthServiceError;
       Toast.show({
         type: 'error',
         text1: 'Signup Failed',
-        text2: error?.message || 'Something went wrong. Please try again',
+        text2: apiError.message,
       });
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
       dispatch(setLoading(false));
     }
   };

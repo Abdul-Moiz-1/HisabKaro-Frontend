@@ -9,5 +9,15 @@ export { Divider } from './Divider';
 export { HeaderNavigation } from './HeaderNavigation';
 export { MenuCard } from './MenuCard';
 export { SocialLoginButton } from './SocialLoginButton';
+export { SearchBar } from './SearchBar';
+export { TabSelector } from './TabSelector';
+export { AccountCard } from './AccountCard';
+export { TransactionItem } from './TransactionItem';
+export { BudgetCard } from './BudgetCard';
+export { ExpenseCategoryItem } from './ExpenseCategoryItem';
+export { ScheduledPaymentCard } from './ScheduledPaymentCard';
+export { NotificationCard } from './NotificationCard';
+export { LineChart } from './LineChart';
+export { PieChart } from './PieChart';
 
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { theme } from '../../../constants/theme';
 
@@ -44,8 +44,14 @@ const mockTransactions: Transaction[] = [
 
 type TabType = 'All' | 'Spending' | 'Income';
 
-export const TransactionHistory: React.FC = () => {
+interface TransactionHistoryProps {
+  onSeeAll?: () => void;
+}
+
+export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onSeeAll }) => {
   const [activeTab, setActiveTab] = useState<TabType>('All');
+
+  console.log('activeTab', activeTab);
 
   const filteredTransactions = mockTransactions.filter(transaction => {
     if (activeTab === 'All') return true;
@@ -54,32 +60,34 @@ export const TransactionHistory: React.FC = () => {
     return true;
   });
 
-  const renderTransaction = ({ item }: { item: Transaction }) => (
-    <View style={styles.transactionItem}>
-      <View style={styles.transactionIcon}>
-        <Text style={styles.iconText}>{item.icon}</Text>
+  const renderTransaction = useCallback(({ item }: { item: Transaction }) => {
+    return (
+      <View style={styles.transactionItem}>
+        <View style={styles.transactionIcon}>
+          <Text style={styles.iconText}>{item.icon}</Text>
+        </View>
+        <View style={styles.transactionDetails}>
+          <Text style={styles.transactionTitle}>{item.title}</Text>
+          <Text style={styles.transactionSubtitle}>{item.subtitle}</Text>
+        </View>
+        <View style={styles.transactionRight}>
+          <Text style={[
+            styles.transactionAmount,
+            { color: item.type === 'income' ? theme.colors.success : theme.colors.text.primary }
+          ]}>
+            {item.amount > 0 ? '+' : ''}${Math.abs(item.amount)}
+          </Text>
+          <Text style={styles.transactionTime}>{item.time}</Text>
+        </View>
       </View>
-      <View style={styles.transactionDetails}>
-        <Text style={styles.transactionTitle}>{item.title}</Text>
-        <Text style={styles.transactionSubtitle}>{item.subtitle}</Text>
-      </View>
-      <View style={styles.transactionRight}>
-        <Text style={[
-          styles.transactionAmount,
-          { color: item.type === 'income' ? theme.colors.success : theme.colors.text.primary }
-        ]}>
-          {item.amount > 0 ? '+' : ''}${Math.abs(item.amount)}
-        </Text>
-        <Text style={styles.transactionTime}>{item.time}</Text>
-      </View>
-    </View>
-  );
+    );
+  }, []);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Transaction History</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onSeeAll}>
           <Text style={styles.seeAll}>See All</Text>
         </TouchableOpacity>
       </View>

@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Keyboard } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Keyboard, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NavigationProps } from '../../types';
 import { ROUTES } from '../../constants/routes';
 import { theme } from '../../constants/theme';
 import { Container, Button, Logo, Checkbox, Divider, SocialLoginButton } from '../../components/common';
 import { Input } from '../../components/forms';
-import { isValidEmail } from '../../utils';
+import { extractUserFromToken, isValidEmail } from '../../utils';
+import {
+  getBiometricAvailability,
+  getStoredBiometricProfile,
+  signWithBiometrics,
+} from '../../utils/biometrics';
 import { useAppDispatch } from '../../store/hooks';
-import { setUser, setToken, setLoading } from '../../store/slices/userSlice';
+import { setUser, setToken, setLoading, setRefreshToken } from '../../store/slices/userSlice';
 import Toast from 'react-native-toast-message';
+import { authService, AuthServiceError } from '../../services/authService';
+import { biometricService } from '../../services/biometricService';
 
 const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
   const dispatch = useAppDispatch();
@@ -17,7 +25,24 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
   const [rememberMe, setRememberMe] = useState(true);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLocalLoading] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+
+  const refreshBiometricAvailability = useCallback(async () => {
+    const [profile, availability] = await Promise.all([
+      getStoredBiometricProfile(),
+      getBiometricAvailability(),
+    ]);
+
+    setBiometricAvailable(Boolean(profile) && availability.available);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshBiometricAvailability();
+    }, [refreshBiometricAvailability])
+  );
 
   const validateForm = (): boolean => {
     let isValid = true;
@@ -45,57 +70,64 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
     return isValid;
   };
 
-  // ------------------------------------------------- TEMPORARY LOGIN FUNCTION JUST TO NAVIGATE TO HOME SCREEN---------------------------------------------
   const handleLogin = async () => {
     Keyboard.dismiss();
 
-    // Basic front-end validation
-    if (!email.trim() || !password.trim()) {
+    if (!validateForm()) {
       Toast.show({
         type: 'error',
-        text1: 'Missing Fields',
-        text2: 'Please enter both email and password',
+        text1: 'Validation Error',
+        text2: 'Please check your email and password',
       });
       return;
     }
 
-    // ✅ Hardcoded mock credentials
-    const MOCK_EMAIL = 'test@example.com';
-    const MOCK_PASSWORD = '123456';
+    setLocalLoading(true);
+    dispatch(setLoading(true));
 
-    setLoading(true);
+    try {
+      const response = await authService.login({
+        username: email.trim(),
+        password,
+      });
 
-    // Simulate a short API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      const tokens = response.data;
 
-    if (email === MOCK_EMAIL && password === MOCK_PASSWORD) {
-      const mockUser = {
-        id: '1',
-        email: MOCK_EMAIL,
-        name: 'Test User',
-      };
-      const mockToken = 'mock_jwt_token_12345';
+      dispatch(setToken(tokens.access_token));
+      dispatch(setRefreshToken(tokens.refresh_token));
 
-      dispatch(setUser(mockUser));
-      dispatch(setToken(mockToken));
+      const parsedUser = extractUserFromToken(tokens.access_token);
+
+      if (parsedUser) {
+        dispatch(setUser(parsedUser));
+      } else {
+        dispatch(
+          setUser({
+            id: '',
+            email,
+            name: email,
+          })
+        );
+      }
 
       Toast.show({
         type: 'success',
         text1: 'Login Successful',
-        text2: 'Welcome back, Test User!',
+        text2: 'Welcome back!',
       });
 
-      // ✅ Navigate to Home screen
       navigation.replace(ROUTES.HOME);
-    } else {
+    } catch (error) {
+      const apiError = error as AuthServiceError;
       Toast.show({
         type: 'error',
         text1: 'Login Failed',
-        text2: 'Invalid email or password',
+        text2: apiError.message,
       });
+    } finally {
+      setLocalLoading(false);
+      dispatch(setLoading(false));
     }
-
-    setLoading(false);
   };
 
   const handleSocialLogin = (provider: 'facebook' | 'google' | 'linkedin') => {
@@ -108,6 +140,83 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
 
   const navigateToSignup = () => {
     navigation.navigate(ROUTES.SIGNUP);
+  };
+
+  const handleBiometricLogin = async () => {
+    setBiometricLoading(true);
+
+    try {
+      const profile = await getStoredBiometricProfile();
+      if (!profile) {
+        throw new Error('Biometric login is not configured for this device.');
+      }
+
+      const challengeResponse = await biometricService.generateChallenge({
+        userId: profile.userId,
+      });
+
+      const challenge = challengeResponse.data?.challenge;
+      if (!challenge) {
+        throw new Error('Unable to start biometric authentication.');
+      }
+
+      const signature = await signWithBiometrics(challenge, 'Login with fingerprint');
+
+      const authResponse = await biometricService.authenticate({
+        userId: profile.userId,
+        deviceId: profile.deviceId,
+        challenge,
+        signature,
+      });
+
+      const payload = authResponse.data;
+
+      if (payload?.access_token) {
+        dispatch(setToken(payload.access_token));
+        dispatch(setRefreshToken(payload.refresh_token ?? null));
+
+        const parsedUser = extractUserFromToken(payload.access_token);
+        if (parsedUser) {
+          dispatch(setUser(parsedUser));
+        } else {
+          dispatch(
+            setUser({
+              id: profile.userId,
+              email: profile.email ?? email,
+              name: profile.email ?? 'User',
+            })
+          );
+        }
+
+        Toast.show({
+          type: 'success',
+          text1: 'Welcome back!',
+          text2: 'Signed in with biometrics',
+        });
+
+        navigation.replace(ROUTES.HOME);
+      } else if (payload?.success) {
+        Toast.show({
+          type: 'success',
+          text1: 'Fingerprint verified',
+          text2: 'Please enter your password to finish login',
+        });
+      } else {
+        throw new Error('Biometric authentication failed. Please try again.');
+      }
+    } catch (error) {
+      const message =
+        (error as AuthServiceError)?.message ??
+        (error instanceof Error ? error.message : 'Biometric login failed');
+      Toast.show({
+        type: 'error',
+        text1: 'Biometric login',
+        text2: message,
+      });
+      await refreshBiometricAvailability();
+    } finally {
+      setBiometricLoading(false);
+    }
   };
 
   return (
@@ -151,7 +260,7 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
 
           <View style={styles.optionsRow}>
             <Checkbox checked={rememberMe} onPress={() => setRememberMe(!rememberMe)} label="Remember Me" />
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate(ROUTES.FORGOT_PASSWORD)}>
               <Text style={styles.forgotPassword}>Forgot Password?</Text>
             </TouchableOpacity>
           </View>
@@ -164,6 +273,23 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
             loading={loading}
             style={styles.button}
           />
+
+          {biometricAvailable && (
+            <View style={styles.biometricContainer}>
+              <Text style={styles.biometricLabel}>or quick sign in</Text>
+              <TouchableOpacity
+                style={styles.biometricButton}
+                onPress={handleBiometricLogin}
+                disabled={biometricLoading}
+              >
+                {biometricLoading ? (
+                  <ActivityIndicator color={theme.colors.text.inverse} />
+                ) : (
+                  <Text style={styles.biometricIcon}>🔓</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
 
           <Divider text="or continue with" />
 
@@ -220,6 +346,32 @@ const styles = StyleSheet.create({
   },
   button: {
     marginBottom: theme.spacing.lg,
+  },
+  biometricContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+  },
+  biometricLabel: {
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
+    flex: 1,
+  },
+  biometricButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  biometricIcon: {
+    fontSize: 20,
   },
   socialContainer: {
     flexDirection: 'row',

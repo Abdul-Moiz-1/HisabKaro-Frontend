@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NavigationProps } from '../../types';
 import { theme } from '../../constants/theme';
 import { ROUTES } from '../../constants/routes';
@@ -14,10 +14,18 @@ import { MonthlyBudget } from './components/MonthlyBudget';
 import { SpendingChart } from './components/SpendingChart';
 import { ExpensesSection } from './components/ExpensesSection';
 import { ScheduledPayments } from './components/ScheduledPayments';
+import Toast from 'react-native-toast-message';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { authService, AuthServiceError } from '../../services/authService';
+import { clearUser } from '../../store/slices/userSlice';
+import { clearBiometricProfile } from '../../utils/biometrics';
 
 const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<'Daily' | 'Weekly' | 'Monthly'>('Monthly');
   const [activeTab, setActiveTab] = useState<string>('home');
+  const dispatch = useAppDispatch();
+  const { user, refreshToken } = useAppSelector((state) => state.user);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   const handleTabPress = (tabId: string) => {
     setActiveTab(tabId);
@@ -44,8 +52,48 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
     }
   };
 
+  const handleLogout = useCallback(async () => {
+    setLogoutLoading(true);
+    try {
+      if (refreshToken) {
+        await authService.logout({ refreshToken });
+      }
+      await clearBiometricProfile();
+      dispatch(clearUser());
+      navigation.replace(ROUTES.LOGIN);
+    } catch (error) {
+      const apiError = error as AuthServiceError;
+      Toast.show({
+        type: 'error',
+        text1: 'Logout failed',
+        text2: apiError.message ?? 'Please try again',
+      });
+    } finally {
+      setLogoutLoading(false);
+    }
+  }, [dispatch, navigation, refreshToken]);
+
   return (
     <Container safeArea edges={['top']} style={styles.container}>
+      <View style={styles.headerRow}>
+        <View>
+          <Text style={styles.greetingText}>
+            Hi {user?.firstName ?? user?.name ?? 'there'}
+          </Text>
+          <Text style={styles.subGreeting}>Welcome back to HisabKaro</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          disabled={logoutLoading}
+        >
+          {logoutLoading ? (
+            <ActivityIndicator color={theme.colors.text.inverse} />
+          ) : (
+            <Text style={styles.logoutIcon}>⎋</Text>
+          )}
+        </TouchableOpacity>
+      </View>
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -55,6 +103,9 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         <BalanceCard 
           userName="Farida Orojova"
           balance={425.35}
+          onAvatarPress={() => navigation.navigate(ROUTES.PROFILE)}
+          onNotificationPress={() => navigation.navigate(ROUTES.NOTIFICATIONS)}
+          onBalancePress={() => navigation.navigate(ROUTES.BALANCE_ACCOUNTS)}
         />
 
         {/* Savings Progress */}
@@ -66,18 +117,27 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         />
 
         {/* Currency Cards */}
-        <CurrencyCards />
+        <CurrencyCards 
+          onCardPress={(accountId) => {
+            // Navigate to balance accounts screen
+            navigation.navigate(ROUTES.BALANCE_ACCOUNTS);
+          }}
+          onSeeAll={() => navigation.navigate(ROUTES.BALANCE_ACCOUNTS)}
+        />
 
         {/* Action Buttons */}
         <ActionButtons />
 
         {/* Transaction History */}
-        <TransactionHistory />
+        <TransactionHistory 
+          onSeeAll={() => navigation.navigate(ROUTES.TRANSACTION_HISTORY)}
+        />
 
         {/* Monthly Budget */}
         <MonthlyBudget 
           spent={3000}
           limit={5000}
+          onSeeAll={() => navigation.navigate(ROUTES.BUDGET)}
         />
 
         {/* Period Selector */}
@@ -105,10 +165,14 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         <SpendingChart period={selectedPeriod} />
 
         {/* Expenses */}
-        <ExpensesSection />
+        <ExpensesSection 
+          onSeeAll={() => navigation.navigate(ROUTES.EXPENSES)}
+        />
 
         {/* Scheduled Payments */}
-        <ScheduledPayments />
+        <ScheduledPayments 
+          onSeeAll={() => navigation.navigate(ROUTES.SCHEDULED_PAYMENTS)}
+        />
 
         {/* Add Widget Button */}
         <TouchableOpacity style={styles.addWidgetButton}>
@@ -130,6 +194,34 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.background,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+  },
+  greetingText: {
+    ...theme.typography.h2,
+    color: theme.colors.text.primary,
+  },
+  subGreeting: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
+  },
+  logoutButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutIcon: {
+    fontSize: 18,
+    color: theme.colors.text.primary,
   },
   scrollView: {
     flex: 1,

@@ -1,43 +1,81 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { theme } from '../../../constants/theme';
+import { theme } from '../../constants/theme';
 
-interface MonthlyBudgetProps {
+export interface Budget {
+  id: string;
+  name: string;
   spent: number;
   limit: number;
+  period: 'Monthly' | 'Weekly' | 'Yearly';
+}
+
+interface BudgetCardProps {
+  budget: Budget;
+  onPress?: () => void;
+  showSeeAll?: boolean;
   onSeeAll?: () => void;
 }
 
-export const MonthlyBudget: React.FC<MonthlyBudgetProps> = ({ spent, limit, onSeeAll }) => {
-  const percentage = (spent / limit) * 100;
-  const remaining = limit - spent;
+export const BudgetCard: React.FC<BudgetCardProps> = ({
+  budget,
+  onPress,
+  showSeeAll = false,
+  onSeeAll,
+}) => {
+  const percentage = (budget.spent / budget.limit) * 100;
+  const isOverspending = percentage >= 100;
+  const isRisk = percentage >= 90 && percentage < 100;
+  const isWithin = percentage < 90;
+
+  const getStatusColor = () => {
+    if (isOverspending) return theme.colors.error;
+    if (isRisk) return theme.colors.warning;
+    return theme.colors.primary;
+  };
+
+  const getStatusText = () => {
+    if (isOverspending) return 'Overspending';
+    if (isRisk) return 'Risk';
+    return 'Within';
+  };
+
+  // Calculate the angle for the circular progress
+  const angle = Math.min(percentage, 100) * 3.6; // Convert to degrees (360/100)
 
   return (
-    <View style={styles.container}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.header}>
-        <Text style={styles.title}>Monthly Budget</Text>
-        <TouchableOpacity onPress={onSeeAll}>
-          <Text style={styles.seeAll}>See All</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>{budget.name}</Text>
+        {showSeeAll && (
+          <TouchableOpacity onPress={onSeeAll}>
+            <Text style={styles.seeAll}>See All</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.content}>
         <View style={styles.textSection}>
-          <Text style={styles.label}>Monthly</Text>
-          <Text style={styles.label}>spending limit</Text>
-          <Text style={styles.spentAmount}>Spend: ${spent.toLocaleString()}/${limit.toLocaleString()}</Text>
-          
+          <Text style={styles.label}>{budget.period} spending limit</Text>
+          <Text style={styles.spentAmount}>
+            Spend: ${budget.spent.toLocaleString()} / ${budget.limit.toLocaleString()}
+          </Text>
+
           <View style={styles.legendContainer}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: theme.colors.primary }]} />
               <Text style={styles.legendText}>Within</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: theme.colors.error }]} />
+              <View style={[styles.legendDot, { backgroundColor: theme.colors.warning }]} />
               <Text style={styles.legendText}>Risk</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: theme.colors.secondary }]} />
+              <View style={[styles.legendDot, { backgroundColor: theme.colors.error }]} />
               <Text style={styles.legendText}>Overspending</Text>
             </View>
           </View>
@@ -46,28 +84,34 @@ export const MonthlyBudget: React.FC<MonthlyBudgetProps> = ({ spent, limit, onSe
         <View style={styles.chartSection}>
           <View style={styles.progressRing}>
             <View style={styles.progressBackground} />
-            <View 
-              style={[
-                styles.progressForeground,
-                {
-                  transform: [{ rotate: `${(percentage / 100) * 360}deg` }]
-                }
-              ]} 
-            />
+            {angle > 0 && (
+              <View
+                style={[
+                  styles.progressForeground,
+                  {
+                    borderColor: getStatusColor(),
+                    transform: [{ rotate: `${angle}deg` }],
+                  },
+                ]}
+              />
+            )}
             <View style={styles.progressCenter}>
               <Text style={styles.percentageText}>{Math.round(percentage)}%</Text>
             </View>
           </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.md,
   },
   header: {
     flexDirection: 'row',
@@ -150,10 +194,10 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     borderWidth: 8,
-    borderColor: theme.colors.primary,
     borderTopColor: 'transparent',
     borderRightColor: 'transparent',
     borderBottomColor: 'transparent',
+    borderLeftColor: theme.colors.primary,
   },
   progressCenter: {
     alignItems: 'center',
@@ -167,3 +211,4 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
 });
+
