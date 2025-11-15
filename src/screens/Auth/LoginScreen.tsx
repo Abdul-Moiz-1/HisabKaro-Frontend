@@ -97,13 +97,20 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
       dispatch(setRefreshToken(tokens.refresh_token));
 
       const parsedUser = extractUserFromToken(tokens.access_token);
+      console.log('=== Login - User Extraction ===');
+      console.log('Parsed user from token:', parsedUser);
+      console.log('User ID (sub):', parsedUser?.id);
 
-      if (parsedUser) {
+      if (parsedUser && parsedUser.id) {
         dispatch(setUser(parsedUser));
+        console.log('✅ User set in Redux with ID from token sub claim');
       } else {
+        console.warn('⚠️ Token missing sub claim, using fallback ID');
+        // If token doesn't have user info, create a fallback user with a generated ID
+        const fallbackUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         dispatch(
           setUser({
-            id: '',
+            id: fallbackUserId,
             email,
             name: email,
           })
@@ -147,20 +154,40 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
 
     try {
       const profile = await getStoredBiometricProfile();
+      console.log('=== Biometric Login Flow ===');
+      console.log('Stored profile:', profile);
+      
       if (!profile) {
         throw new Error('Biometric login is not configured for this device.');
       }
 
+      console.log('Step 1: Requesting challenge from backend...');
+      console.log('Payload:', { userId: profile.userId });
+      
       const challengeResponse = await biometricService.generateChallenge({
         userId: profile.userId,
       });
+      
+      console.log('Challenge response:', challengeResponse);
 
       const challenge = challengeResponse.data?.challenge;
       if (!challenge) {
         throw new Error('Unable to start biometric authentication.');
       }
 
+      console.log('Step 2: Challenge received:', challenge);
+      console.log('Step 3: Prompting biometric authentication...');
+      
       const signature = await signWithBiometrics(challenge, 'Login with fingerprint');
+      
+      console.log('Step 4: Signature generated, length:', signature.length);
+      console.log('Step 5: Authenticating with backend...');
+      console.log('Payload:', {
+        userId: profile.userId,
+        deviceId: profile.deviceId,
+        challenge: challenge,
+        signature: signature,
+      });
 
       const authResponse = await biometricService.authenticate({
         userId: profile.userId,
@@ -168,6 +195,8 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
         challenge,
         signature,
       });
+      
+      console.log('Step 6: Authentication response:', authResponse);
 
       const payload = authResponse.data;
 
@@ -175,10 +204,17 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
         dispatch(setToken(payload.access_token));
         dispatch(setRefreshToken(payload.refresh_token ?? null));
 
-        const parsedUser = extractUserFromToken(payload.access_token);    // <-----  kashif se bolo username bhi bhejay token mai
-        if (parsedUser) {
+        const parsedUser = extractUserFromToken(payload.access_token);
+        console.log('=== Biometric Login - User Extraction ===');
+        console.log('Parsed user from token:', parsedUser);
+        console.log('User ID (sub):', parsedUser?.id);
+        
+        if (parsedUser && parsedUser.id) {
           dispatch(setUser(parsedUser));
+          console.log('✅ User set in Redux with ID from token sub claim');
         } else {
+          console.warn('⚠️ Token missing sub claim, using stored profile userId as fallback');
+          // Use the stored profile userId as fallback
           dispatch(
             setUser({
               id: profile.userId,
@@ -205,6 +241,11 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
         throw new Error('Biometric authentication failed. Please try again.');
       }
     } catch (error) {
+      console.error('=== Biometric Login Error ===');
+      console.error('Error object:', error);
+      console.error('Error details:', (error as AuthServiceError)?.details);
+      console.error('Error status:', (error as AuthServiceError)?.status);
+      
       const message =
         (error as AuthServiceError)?.message ??
         (error instanceof Error ? error.message : 'Biometric login failed');

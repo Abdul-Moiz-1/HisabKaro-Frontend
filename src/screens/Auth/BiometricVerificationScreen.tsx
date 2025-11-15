@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Switch, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { jwtDecode } from 'jwt-decode';
 import { NavigationProps } from '../../types';
 import { Container, HeaderNavigation } from '../../components/common';
 import { theme } from '../../constants/theme';
@@ -19,37 +20,97 @@ import {
 } from '../../utils/biometrics';
 
 const BiometricVerificationScreen: React.FC<NavigationProps<'BiometricVerification'>> = ({ navigation }) => {
-  const { user } = useAppSelector((state) => state.user);
-  console.log('user', user);
+  const { user, isAuthenticated, token } = useAppSelector((state) => state.user);
   const [biometricToggleLoading, setBiometricToggleLoading] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
 
+  // Debug: Log Redux state on mount
+  useEffect(() => {
+    console.log('=== BiometricVerificationScreen Redux State ===');
+    console.log('isAuthenticated:', isAuthenticated);
+    console.log('user:', user);
+    console.log('token exists:', !!token);
+    console.log('token type:', typeof token);
+    if (token) {
+      console.log('token length:', token.length);
+    }
+  }, []);
+
+  // // Extract userId from JWT token's sub claim
+  // const getUserIdFromToken = (): string | null => {
+  //   if (!token) return null;
+  //   try {
+  //     const decoded = jwtDecode<JwtPayload>(token);
+  //     return decoded.sub ?? null;
+  //   } catch {
+  //     return null;
+  //   }
+    
+  // };
+
+  const getUserIdFromToken = (): string | null => {
+    if (!token) {
+      console.log('❌ No token available in Redux state');
+      return null;
+    }
+    try {
+      console.log('Token exists, attempting to decode...');
+      console.log('Token (first 50 chars):', token.substring(0, 50));
+      const decoded: any = jwtDecode(token);
+      console.log('Decoded token:', JSON.stringify(decoded, null, 2));
+      console.log('Sub claim:', decoded.sub);
+      return decoded.sub || null;
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const syncProfile = async () => {
+      const userId = getUserIdFromToken();
       const storedProfile = await getStoredBiometricProfile();
-      if (storedProfile?.userId === user?.id) {
+      if (storedProfile?.userId && userId && storedProfile.userId === userId) {
         setBiometricEnabled(true);
       } else {
         setBiometricEnabled(false);
       }
     };
 
-    syncProfile();
-  }, [user?.id]);
+    if (token) {
+      syncProfile();
+    }
+  }, [token]);
 
   const enableBiometricLogin = async () => {
-    if (!user?.id) {
+    // Extract userId from JWT token
+    const userId = getUserIdFromToken();
+    
+    // Debug logging
+    console.log('=== Biometric Enable Debug ===');
+    console.log('isAuthenticated:', isAuthenticated);
+    console.log('token exists:', !!token);
+    console.log('userId from token (sub):', userId);
+    console.log('userId type:', typeof userId);
+    console.log('userId length:', userId?.length);
+    
+    // Check if user is authenticated and has a valid token with userId
+    if (!isAuthenticated || !token || !userId || userId.trim() === '') {
+      console.log('❌ User validation failed - no valid userId in token');
       Toast.show({
-        type: 'info',
+        type: 'error',
         text1: 'Sign in required',
-        text2: 'Login before enabling biometrics',
+        text2: 'Please login with your email and password first',
       });
       return;
     }
 
+    console.log('✅ User validation passed, proceeding with biometric setup');
     setBiometricToggleLoading(true);
     try {
       const availability = await getBiometricAvailability();
+      console.log('Biometric availability:', availability);
+      
       if (!availability.available) {
         Toast.show({
           type: 'error',
@@ -60,26 +121,37 @@ const BiometricVerificationScreen: React.FC<NavigationProps<'BiometricVerificati
       }
 
       const keysExist = await biometricKeysExist();
+      console.log('Keys exist:', keysExist);
+      
       if (keysExist) {
         await deleteBiometricKeys();
+        console.log('Old keys deleted');
       }
 
+      console.log('Generating biometric keys...');
       const generatedPublicKey = await createBiometricKeys();
+      console.log('New keys generated, public key length:', generatedPublicKey.length);
+      
       const deviceMeta = await getDeviceMetadata();
+      console.log('Device metadata:', deviceMeta);
 
+      console.log('Registering device with backend...');
+      // Backend extracts userId from JWT token (Authorization header)
       await biometricService.registerDevice({
         deviceId: deviceMeta.deviceId,
         publicKey: generatedPublicKey,
         deviceName: deviceMeta.deviceName,
         deviceOs: deviceMeta.deviceOs,
       });
+      console.log('Device registered with backend');
 
       await saveBiometricProfile({
-        userId: user.id,
-        email: user.email,
+        userId: userId,
+        email: user?.email,
         deviceId: deviceMeta.deviceId,
         biometryType: availability.biometryType,
       });
+      console.log('Biometric profile saved locally');
 
       setBiometricEnabled(true);
       Toast.show({
@@ -88,6 +160,7 @@ const BiometricVerificationScreen: React.FC<NavigationProps<'BiometricVerificati
         text2: 'You can now sign in with your fingerprint',
       });
     } catch (error) {
+      console.error('Biometric setup error:', error);
       const apiError = error as AuthServiceError;
       Toast.show({
         type: 'error',

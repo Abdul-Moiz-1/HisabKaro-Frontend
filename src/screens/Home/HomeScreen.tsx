@@ -17,7 +17,7 @@ import { ScheduledPayments } from './components/ScheduledPayments';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { authService, AuthServiceError } from '../../services/authService';
-import { clearUser } from '../../store/slices/userSlice';
+import { clearUser , logout} from '../../store/slices/userSlice';
 import { clearBiometricProfile } from '../../utils/biometrics';
 
 const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
@@ -52,24 +52,52 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
     }
   };
 
+// const handleLogout = useCallback(async () => {
+//   setLogoutLoading(true);
+//   try {
+//     if (refreshToken) {
+//       await authService.logout({ refreshToken });
+
+//     }
+//     navigation.replace(ROUTES.LOGIN);
+//   } catch (error) {
+//     Toast.show({
+//       type: 'error',
+//       text1: 'Logout failed',
+//       text2: error?.message ?? 'Please try again',
+//     });
+//   } finally {
+//     setLogoutLoading(false);
+//   }
+// }, [refreshToken]);
+
+
 const handleLogout = useCallback(async () => {
   setLogoutLoading(true);
+  
   try {
     if (refreshToken) {
       await authService.logout({ refreshToken });
+      console.log('Backend logout successful');  
+      dispatch(logout());                   // <---- locally bhi clear kardo token jb logout hojae
 
     }
-    navigation.replace(ROUTES.LOGIN);
   } catch (error) {
+    console.error('Logout API failed:', error);
     Toast.show({
-      type: 'error',
-      text1: 'Logout failed',
-      text2: error?.message ?? 'Please try again',
+      type: 'info',
+      text1: 'Logged out locally',
     });
   } finally {
+    // Clear tokens locally 
+    dispatch(logout());
+    
+    console.log(' Tokens cleared locally');
+    
     setLogoutLoading(false);
+    navigation.replace(ROUTES.LOGIN);
   }
-}, [refreshToken]);
+}, [refreshToken, dispatch, navigation]);
 
 
   return (

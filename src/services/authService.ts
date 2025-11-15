@@ -124,34 +124,17 @@ export const authService = {
     return unwrap(response);
   },
 logout: async (payload: RefreshPayload): Promise<BaseResponse> => {
-  console.log("API CALLED");
-  console.log("Refresh token received:", payload.refreshToken);
-  
-  try {
-    const response = await httpClient.post<BaseResponse>(
-      "/auth/logout",
-      {}, 
-      {
-        headers: {
-          "Authorization": `Bearer ${payload.refreshToken}`,
-        },
-      }
-    );
-    
-    console.log("API successful");
-    console.log("Response:", response.data);
-    
-    return unwrap(response);
-  } catch (error) {
-    console.error("API failed");
-    console.error("Error:", error);
-    console.error("Error response:", error?.response?.data);
-    console.error("Error status:", error?.response?.status);
-    throw error; // Re-throw so frontend can handle it
-  }
+  const response = await httpClient.post<BaseResponse>(
+    '/auth/logout',
+    { refreshToken: payload.refreshToken }, //  Send refresh token in body
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  return unwrap(response);
 },
-
-
   forgotPassword: async (payload: ForgotPasswordPayload): Promise<BaseResponse> => {
     const response = await httpClient.post<BaseResponse>('/auth/forgot-password', payload);
     return unwrap(response);

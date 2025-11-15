@@ -20,8 +20,12 @@ const httpClient = axios.create({
 httpClient.interceptors.request.use((config) => {
   const token = store.getState().user.token;
 
-  if (token && config.headers) {
+  // Only add Authorization header if token exists and is not empty
+  if (token && token.trim() !== '' && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('[HTTP] Request with auth:', config.method?.toUpperCase(), config.url);
+  } else {
+    console.log('[HTTP] Request without auth:', config.method?.toUpperCase(), config.url);
   }
 
   return config;
