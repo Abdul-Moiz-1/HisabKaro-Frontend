@@ -52,26 +52,25 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
     }
   };
 
-  const handleLogout = useCallback(async () => {
-    setLogoutLoading(true);
-    try {
-      if (refreshToken) {
-        await authService.logout({ refreshToken });
-      }
-      await clearBiometricProfile();
-      dispatch(clearUser());
-      navigation.replace(ROUTES.LOGIN);
-    } catch (error) {
-      const apiError = error as AuthServiceError;
-      Toast.show({
-        type: 'error',
-        text1: 'Logout failed',
-        text2: apiError.message ?? 'Please try again',
-      });
-    } finally {
-      setLogoutLoading(false);
+const handleLogout = useCallback(async () => {
+  setLogoutLoading(true);
+  try {
+    if (refreshToken) {
+      await authService.logout({ refreshToken });
+
     }
-  }, [dispatch, navigation, refreshToken]);
+    navigation.replace(ROUTES.LOGIN);
+  } catch (error) {
+    Toast.show({
+      type: 'error',
+      text1: 'Logout failed',
+      text2: error?.message ?? 'Please try again',
+    });
+  } finally {
+    setLogoutLoading(false);
+  }
+}, [refreshToken]);
+
 
   return (
     <Container safeArea edges={['top']} style={styles.container}>

@@ -13,6 +13,7 @@ export interface LoginPayload {
   password: string;
 }
 
+
 export interface RefreshPayload {
   refreshToken: string;
 }
@@ -114,41 +115,7 @@ export const authService = {
     return unwrap(response);
   },
   login: async (payload: LoginPayload): Promise<LoginResponse> => {
-    // Check for dummy user credentials
     const email = payload.username.toLowerCase().trim();
-    if (email === DUMMY_USER.email && payload.password === DUMMY_USER.password) {
-      // Return mock response for dummy user
-      const now = Math.floor(Date.now() / 1000);
-      const accessToken = createMockToken({
-        sub: 'test-user-id',
-        email: DUMMY_USER.email,
-        name: 'Test User',
-        preferred_username: DUMMY_USER.email,
-        exp: now + 3600, // Expires in 1 hour
-        iat: now,
-      });
-      const refreshToken = createMockToken({
-        sub: 'test-user-id',
-        type: 'refresh',
-        exp: now + 86400, // Expires in 24 hours
-        iat: now,
-      });
-
-      return {
-        status: 200,
-        data: {
-          access_token: accessToken,
-          refresh_token: refreshToken,
-          expires_in: 3600,
-          refresh_expires_in: 86400,
-          token_type: 'Bearer',
-          scope: 'read write',
-        },
-        message: 'Login successful',
-      };
-    }
-
-    // Proceed with normal network call for other users
     const response = await httpClient.post<LoginResponse>('/auth/login', payload);
     return unwrap(response);
   },
@@ -156,10 +123,35 @@ export const authService = {
     const response = await httpClient.post<LoginResponse>('/auth/refresh', payload);
     return unwrap(response);
   },
-  logout: async (payload: RefreshPayload): Promise<BaseResponse> => {
-    const response = await httpClient.post<BaseResponse>('/auth/logout', payload);
+logout: async (payload: RefreshPayload): Promise<BaseResponse> => {
+  console.log("API CALLED");
+  console.log("Refresh token received:", payload.refreshToken);
+  
+  try {
+    const response = await httpClient.post<BaseResponse>(
+      "/auth/logout",
+      {}, 
+      {
+        headers: {
+          "Authorization": `Bearer ${payload.refreshToken}`,
+        },
+      }
+    );
+    
+    console.log("API successful");
+    console.log("Response:", response.data);
+    
     return unwrap(response);
-  },
+  } catch (error) {
+    console.error("API failed");
+    console.error("Error:", error);
+    console.error("Error response:", error?.response?.data);
+    console.error("Error status:", error?.response?.status);
+    throw error; // Re-throw so frontend can handle it
+  }
+},
+
+
   forgotPassword: async (payload: ForgotPasswordPayload): Promise<BaseResponse> => {
     const response = await httpClient.post<BaseResponse>('/auth/forgot-password', payload);
     return unwrap(response);

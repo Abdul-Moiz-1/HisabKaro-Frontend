@@ -175,7 +175,7 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
         dispatch(setToken(payload.access_token));
         dispatch(setRefreshToken(payload.refresh_token ?? null));
 
-        const parsedUser = extractUserFromToken(payload.access_token);
+        const parsedUser = extractUserFromToken(payload.access_token);    // <-----  kashif se bolo username bhi bhejay token mai
         if (parsedUser) {
           dispatch(setUser(parsedUser));
         } else {

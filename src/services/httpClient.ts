@@ -2,6 +2,8 @@ import axios, { AxiosError } from 'axios';
 import { API_CONFIG, DEFAULT_HTTP_HEADERS } from '../constants/config';
 import { store } from '../store';
 import { clearUser } from '../store/slices/userSlice';
+import { V1_API } from '@env';
+
 
 export interface ApiError {
   message: string;
@@ -10,7 +12,7 @@ export interface ApiError {
 }
 
 const httpClient = axios.create({
-  baseURL: API_CONFIG.baseURL,
+  baseURL: V1_API,
   timeout: API_CONFIG.timeout,
   headers: DEFAULT_HTTP_HEADERS,
 });

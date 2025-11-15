@@ -79,7 +79,7 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
     }
 
     setLocalLoading(true);
-    dispatch(setLoading(true));
+    // dispatch(setLoading(true));
 
     const nameParts = fullName.trim().split(' ');
     const firstNameValue = nameParts.shift() ?? '';
@@ -111,7 +111,7 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
       });
     } finally {
       setLocalLoading(false);
-      dispatch(setLoading(false));
+      // dispatch(setLoading(false));
     }
   };
 
