@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NavigationProps } from '../../types';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../store/hooks';
 import { ROUTES } from '../../constants/routes';
 import { Container } from '../../components/common';
 import { BottomTabBar } from '../../components/navigation/BottomTabBar';
@@ -19,8 +19,10 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { authService, AuthServiceError } from '../../services/authService';
 import { clearUser , logout} from '../../store/slices/userSlice';
 import { clearBiometricProfile } from '../../utils/biometrics';
+import { toggleTheme } from '../../store/slices/themeSlice';
 
 const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
+  const theme = useTheme();
   const [selectedPeriod, setSelectedPeriod] = useState<'Daily' | 'Weekly' | 'Monthly'>('Monthly');
   const [activeTab, setActiveTab] = useState<string>('home');
   const dispatch = useAppDispatch();
@@ -99,6 +101,118 @@ const handleLogout = useCallback(async () => {
   }
 }, [refreshToken, dispatch, navigation]);
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.background,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+    },
+    greetingText: {
+      ...theme.typography.h2,
+      color: theme.colors.text.primary,
+    },
+    subGreeting: {
+      ...theme.typography.caption,
+      color: theme.colors.text.secondary,
+      marginTop: theme.spacing.xs,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+      alignItems: 'center',
+    },
+    themeToggleButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: theme.colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    themeIcon: {
+      fontSize: 20,
+    },
+    logoutButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: theme.colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    logoutIcon: {
+      fontSize: 18,
+      color: theme.colors.text.primary,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingBottom: theme.spacing.xxl,
+    },
+    periodSelector: {
+      flexDirection: 'row',
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.lg,
+      padding: theme.spacing.xs,
+      marginHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.md,
+    },
+    periodButton: {
+      flex: 1,
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      borderRadius: theme.borderRadius.md,
+      alignItems: 'center',
+    },
+    periodButtonActive: {
+      backgroundColor: theme.colors.primary,
+    },
+    periodText: {
+      ...theme.typography.caption,
+      color: theme.colors.text.secondary,
+      fontWeight: '500',
+    },
+    periodTextActive: {
+      color: theme.colors.text.inverse,
+      fontWeight: '600',
+    },
+    addWidgetButton: {
+      marginHorizontal: theme.spacing.md,
+      marginTop: theme.spacing.lg,
+      borderRadius: theme.borderRadius.lg,
+      borderWidth: 2,
+      borderColor: theme.colors.border,
+      borderStyle: 'dashed',
+      paddingVertical: theme.spacing.xl,
+    },
+    addWidgetContent: {
+      alignItems: 'center',
+    },
+    addIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: theme.spacing.sm,
+    },
+    addIconText: {
+      fontSize: 20,
+      color: theme.colors.text.secondary,
+      fontWeight: '300',
+    },
+    addWidgetText: {
+      ...theme.typography.body,
+      color: theme.colors.text.secondary,
+    },
+  }), [theme]);
 
   return (
     <Container safeArea edges={['top']} style={styles.container}>
@@ -109,17 +223,26 @@ const handleLogout = useCallback(async () => {
           </Text>
           <Text style={styles.subGreeting}>Welcome back to HisabKaro</Text>
         </View>
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-          disabled={logoutLoading}
-        >
-          {logoutLoading ? (
-            <ActivityIndicator color={theme.colors.text.inverse} />
-          ) : (
-            <Text style={styles.logoutIcon}>⎋</Text>
-          )}
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.themeToggleButton}
+            onPress={() => dispatch(toggleTheme())}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.themeIcon}>{theme.mode === 'dark' ? '🌙' : '☀️'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            disabled={logoutLoading}
+          >
+            {logoutLoading ? (
+              <ActivityIndicator color={theme.colors.text.inverse} />
+            ) : (
+              <Text style={styles.logoutIcon}>⎋</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
       <ScrollView 
         style={styles.scrollView}
@@ -218,101 +341,6 @@ const handleLogout = useCallback(async () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: theme.colors.background,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-  },
-  greetingText: {
-    ...theme.typography.h2,
-    color: theme.colors.text.primary,
-  },
-  subGreeting: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
-  },
-  logoutButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoutIcon: {
-    fontSize: 18,
-    color: theme.colors.text.primary,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: theme.spacing.xxl,
-  },
-  periodSelector: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.xs,
-    marginHorizontal: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-  },
-  periodButton: {
-    flex: 1,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-  },
-  periodButtonActive: {
-    backgroundColor: theme.colors.primary,
-  },
-  periodText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    fontWeight: '500',
-  },
-  periodTextActive: {
-    color: theme.colors.text.inverse,
-    fontWeight: '600',
-  },
-  addWidgetButton: {
-    marginHorizontal: theme.spacing.md,
-    marginTop: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    borderStyle: 'dashed',
-    paddingVertical: theme.spacing.xl,
-  },
-  addWidgetContent: {
-    alignItems: 'center',
-  },
-  addIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  addIconText: {
-    fontSize: 20,
-    color: theme.colors.text.secondary,
-    fontWeight: '300',
-  },
-  addWidgetText: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-  },
-});
+// Styles are now created dynamically in the component
 
 export default HomeScreen;

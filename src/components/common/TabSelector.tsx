@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../store/hooks';
 
 export interface Tab {
   id: string;
@@ -18,6 +18,33 @@ export const TabSelector: React.FC<TabSelectorProps> = ({
   activeTab,
   onTabChange,
 }) => {
+  const theme = useTheme();
+  
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      paddingHorizontal: theme.spacing.md,
+      marginVertical: theme.spacing.sm,
+      gap: theme.spacing.md,
+    },
+    tab: {
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+    },
+    activeTab: {
+      borderBottomWidth: 2,
+      borderBottomColor: theme.colors.primary,
+    },
+    tabText: {
+      ...theme.typography.body,
+      color: theme.colors.text.secondary,
+    },
+    activeTabText: {
+      color: theme.colors.text.primary, // This will be black in light mode
+      fontWeight: '600',
+    },
+  }), [theme]);
+
   return (
     <View style={styles.container}>
       {tabs.map((tab) => (
@@ -39,29 +66,4 @@ export const TabSelector: React.FC<TabSelectorProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    paddingHorizontal: theme.spacing.md,
-    marginVertical: theme.spacing.sm,
-    gap: theme.spacing.md,
-  },
-  tab: {
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: theme.colors.primary,
-  },
-  tabText: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-  },
-  activeTabText: {
-    color: theme.colors.text.primary,
-    fontWeight: '600',
-  },
-});
 

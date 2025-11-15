@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { NavigationProps } from '../../types';
-import { theme } from '../../constants/theme';
 import { Container, AILogo, Button, Avatar } from '../../components/common';
-import { useAppSelector } from '../../store/hooks';
+import { useAppSelector, useTheme } from '../../store/hooks';
 import { ROUTES } from '../../constants/routes';
 
 interface ChatHistoryItem {
@@ -13,6 +12,7 @@ interface ChatHistoryItem {
 }
 
 const AIAssistantScreen: React.FC<NavigationProps<'AIAssistant'>> = ({ navigation }) => {
+  const theme = useTheme();
   const user = useAppSelector((state) => state.user.user);
   
   // Mock chat history data
@@ -43,6 +43,8 @@ const AIAssistantScreen: React.FC<NavigationProps<'AIAssistant'>> = ({ navigatio
     navigation.navigate(ROUTES.AI_CHAT, { chatId });
   };
 
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   return (
     <Container safeArea style={styles.container}>
       {/* Header */}
@@ -60,10 +62,10 @@ const AIAssistantScreen: React.FC<NavigationProps<'AIAssistant'>> = ({ navigatio
           </Text>
         </View>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.iconText}>🌙</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => navigation.navigate(ROUTES.NOTIFICATIONS)}
+          >
             <Text style={styles.iconText}>🔔</Text>
           </TouchableOpacity>
         </View>
@@ -113,7 +115,8 @@ const AIAssistantScreen: React.FC<NavigationProps<'AIAssistant'>> = ({ navigatio
   );
 };
 
-const styles = StyleSheet.create({
+// Helper function to create styles with theme
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
   container: {
     backgroundColor: theme.colors.background,
   },

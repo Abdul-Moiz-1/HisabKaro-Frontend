@@ -1,11 +1,10 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { NavigationProps } from '../../types';
 import { ROUTES, RouteName } from '../../constants/routes';
-import { theme } from '../../constants/theme';
 import { Container, Avatar, MenuCard } from '../../components/common';
 import { BottomTabBar } from '../../components/navigation/BottomTabBar';
-import { useAppSelector } from '../../store/hooks';
+import { useAppSelector, useTheme } from '../../store/hooks';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -23,6 +22,7 @@ interface MenuItem {
 
 const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
   const user = useAppSelector((state) => state.user.user);
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState<string>('menu');
 
   // Set active tab when component mounts
@@ -78,6 +78,128 @@ const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
       item.onPress();
     }
   }, [navigation]);
+
+  // Create styles first before using them
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.divider,
+    },
+    userInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.md,
+    },
+    userName: {
+      ...theme.typography.h3,
+      color: theme.colors.text.primary,
+      fontWeight: '500',
+    },
+    headerIcons: {
+      flexDirection: 'row',
+      gap: theme.spacing.md,
+    },
+    iconButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    iconText: {
+      fontSize: 18,
+    },
+    notificationBadge: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      zIndex: 1,
+    },
+    notificationDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: theme.spacing.md,
+      paddingBottom: theme.spacing.xl,
+    },
+    menuGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    },
+    menuCard: {
+      width: '48%',
+      marginBottom: theme.spacing.md,
+    },
+    gridIcon: {
+      width: 48,
+      height: 48,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      alignContent: 'space-between',
+    },
+    gridDot: {
+      width: 8,
+      height: 8,
+      backgroundColor: theme.colors.text.primary,
+      borderRadius: 2,
+    },
+    dotsIcon: {
+      flexDirection: 'row',
+      gap: theme.spacing.xs,
+      alignItems: 'center',
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: theme.colors.text.primary,
+    },
+    gearIcon: {
+      width: 48,
+      height: 48,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    gearIconText: {
+      fontSize: 28,
+    },
+    dataIcon: {
+      width: 48,
+      height: 48,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dataIconText: {
+      fontSize: 28,
+      color: theme.colors.text.primary,
+    },
+    lockIcon: {
+      width: 48,
+      height: 48,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    lockIconText: {
+      fontSize: 28,
+    },
+  }), [theme]);
 
   // Menu items configuration
   const menuItems: MenuItem[] = [
@@ -184,12 +306,13 @@ const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
           <Text style={styles.userName}>{userName}</Text>
         </View>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-            <Text style={styles.iconText}>🌙</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
+          <TouchableOpacity 
+            style={[styles.iconButton, { backgroundColor: theme.colors.surface }]} 
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate(ROUTES.NOTIFICATIONS)}
+          >
             <View style={styles.notificationBadge}>
-              <View style={styles.notificationDot} />
+              <View style={[styles.notificationDot, { backgroundColor: theme.colors.error }]} />
             </View>
             <Text style={styles.iconText}>🔔</Text>
           </TouchableOpacity>
@@ -222,128 +345,6 @@ const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.divider,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  userName: {
-    ...theme.typography.h3,
-    color: theme.colors.text.primary,
-    fontWeight: '500',
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  iconText: {
-    fontSize: 18,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    zIndex: 1,
-  },
-  notificationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.error,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: theme.spacing.md,
-    paddingBottom: theme.spacing.xl,
-  },
-  menuGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  menuCard: {
-    width: '48%',
-    marginBottom: theme.spacing.md,
-  },
-  // Icon Styles
-  gridIcon: {
-    width: 48,
-    height: 48,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignContent: 'space-between',
-  },
-  gridDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: theme.colors.text.primary,
-    borderRadius: 2,
-  },
-  dotsIcon: {
-    flexDirection: 'row',
-    gap: theme.spacing.xs,
-    alignItems: 'center',
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.text.primary,
-  },
-  gearIcon: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gearIconText: {
-    fontSize: 28,
-  },
-  dataIcon: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dataIconText: {
-    fontSize: 28,
-    color: theme.colors.text.primary,
-  },
-  lockIcon: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  lockIconText: {
-    fontSize: 28,
-  },
-});
+// Styles are now created dynamically in the component
 
 export default MenuScreen;

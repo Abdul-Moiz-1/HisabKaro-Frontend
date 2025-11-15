@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import { ROUTES } from '../constants/routes';
+import { useTheme } from '../store/hooks';
 import SplashScreen from '../screens/Splash/SplashScreen';
 import Splash2Screen from '../screens/Splash/Splash2Screen';
 import Splash3Screen from '../screens/Splash/Splash3Screen';
@@ -29,13 +30,15 @@ import BankAccountDetailsScreen from '../screens/BankAccountDetails/BankAccountD
 const Stack = createStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
+  const theme = useTheme();
+  
   return (
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName={ROUTES.SPLASH}
         screenOptions={{
           headerShown: false,
-          cardStyle: { backgroundColor: '#1A1A1A' },
+          cardStyle: { backgroundColor: theme.colors.background },
         }}
       >
         <Stack.Screen name={ROUTES.SPLASH} component={SplashScreen} />

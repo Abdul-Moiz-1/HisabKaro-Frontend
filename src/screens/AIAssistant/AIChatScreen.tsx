@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -11,7 +11,7 @@ import {
   Keyboard
 } from 'react-native';
 import { NavigationProps } from '../../types';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../store/hooks';
 import { Container, AILogo, HeaderNavigation } from '../../components/common';
 
 /**
@@ -45,6 +45,7 @@ interface SuggestedPrompt {
 }
 
 const AIChatScreen: React.FC<NavigationProps<'AIChat'>> = ({ navigation, route }) => {
+  const theme = useTheme();
   // State management for chat functionality
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
@@ -245,6 +246,8 @@ const AIChatScreen: React.FC<NavigationProps<'AIChat'>> = ({ navigation, route }
     );
   };
 
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   /**
    * Render suggested prompts
    */
@@ -340,7 +343,8 @@ const AIChatScreen: React.FC<NavigationProps<'AIChat'>> = ({ navigation, route }
   );
 };
 
-const styles = StyleSheet.create({
+// Helper function to create styles with theme
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
   container: {
     backgroundColor: theme.colors.background,
   },

@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import { theme } from '../../../constants/theme';
+import { useTheme } from '../../../store/hooks';
 
 interface Transaction {
   id: string;
@@ -49,6 +49,7 @@ interface TransactionHistoryProps {
 }
 
 export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onSeeAll }) => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('All');
 
   console.log('activeTab', activeTab);
@@ -59,6 +60,98 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onSeeAll
     if (activeTab === 'Income') return transaction.type === 'income';
     return true;
   });
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      paddingHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: theme.spacing.md,
+    },
+    title: {
+      ...theme.typography.h3,
+      color: theme.colors.text.primary,
+    },
+    seeAll: {
+      ...theme.typography.caption,
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    tabContainer: {
+      flexDirection: 'row',
+      marginBottom: theme.spacing.md,
+    },
+    tab: {
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      marginRight: theme.spacing.md,
+    },
+    activeTab: {
+      borderBottomWidth: 2,
+      borderBottomColor: theme.colors.primary,
+    },
+    tabText: {
+      ...theme.typography.body,
+      color: theme.colors.text.primary, // Black in light mode, white in dark mode
+      opacity: 0.6, // Make inactive tabs slightly transparent but still visible
+    },
+    activeTabText: {
+      color: theme.colors.text.primary, // Pure black in light mode, pure white in dark mode
+      fontWeight: '600',
+      opacity: 1, // Full opacity for active tab
+    },
+    transactionList: {
+      maxHeight: 200,
+    },
+    transactionItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.divider,
+    },
+    transactionIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: theme.spacing.md,
+    },
+    iconText: {
+      fontSize: 18,
+    },
+    transactionDetails: {
+      flex: 1,
+    },
+    transactionTitle: {
+      ...theme.typography.body,
+      color: theme.colors.text.primary,
+      fontWeight: '500',
+    },
+    transactionSubtitle: {
+      ...theme.typography.caption,
+      color: theme.colors.text.secondary,
+      marginTop: 2,
+    },
+    transactionRight: {
+      alignItems: 'flex-end',
+    },
+    transactionAmount: {
+      ...theme.typography.body,
+      fontWeight: '600',
+    },
+    transactionTime: {
+      ...theme.typography.caption,
+      color: theme.colors.text.secondary,
+      marginTop: 2,
+    },
+  }), [theme]);
 
   const renderTransaction = useCallback(({ item }: { item: Transaction }) => {
     return (
@@ -81,7 +174,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onSeeAll
         </View>
       </View>
     );
-  }, []);
+  }, [styles, theme]);
 
   return (
     <View style={styles.container}>
@@ -123,93 +216,3 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onSeeAll
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  title: {
-    ...theme.typography.h3,
-    color: theme.colors.text.primary,
-  },
-  seeAll: {
-    ...theme.typography.caption,
-    color: theme.colors.primary,
-    fontWeight: '600',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    marginBottom: theme.spacing.md,
-  },
-  tab: {
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    marginRight: theme.spacing.md,
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: theme.colors.primary,
-  },
-  tabText: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-  },
-  activeTabText: {
-    color: theme.colors.text.primary,
-    fontWeight: '600',
-  },
-  transactionList: {
-    maxHeight: 200,
-  },
-  transactionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.divider,
-  },
-  transactionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.md,
-  },
-  iconText: {
-    fontSize: 18,
-  },
-  transactionDetails: {
-    flex: 1,
-  },
-  transactionTitle: {
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-    fontWeight: '500',
-  },
-  transactionSubtitle: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    marginTop: 2,
-  },
-  transactionRight: {
-    alignItems: 'flex-end',
-  },
-  transactionAmount: {
-    ...theme.typography.body,
-    fontWeight: '600',
-  },
-  transactionTime: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    marginTop: 2,
-  },
-});

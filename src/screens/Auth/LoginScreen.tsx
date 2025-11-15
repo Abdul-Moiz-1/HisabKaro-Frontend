@@ -1,9 +1,9 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Keyboard, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { NavigationProps } from '../../types';
 import { ROUTES } from '../../constants/routes';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../store/hooks';
 import { Container, Button, Logo, Checkbox, Divider, SocialLoginButton } from '../../components/common';
 import { Input } from '../../components/forms';
 import { extractUserFromToken, isValidEmail } from '../../utils';
@@ -14,11 +14,13 @@ import {
 } from '../../utils/biometrics';
 import { useAppDispatch } from '../../store/hooks';
 import { setUser, setToken, setLoading, setRefreshToken } from '../../store/slices/userSlice';
+import { toggleTheme } from '../../store/slices/themeSlice';
 import Toast from 'react-native-toast-message';
 import { authService, AuthServiceError } from '../../services/authService';
 import { biometricService } from '../../services/biometricService';
 
 const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,6 +30,8 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
   const [loading, setLocalLoading] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
+
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   const refreshBiometricAvailability = useCallback(async () => {
     const [profile, availability] = await Promise.all([
@@ -263,8 +267,17 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
   return (
     <Container scrollable safeArea style={styles.container}>
       <View style={styles.content}>
-        <View style={styles.logoContainer}>
-          <Logo size="large" />
+        <View style={styles.headerRow}>
+          <View style={styles.logoContainer}>
+            <Logo size="large" />
+          </View>
+          <TouchableOpacity
+            style={styles.themeToggleButton}
+            onPress={() => dispatch(toggleTheme())}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.themeIcon}>{theme.mode === 'dark' ? '🌙' : '☀️'}</Text>
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.welcomeText}>Welcome back!</Text>
@@ -352,7 +365,8 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+// Helper function to create styles with theme
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
   container: {
     backgroundColor: theme.colors.background,
   },
@@ -361,9 +375,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
     paddingTop: theme.spacing.xl,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.xl,
+  },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    flex: 1,
+  },
+  themeToggleButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: theme.spacing.sm,
+  },
+  themeIcon: {
+    fontSize: 20,
   },
   welcomeText: {
     ...theme.typography.h2,

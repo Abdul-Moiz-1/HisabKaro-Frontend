@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text, Animated } from 'react-native';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../store/hooks';
 
 interface TabItem {
   id: string;
@@ -53,6 +53,8 @@ const AnimatedTabIcon: React.FC<AnimatedTabIconProps> = ({ tab, children }) => {
 };
 
 export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabPress }) => {
+  const theme = useTheme();
+  
   const tabs: TabItem[] = [
     {
       id: 'home',
@@ -197,6 +199,112 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabPres
     return null;
   };
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.background,
+      paddingBottom: 20, // Safe area padding
+    },
+    tabBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      backgroundColor: theme.colors.surface,
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.md,
+      borderTopLeftRadius: theme.borderRadius.xl,
+      borderTopRightRadius: theme.borderRadius.xl,
+      ...theme.shadows.lg,
+    },
+    tab: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: 1,
+    },
+    addTab: {
+      marginTop: -20, // Elevate the add button
+    },
+    homeIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    homeIconText: {
+      fontSize: 18,
+      fontWeight: 'bold',
+    },
+    regularIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    regularIconText: {
+      fontSize: 16,
+    },
+    aiIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    aiIconText: {
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    addButton: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...theme.shadows.lg,
+    },
+    addIcon: {
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    addIconHorizontal: {
+      position: 'absolute',
+      width: 16,
+      height: 3,
+      backgroundColor: theme.colors.text.inverse,
+      borderRadius: 1.5,
+    },
+    addIconVertical: {
+      position: 'absolute',
+      width: 3,
+      height: 16,
+      backgroundColor: theme.colors.text.inverse,
+      borderRadius: 1.5,
+    },
+    menuIcon: {
+      width: 40,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    menuGrid: {
+      width: 24,
+      height: 24,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      alignContent: 'space-between',
+    },
+    menuDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 2,
+    },
+  }), [theme]);
+
   const TabButton: React.FC<{ tab: TabItem }> = ({ tab }) => {
     const pressAnim = useRef(new Animated.Value(1)).current;
 
@@ -250,108 +358,4 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabPres
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: theme.colors.background,
-    paddingBottom: 20, // Safe area padding
-  },
-  tabBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: theme.colors.surface,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
-    ...theme.shadows.lg,
-  },
-  tab: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  addTab: {
-    marginTop: -20, // Elevate the add button
-  },
-  homeIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  homeIconText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  regularIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  regularIconText: {
-    fontSize: 16,
-  },
-  aiIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  aiIconText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  addButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadows.lg,
-  },
-  addIcon: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  addIconHorizontal: {
-    position: 'absolute',
-    width: 16,
-    height: 3,
-    backgroundColor: theme.colors.text.inverse,
-    borderRadius: 1.5,
-  },
-  addIconVertical: {
-    position: 'absolute',
-    width: 3,
-    height: 16,
-    backgroundColor: theme.colors.text.inverse,
-    borderRadius: 1.5,
-  },
-  menuIcon: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuGrid: {
-    width: 24,
-    height: 24,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignContent: 'space-between',
-  },
-  menuDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 2,
-  },
-});
+// Styles are now created dynamically in the component
