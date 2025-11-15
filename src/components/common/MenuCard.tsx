@@ -98,5 +98,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export const MenuCard = memo(MenuCard);
+export const MenuCard = memo(MenuCardComponent);
 

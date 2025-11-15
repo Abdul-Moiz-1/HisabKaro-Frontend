@@ -5,34 +5,55 @@ import { theme } from '../../../constants/theme';
 interface BalanceCardProps {
   userName: string;
   balance: number;
+  onAvatarPress?: () => void;
+  onNotificationPress?: () => void;
+  onBalancePress?: () => void;
 }
 
-export const BalanceCard: React.FC<BalanceCardProps> = ({ userName, balance }) => {
+export const BalanceCard: React.FC<BalanceCardProps> = ({ 
+  userName, 
+  balance, 
+  onAvatarPress,
+  onNotificationPress,
+  onBalancePress
+}) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.userInfo}>
+        <TouchableOpacity 
+          style={styles.userInfo} 
+          onPress={onAvatarPress}
+          activeOpacity={0.7}
+        >
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{userName.charAt(0)}</Text>
           </View>
           <View style={styles.notificationBadge}>
             <View style={styles.notificationDot} />
           </View>
-        </View>
+        </TouchableOpacity>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton}>
             <Text style={styles.iconText}>🌙</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={onNotificationPress}
+            activeOpacity={0.7}
+          >
             <Text style={styles.iconText}>🔔</Text>
           </TouchableOpacity>
         </View>
       </View>
       
-      <View style={styles.balanceSection}>
+      <TouchableOpacity 
+        style={styles.balanceSection}
+        onPress={onBalancePress || onAvatarPress}
+        activeOpacity={0.7}
+      >
         <Text style={styles.balanceLabel}>Balance</Text>
         <Text style={styles.balanceAmount}>${balance.toFixed(2)}</Text>
-      </View>
+      </TouchableOpacity>
     </View>
   );
 };

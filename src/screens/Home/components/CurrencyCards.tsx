@@ -30,11 +30,20 @@ const currencyData: CurrencyCardData[] = [
   },
 ];
 
-export const CurrencyCards: React.FC = () => {
+interface CurrencyCardsProps {
+  onCardPress?: (accountId: string) => void;
+  onSeeAll?: () => void;
+}
+
+export const CurrencyCards: React.FC<CurrencyCardsProps> = ({ onCardPress, onSeeAll }) => {
   return (
     <View style={styles.container}>
       {currencyData.map((item) => (
-        <TouchableOpacity key={item.id} style={styles.card}>
+        <TouchableOpacity 
+          key={item.id} 
+          style={styles.card}
+          onPress={() => onCardPress?.(item.id)}
+        >
           <View style={styles.iconContainer}>
             <Text style={styles.icon}>{item.icon}</Text>
           </View>
@@ -42,6 +51,11 @@ export const CurrencyCards: React.FC = () => {
           <Text style={styles.label}>{item.label}</Text>
         </TouchableOpacity>
       ))}
+      {onSeeAll && (
+        <TouchableOpacity style={styles.seeAllCard} onPress={onSeeAll}>
+          <Text style={styles.seeAllText}>See All</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -85,5 +99,19 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     fontSize: 11,
+  },
+  seeAllCard: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 100,
+  },
+  seeAllText: {
+    ...theme.typography.caption,
+    color: theme.colors.primary,
+    fontWeight: '600',
   },
 });

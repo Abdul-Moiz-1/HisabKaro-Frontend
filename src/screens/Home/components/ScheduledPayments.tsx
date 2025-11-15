@@ -42,12 +42,16 @@ const scheduledPayments: ScheduledPayment[] = [
   },
 ];
 
-export const ScheduledPayments: React.FC = () => {
+interface ScheduledPaymentsProps {
+  onSeeAll?: () => void;
+}
+
+export const ScheduledPayments: React.FC<ScheduledPaymentsProps> = ({ onSeeAll }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Scheduled payments</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onSeeAll}>
           <Text style={styles.seeAll}>See All</Text>
         </TouchableOpacity>
       </View>

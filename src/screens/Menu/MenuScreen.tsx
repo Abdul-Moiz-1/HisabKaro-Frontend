@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { NavigationProps } from '../../types';
-import { ROUTES } from '../../constants/routes';
+import { ROUTES, RouteName } from '../../constants/routes';
 import { theme } from '../../constants/theme';
 import { Container, Avatar, MenuCard } from '../../components/common';
 import { BottomTabBar } from '../../components/navigation/BottomTabBar';
@@ -17,7 +17,7 @@ interface MenuItem {
   title: string;
   description: string;
   icon: React.ReactNode;
-  route?: keyof typeof ROUTES;
+  route?: RouteName;
   onPress?: () => void;
 }
 
@@ -92,7 +92,7 @@ const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
           size={48}
         />
       ),
-      route: ROUTES.PROFILE as keyof typeof ROUTES,
+      route: ROUTES.PROFILE,
     },
     {
       id: 'appearance',
@@ -163,10 +163,7 @@ const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
           <Text style={styles.lockIconText}>🔒</Text>
         </View>
       ),
-      onPress: () => {
-        // TODO: Navigate to Privacy screen
-        console.log('Privacy pressed');
-      },
+      route: ROUTES.BIOMETRIC_VERIFICATION,
     },
   ];
 

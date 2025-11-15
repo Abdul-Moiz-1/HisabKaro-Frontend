@@ -38,12 +38,16 @@ const expenseCategories: ExpenseCategory[] = [
   },
 ];
 
-export const ExpensesSection: React.FC = () => {
+interface ExpensesSectionProps {
+  onSeeAll?: () => void;
+}
+
+export const ExpensesSection: React.FC<ExpensesSectionProps> = ({ onSeeAll }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Expenses</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onSeeAll}>
           <Text style={styles.seeAll}>See All</Text>
         </TouchableOpacity>
       </View>
