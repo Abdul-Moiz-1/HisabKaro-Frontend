@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../../constants/theme';
+import { ThemeToggle } from '../../../components/common';
 
 interface BalanceCardProps {
   userName: string;
@@ -10,18 +11,18 @@ interface BalanceCardProps {
   onBalancePress?: () => void;
 }
 
-export const BalanceCard: React.FC<BalanceCardProps> = ({ 
-  userName, 
-  balance, 
+export const BalanceCard: React.FC<BalanceCardProps> = ({
+  userName,
+  balance,
   onAvatarPress,
   onNotificationPress,
-  onBalancePress
+  onBalancePress,
 }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.userInfo} 
+        <TouchableOpacity
+          style={styles.userInfo}
           onPress={onAvatarPress}
           activeOpacity={0.7}
         >
@@ -33,10 +34,9 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
           </View>
         </TouchableOpacity>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.iconText}>🌙</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
+          <ThemeToggle />
+
+          <TouchableOpacity
             style={styles.iconButton}
             onPress={onNotificationPress}
             activeOpacity={0.7}
@@ -45,8 +45,8 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
           </TouchableOpacity>
         </View>
       </View>
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         style={styles.balanceSection}
         onPress={onBalancePress || onAvatarPress}
         activeOpacity={0.7}

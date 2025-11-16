@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -20,6 +19,7 @@ export type RootStackParamList = {
   Home?: { userId?: string };
   Analytics: undefined;
   AddTransaction: undefined;
+  AddTransactionManual: undefined;
   AIAssistant: undefined;
   AIChat?: { chatId?: string };
   Menu: undefined;
@@ -37,13 +37,17 @@ export type RootStackParamList = {
 
 export type NavigationProps<T extends keyof RootStackParamList> = {
   navigation: {
-    navigate: <R extends keyof RootStackParamList>(screen: R, params?: RootStackParamList[R]) => void;
+    navigate: <R extends keyof RootStackParamList>(
+      screen: R,
+      params?: RootStackParamList[R],
+    ) => void;
     goBack: () => void;
-    replace: <R extends keyof RootStackParamList>(screen: R, params?: RootStackParamList[R]) => void;
+    replace: <R extends keyof RootStackParamList>(
+      screen: R,
+      params?: RootStackParamList[R],
+    ) => void;
   };
   route: {
     params?: RootStackParamList[T];
   };
 };
-
-

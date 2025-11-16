@@ -7,16 +7,22 @@ import Toast from 'react-native-toast-message';
 import { store, persistor } from './src/store';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { theme } from './src/constants/theme';
+import { ThemeProvider } from './src/context/ThemeContext';
 
 function App() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <SafeAreaProvider>
-          <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
-          <RootNavigator />
-          <Toast />
-        </SafeAreaProvider>
+        <ThemeProvider>
+          <SafeAreaProvider>
+            <StatusBar
+              barStyle="light-content"
+              backgroundColor={theme.colors.background}
+            />
+            <RootNavigator />
+            <Toast />
+          </SafeAreaProvider>
+        </ThemeProvider>
       </PersistGate>
     </Provider>
   );

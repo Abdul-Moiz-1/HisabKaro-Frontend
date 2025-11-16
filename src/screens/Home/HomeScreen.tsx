@@ -1,5 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { NavigationProps } from '../../types';
 import { theme } from '../../constants/theme';
 import { ROUTES } from '../../constants/routes';
@@ -19,17 +26,21 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { authService, AuthServiceError } from '../../services/authService';
 import { clearUser } from '../../store/slices/userSlice';
 import { clearBiometricProfile } from '../../utils/biometrics';
+import { Theme, useThemedStyles } from '../../theme';
 
 const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<'Daily' | 'Weekly' | 'Monthly'>('Monthly');
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    'Daily' | 'Weekly' | 'Monthly'
+  >('Monthly');
   const [activeTab, setActiveTab] = useState<string>('home');
   const dispatch = useAppDispatch();
-  const { user, refreshToken } = useAppSelector((state) => state.user);
+  const { user, refreshToken } = useAppSelector(state => state.user);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const styles = useThemedStyles(createStyles);
 
   const handleTabPress = (tabId: string) => {
     setActiveTab(tabId);
-    
+
     // Navigate to respective screens
     switch (tabId) {
       case 'home':
@@ -94,13 +105,13 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
           )}
         </TouchableOpacity>
       </View>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* Header with Balance */}
-        <BalanceCard 
+        <BalanceCard
           userName="Farida Orojova"
           balance={425.35}
           onAvatarPress={() => navigation.navigate(ROUTES.PROFILE)}
@@ -109,7 +120,7 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         />
 
         {/* Savings Progress */}
-        <SavingsProgressCard 
+        <SavingsProgressCard
           savedAmount={75}
           targetAmount={100}
           message="Well done!"
@@ -117,8 +128,8 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         />
 
         {/* Currency Cards */}
-        <CurrencyCards 
-          onCardPress={(accountId) => {
+        <CurrencyCards
+          onCardPress={accountId => {
             // Navigate to balance accounts screen
             navigation.navigate(ROUTES.BALANCE_ACCOUNTS);
           }}
@@ -129,12 +140,12 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         <ActionButtons />
 
         {/* Transaction History */}
-        <TransactionHistory 
+        <TransactionHistory
           onSeeAll={() => navigation.navigate(ROUTES.TRANSACTION_HISTORY)}
         />
 
         {/* Monthly Budget */}
-        <MonthlyBudget 
+        <MonthlyBudget
           spent={3000}
           limit={5000}
           onSeeAll={() => navigation.navigate(ROUTES.BUDGET)}
@@ -142,19 +153,21 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
 
         {/* Period Selector */}
         <View style={styles.periodSelector}>
-          {(['Daily', 'Weekly', 'Monthly'] as const).map((period) => (
+          {(['Daily', 'Weekly', 'Monthly'] as const).map(period => (
             <TouchableOpacity
               key={period}
               style={[
                 styles.periodButton,
-                selectedPeriod === period && styles.periodButtonActive
+                selectedPeriod === period && styles.periodButtonActive,
               ]}
               onPress={() => setSelectedPeriod(period)}
             >
-              <Text style={[
-                styles.periodText,
-                selectedPeriod === period && styles.periodTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.periodText,
+                  selectedPeriod === period && styles.periodTextActive,
+                ]}
+              >
                 {period}
               </Text>
             </TouchableOpacity>
@@ -165,12 +178,12 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         <SpendingChart period={selectedPeriod} />
 
         {/* Expenses */}
-        <ExpensesSection 
+        <ExpensesSection
           onSeeAll={() => navigation.navigate(ROUTES.EXPENSES)}
         />
 
         {/* Scheduled Payments */}
-        <ScheduledPayments 
+        <ScheduledPayments
           onSeeAll={() => navigation.navigate(ROUTES.SCHEDULED_PAYMENTS)}
         />
 
@@ -184,21 +197,21 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
           </View>
         </TouchableOpacity>
       </ScrollView>
-      
+
       {/* Bottom Navigation */}
       <BottomTabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </Container>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme) => ({
   container: {
     backgroundColor: theme.colors.background,
   },
   headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
   },
@@ -216,8 +229,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
   },
   logoutIcon: {
     fontSize: 18,
@@ -230,7 +243,7 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xxl,
   },
   periodSelector: {
-    flexDirection: 'row',
+    flexDirection: 'row' as const,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.xs,
@@ -242,7 +255,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
+    alignItems: 'center' as const,
   },
   periodButtonActive: {
     backgroundColor: theme.colors.primary,
@@ -250,11 +263,11 @@ const styles = StyleSheet.create({
   periodText: {
     ...theme.typography.caption,
     color: theme.colors.text.secondary,
-    fontWeight: '500',
+    fontWeight: '500' as const,
   },
   periodTextActive: {
     color: theme.colors.text.inverse,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   addWidgetButton: {
     marginHorizontal: theme.spacing.md,
@@ -262,25 +275,25 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     borderWidth: 2,
     borderColor: theme.colors.border,
-    borderStyle: 'dashed',
+    borderStyle: 'dashed' as const,
     paddingVertical: theme.spacing.xl,
   },
   addWidgetContent: {
-    alignItems: 'center',
+    alignItems: 'center' as const,
   },
   addIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     marginBottom: theme.spacing.sm,
   },
   addIconText: {
     fontSize: 20,
     color: theme.colors.text.secondary,
-    fontWeight: '300',
+    fontWeight: '300' as const,
   },
   addWidgetText: {
     ...theme.typography.body,

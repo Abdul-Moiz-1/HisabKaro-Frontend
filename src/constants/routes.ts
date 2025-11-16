@@ -8,6 +8,7 @@ export const ROUTES = {
   HOME: 'Home',
   ANALYTICS: 'Analytics',
   ADD_TRANSACTION: 'AddTransaction',
+  ADD_TRANSACTION_MANUAL: 'AddTransactionManual',
   AI_ASSISTANT: 'AIAssistant',
   AI_CHAT: 'AIChat',
   MENU: 'Menu',
@@ -23,6 +24,4 @@ export const ROUTES = {
   BANK_ACCOUNT_DETAILS: 'BankAccountDetails',
 } as const;
 
-export type RouteName = typeof ROUTES[keyof typeof ROUTES];
-
-
+export type RouteName = (typeof ROUTES)[keyof typeof ROUTES];

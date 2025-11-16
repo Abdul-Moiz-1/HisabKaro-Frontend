@@ -1,5 +1,9 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+} from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import { ROUTES } from '../constants/routes';
@@ -25,12 +29,28 @@ import ExpensesScreen from '../screens/Expenses/ExpensesScreen';
 import ScheduledPaymentsScreen from '../screens/ScheduledPayments/ScheduledPaymentsScreen';
 import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
 import BankAccountDetailsScreen from '../screens/BankAccountDetails/BankAccountDetailsScreen';
+import { useTheme } from '../context/ThemeContext';
+import TransactionManualEntryScreen from '../screens/TransactionManualEntry/TransactionManualEntry';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
+  const { theme, isDark } = useTheme();
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      theme={{
+        dark: isDark,
+        colors: {
+          primary: theme.colors.primary,
+          background: theme.colors.background,
+          card: theme.colors.surface,
+          text: theme.colors.text.primary,
+          border: theme.colors.border,
+          notification: theme.colors.notification,
+        },
+        fonts: isDark ? DarkTheme.fonts : DefaultTheme.fonts,
+      }}
+    >
       <Stack.Navigator
         initialRouteName={ROUTES.SPLASH}
         screenOptions={{
@@ -43,26 +63,58 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen name={ROUTES.SPLASH3} component={Splash3Screen} />
         <Stack.Screen name={ROUTES.LOGIN} component={LoginScreen} />
         <Stack.Screen name={ROUTES.SIGNUP} component={SignupScreen} />
-        <Stack.Screen name={ROUTES.FORGOT_PASSWORD} component={ForgotPasswordScreen} />
+        <Stack.Screen
+          name={ROUTES.FORGOT_PASSWORD}
+          component={ForgotPasswordScreen}
+        />
         <Stack.Screen name={ROUTES.HOME} component={HomeScreen} />
         <Stack.Screen name={ROUTES.ANALYTICS} component={AnalyticsScreen} />
-        <Stack.Screen name={ROUTES.ADD_TRANSACTION} component={AddTransactionScreen} />
-        <Stack.Screen name={ROUTES.AI_ASSISTANT} component={AIAssistantScreen} />
+        <Stack.Screen
+          name={ROUTES.ADD_TRANSACTION}
+          component={AddTransactionScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_TRANSACTION_MANUAL}
+          component={TransactionManualEntryScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.AI_ASSISTANT}
+          component={AIAssistantScreen}
+        />
         <Stack.Screen name={ROUTES.AI_CHAT} component={AIChatScreen} />
         <Stack.Screen name={ROUTES.MENU} component={MenuScreen} />
-        <Stack.Screen name={ROUTES.PROFILE} component={ProfileManagementScreen} />
-        <Stack.Screen name={ROUTES.BIOMETRIC_VERIFICATION} component={BiometricVerificationScreen} />
+        <Stack.Screen
+          name={ROUTES.PROFILE}
+          component={ProfileManagementScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.BIOMETRIC_VERIFICATION}
+          component={BiometricVerificationScreen}
+        />
         <Stack.Screen name={ROUTES.STATISTICS} component={StatisticsScreen} />
-        <Stack.Screen name={ROUTES.BALANCE_ACCOUNTS} component={BalanceAccountsScreen} />
-        <Stack.Screen name={ROUTES.TRANSACTION_HISTORY} component={TransactionHistoryScreen} />
+        <Stack.Screen
+          name={ROUTES.BALANCE_ACCOUNTS}
+          component={BalanceAccountsScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.TRANSACTION_HISTORY}
+          component={TransactionHistoryScreen}
+        />
         <Stack.Screen name={ROUTES.BUDGET} component={BudgetScreen} />
         <Stack.Screen name={ROUTES.EXPENSES} component={ExpensesScreen} />
-        <Stack.Screen name={ROUTES.SCHEDULED_PAYMENTS} component={ScheduledPaymentsScreen} />
-        <Stack.Screen name={ROUTES.NOTIFICATIONS} component={NotificationsScreen} />
-        <Stack.Screen name={ROUTES.BANK_ACCOUNT_DETAILS} component={BankAccountDetailsScreen} />
+        <Stack.Screen
+          name={ROUTES.SCHEDULED_PAYMENTS}
+          component={ScheduledPaymentsScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.NOTIFICATIONS}
+          component={NotificationsScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.BANK_ACCOUNT_DETAILS}
+          component={BankAccountDetailsScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
-
-
