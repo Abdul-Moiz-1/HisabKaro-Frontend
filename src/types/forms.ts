@@ -25,7 +25,8 @@ export interface ValidationRule {
   type: 'required' | 'min' | 'max' | 'pattern' | 'custom';
   value?: any;
   message: string;
-  validator?: (value: any, formData?: any) => boolean;
+  // validator?: (value: any, formData?: any) => boolean;
+  validator?: string;
 }
 
 export interface FormField {

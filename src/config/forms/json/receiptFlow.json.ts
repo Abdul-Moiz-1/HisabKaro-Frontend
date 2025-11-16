@@ -267,10 +267,10 @@ export const receiptFlowJSON = {
         screenId: 'RCPT-002',
         route: '/receipt/amount',
         type: 'AMOUNT_INPUT',
-        title: 'How much did {customerName\r\n                } pay?',
+        title: 'How much did {customerName} pay?',
         config: {
           displayInfo: {
-            label: '{customerName\r\n                        } owes you:',
+            label: '{customerName} owes you:',
             field: 'outstanding',
             format: 'currency',
             prefix: 'PKR',
@@ -374,7 +374,7 @@ export const receiptFlowJSON = {
         screenId: 'RCPT-003',
         route: '/receipt/payment-method',
         type: 'SELECTION',
-        title: 'How did {customerName\r\n                } pay?',
+        title: 'How did {customerName} pay?',
         config: {
           selectionType: 'single',
           displayType: 'cards',
@@ -513,7 +513,10 @@ export const receiptFlowJSON = {
                   {
                     type: 'custom',
                     message: 'Date cannot be in future',
-                    validator: 'date <= today',
+                    // validator: 'date <= today',
+                    validator: `const date = new Date(formData.chequeDate);
+                      const today = new Date();
+                      return date <= today;`,
                   },
                 ],
               },
@@ -840,7 +843,10 @@ export const receiptFlowJSON = {
                     {
                       type: 'custom',
                       message: 'Cheque date cannot be in future',
-                      validator: 'date <= today',
+                      // validator: 'date <= today',
+                      validator: `const date = new Date(formData.chequeDate);
+                      const today = new Date();
+                      return date <= today;`,
                     },
                   ],
                 },

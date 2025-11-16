@@ -1,31 +1,35 @@
 // hooks/useDynamicForm.ts
-import { useState, useCallback, useEffect } from 'react';
-import {
-  FormConfig,
-  FormData,
-  FormErrors,
-  FormField,
-  ValidationRule,
-} from '../types/forms';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { FormConfig, FormData, FormErrors, FormField } from '../types/forms';
 
 export const useDynamicForm = (config: FormConfig, initialData?: FormData) => {
   const [formData, setFormData] = useState<FormData>(initialData || {});
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize default values
-  useEffect(() => {
-    const defaultValues: FormData = {};
+  // Memoize default values to prevent recreation on every render
+  const defaultValues = useMemo(() => {
+    const defaults: FormData = {};
     config.sections.forEach(section => {
       section.fields.forEach(field => {
         if (field.defaultValue !== undefined) {
-          defaultValues[field.id] = field.defaultValue;
+          defaults[field.id] = field.defaultValue;
         }
       });
     });
-    setFormData(prev => ({ ...defaultValues, ...prev }));
-  }, [config]);
+    return defaults;
+  }, [config.sections]);
 
+  // Initialize default values only once
+  useEffect(() => {
+    if (!isInitialized) {
+      setFormData(prev => ({ ...defaultValues, ...prev }));
+      setIsInitialized(true);
+    }
+  }, [defaultValues, isInitialized]);
+
+  // Rest of the hook remains the same...
   const validateField = useCallback(
     (field: FormField, value: any): string | null => {
       if (!field.validations) return null;
@@ -56,17 +60,23 @@ export const useDynamicForm = (config: FormConfig, initialData?: FormData) => {
             }
             break;
 
-          case 'pattern':
-            if (value && !rule.value.test(value)) {
-              return rule.message;
-            }
-            break;
+          case 'pattern': {
+            const cleaned = rule.value.replace(/\s+/g, '');
+            const regex = new RegExp(cleaned);
 
-          case 'custom':
-            if (rule.validator && !rule.validator(value, formData)) {
+            if (value && !regex.test(value)) {
               return rule.message;
             }
             break;
+          }
+
+          case 'custom': {
+            if (rule.validator) {
+              const validatorFn = new Function('formData', rule.validator);
+              if (!validatorFn(formData)) return rule.message;
+            }
+            break;
+          }
         }
       }
 
@@ -82,7 +92,6 @@ export const useDynamicForm = (config: FormConfig, initialData?: FormData) => {
         [fieldId]: value,
       }));
 
-      // Clear error when user starts typing
       if (errors[fieldId]) {
         setErrors(prev => {
           const newErrors = { ...prev };
@@ -98,7 +107,6 @@ export const useDynamicForm = (config: FormConfig, initialData?: FormData) => {
     (fieldId: string) => {
       setTouched(prev => ({ ...prev, [fieldId]: true }));
 
-      // Find field configuration
       const field = config.sections
         .flatMap(s => s.fields)
         .find(f => f.id === fieldId);
@@ -110,7 +118,7 @@ export const useDynamicForm = (config: FormConfig, initialData?: FormData) => {
         }
       }
     },
-    [config, formData, validateField],
+    [config.sections, formData, validateField],
   );
 
   const validateForm = useCallback((): boolean => {
@@ -118,13 +126,11 @@ export const useDynamicForm = (config: FormConfig, initialData?: FormData) => {
     let isValid = true;
 
     config.sections.forEach(section => {
-      // Check if section should be shown
       if (section.showWhen && !section.showWhen(formData)) {
         return;
       }
 
       section.fields.forEach(field => {
-        // Check if field should be shown
         if (field.showWhen && !field.showWhen(formData)) {
           return;
         }
@@ -139,10 +145,9 @@ export const useDynamicForm = (config: FormConfig, initialData?: FormData) => {
 
     setErrors(newErrors);
     return isValid;
-  }, [config, formData, validateField]);
+  }, [config.sections, formData, validateField]);
 
   const handleSubmit = useCallback(() => {
-    // Mark all fields as touched
     const allTouched: { [key: string]: boolean } = {};
     config.sections.forEach(section => {
       section.fields.forEach(field => {
@@ -151,7 +156,6 @@ export const useDynamicForm = (config: FormConfig, initialData?: FormData) => {
     });
     setTouched(allTouched);
 
-    // Validate
     if (validateForm()) {
       config.onSubmit?.(formData);
       return true;
@@ -163,14 +167,12 @@ export const useDynamicForm = (config: FormConfig, initialData?: FormData) => {
     setFormData({});
     setErrors({});
     setTouched({});
+    setIsInitialized(false);
   }, []);
 
-  const setFieldValue = useCallback(
-    (fieldId: string, value: any) => {
-      handleChange(fieldId, value);
-    },
-    [handleChange],
-  );
+  const setFieldValue = useCallback((fieldId: string, value: any) => {
+    setFormData(prev => ({ ...prev, [fieldId]: value }));
+  }, []);
 
   const setFieldError = useCallback((fieldId: string, error: string) => {
     setErrors(prev => ({ ...prev, [fieldId]: error }));

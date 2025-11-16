@@ -8,16 +8,32 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Theme, useTheme, useThemedStyles } from '../../theme';
-import { FormConfig } from '../../types/forms';
-import { DynamicForm } from '../../components/DynamicForm';
+import { FieldType, FormConfig } from '../../types/forms';
+import { DynamicForm, DynamicFormField } from '../../components/DynamicForm';
 import { receiptFlowJSON } from '../../config/forms/json/receiptFlow.json';
 import { NavigationProps } from '../../types';
 
 interface TransactionManualEntryScreenProps {}
-
+const mockBankAccounts = [
+  {
+    id: '1',
+    bankName: 'HBL',
+    accountTitle: 'Business Account',
+    accountNumber: '****1234',
+    balance: 250000,
+  },
+  {
+    id: '2',
+    bankName: 'Meezan Bank',
+    accountTitle: 'Savings Account',
+    accountNumber: '****5678',
+    balance: 150000,
+  },
+];
 const TransactionManualEntryScreen: React.FC<
   NavigationProps<'AddTransactionManual'>
 > = () => {
@@ -32,6 +48,30 @@ const TransactionManualEntryScreen: React.FC<
   const [currentScreen, setCurrentScreen] = useState<any>(null);
   const [flowState, setFlowState] = useState<any>({});
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [screenHistory, setScreenHistory] = useState<string[]>([
+    'customer-selection',
+  ]);
+  const [customersList, setCustomersList] = useState([
+    {
+      id: '1',
+      name: 'Ahmed Electronics',
+      outstanding: 125000,
+      dueDate: '2025-11-10',
+    },
+    {
+      id: '2',
+      name: 'Karachi Traders',
+      outstanding: 85000,
+      dueDate: '2025-11-20',
+    },
+    {
+      id: '3',
+      name: 'Bismillah Store',
+      outstanding: 45000,
+      dueDate: '2025-11-05',
+    },
+  ]);
 
   useEffect(() => {
     loadScreen(screenId || 'customer-selection');
@@ -40,7 +80,6 @@ const TransactionManualEntryScreen: React.FC<
   const loadScreen = (screenIdToLoad: string) => {
     setLoading(true);
 
-    // Find screen configuration from JSON
     const screen = receiptFlowJSON.flow.screens.find(
       s => s.id === screenIdToLoad,
     );
@@ -59,9 +98,30 @@ const TransactionManualEntryScreen: React.FC<
       ...params,
     }));
 
+    setScreenHistory(prev => [...prev, nextScreenId]);
+
     // Navigate to next screen
     loadScreen(nextScreenId);
   };
+
+  const handleBack = () => {
+    if (screenHistory.length > 1) {
+      // Remove current screen
+      const newHistory = [...screenHistory];
+      newHistory.pop();
+      setScreenHistory(newHistory);
+
+      // Load previous screen
+      const previousScreen = newHistory[newHistory.length - 1];
+      loadScreen(previousScreen);
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const filteredCustomers = customersList.filter(customer =>
+    customer.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   const renderScreenByType = () => {
     if (!currentScreen) return null;
@@ -101,11 +161,33 @@ const TransactionManualEntryScreen: React.FC<
         initialData={flowState}
         onSubmit={data => {
           console.log('Form submitted:', data);
+          console.log('Current Screen:', currentScreen);
+
+          if (currentScreen.id === 'add-customer') {
+            const newCustomer = {
+              id: Date.now().toString(),
+              name: data.name,
+              outstanding: parseFloat(data.openingBalance || '0'),
+              dueDate: new Date(
+                Date.now() + 30 * 24 * 60 * 60 * 1000,
+              ).toISOString(),
+              phone: data.phone,
+              email: data.email,
+            };
+
+            // Add to customers list
+            setCustomersList(prev => [newCustomer, ...prev]);
+
+            // Navigate back with new customer
+            handleNavigate('customer-selection', { newCustomer });
+            return;
+          }
 
           // Handle navigation based on config
           const action = currentScreen.config.actions.onSubmit;
-          if (action.navigate) {
-            handleNavigate(action.navigate, data);
+          const navigate = action.navigate || action.onSuccess?.navigate;
+          if (navigate) {
+            handleNavigate(navigate, data);
           }
         }}
         onCancel={() => {
@@ -128,9 +210,13 @@ const TransactionManualEntryScreen: React.FC<
 
           {/* Search Field */}
           <View style={styles.searchContainer}>
-            <Text style={styles.searchPlaceholder}>
-              {currentScreen.config.searchPlaceholder}
-            </Text>
+            <TextInput
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={currentScreen.config.searchPlaceholder}
+              placeholderTextColor={theme.colors.text.disabled}
+            />
           </View>
 
           {/* Section Header */}
@@ -139,7 +225,7 @@ const TransactionManualEntryScreen: React.FC<
           </Text>
 
           {/* Mock Customer List */}
-          <View style={styles.listContainer}>
+          {/* <View style={styles.listContainer}>
             <TouchableOpacity
               style={styles.listItem}
               onPress={() => {
@@ -188,6 +274,41 @@ const TransactionManualEntryScreen: React.FC<
               <Text style={styles.arrow}>→</Text>
             </TouchableOpacity>
           </View>
+        </ScrollView> */}
+
+          <View style={styles.listContainer}>
+            {filteredCustomers.length > 0 ? (
+              filteredCustomers.map(customer => (
+                <TouchableOpacity
+                  key={customer.id}
+                  style={styles.listItem}
+                  onPress={() => {
+                    handleNavigate('amount-entry', {
+                      customer: customer,
+                    });
+                  }}
+                >
+                  <View style={styles.listItemContent}>
+                    <Text style={styles.listItemTitle}>{customer.name}</Text>
+                    <Text style={styles.listItemAmount}>
+                      PKR {customer.outstanding.toLocaleString()}
+                    </Text>
+                    <View style={styles.listItemDue}>
+                      <Text style={styles.dueDateIndicator}>🔴</Text>
+                      <Text style={styles.dueDateText}>
+                        Due: {new Date(customer.dueDate).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.arrow}>→</Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No customers found</Text>
+              </View>
+            )}
+          </View>
         </ScrollView>
 
         {/* Add New Button */}
@@ -221,12 +342,30 @@ const TransactionManualEntryScreen: React.FC<
           </View>
 
           {/* Question */}
+
           <Text style={styles.question}>
             {currentScreen.title.replace('{customerName}', customer.name)}
           </Text>
 
           {/* Amount Display */}
-          <TouchableOpacity
+          <View style={styles.amountDisplayContainer}>
+            <DynamicFormField
+              field={{
+                id: 'amount',
+                name: 'amount',
+                type: FieldType.AMOUNT,
+                label: '',
+                required: true,
+              }}
+              value={flowState.amount?.toString() || '0'}
+              onChange={value => {
+                setFlowState({ ...flowState, amount: parseFloat(value) || 0 });
+              }}
+              onBlur={() => {}}
+            />
+          </View>
+
+          {/* <TouchableOpacity
             style={styles.amountDisplay}
             onPress={() => {
               // Open amount keypad modal
@@ -237,7 +376,7 @@ const TransactionManualEntryScreen: React.FC<
             <Text style={styles.amountValue}>
               {flowState.amount?.toLocaleString() || '0'}
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Quick Amounts */}
           <View style={styles.quickAmountsContainer}>
@@ -315,6 +454,7 @@ const TransactionManualEntryScreen: React.FC<
 
   const renderSelectionScreen = () => {
     const field = currentScreen.config.field;
+    const customer = flowState.customer || { name: 'Customer', outstanding: 0 };
 
     return (
       <View style={styles.screenContainer}>
@@ -322,7 +462,9 @@ const TransactionManualEntryScreen: React.FC<
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
         >
-          <Text style={styles.question}>{currentScreen.title}</Text>
+          <Text style={styles.question}>
+            {currentScreen.title.replace('{customerName}', customer.name)}
+          </Text>
 
           <View style={styles.selectionContainer}>
             {field.options.map((option: any) => (
@@ -336,12 +478,12 @@ const TransactionManualEntryScreen: React.FC<
                 onPress={() => {
                   setFlowState({ ...flowState, [field.id]: option.value });
 
-                  // Navigate based on option
-                  setTimeout(() => {
-                    handleNavigate(option.navigateTo, {
-                      [field.id]: option.value,
-                    });
-                  }, 300);
+                  // // Navigate based on option
+                  // setTimeout(() => {
+                  //   handleNavigate(option.navigateTo, {
+                  //     [field.id]: option.value,
+                  //   });
+                  // }, 300);
                 }}
               >
                 <Text style={styles.selectionIcon}>{option.icon}</Text>
@@ -365,21 +507,354 @@ const TransactionManualEntryScreen: React.FC<
               </TouchableOpacity>
             ))}
           </View>
+          {/* Continue Button */}
+          {flowState[field.id] && (
+            <TouchableOpacity
+              style={styles.proceedButton}
+              onPress={() => {
+                const selectedOption = field.options.find(
+                  (opt: any) => opt.value === flowState[field.id],
+                );
+                if (selectedOption) {
+                  handleNavigate(selectedOption.navigateTo, {
+                    [field.id]: selectedOption.value,
+                  });
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.proceedButtonText}>Continue →</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       </View>
     );
   };
 
   const renderCompoundScreen = () => {
-    // For compound screens, render multiple sections
+    const sections = currentScreen.config.sections;
+
+    // Bank Transfer Screen
+    if (currentScreen.id === 'bank-selection') {
+      return (
+        <View style={styles.screenContainer}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {sections.map((section: any) => {
+              if (section.type === 'LIST_SELECTION') {
+                return (
+                  <View key={section.id}>
+                    <Text style={styles.sectionTitle}>{section.title}</Text>
+
+                    {mockBankAccounts.map(bank => (
+                      <TouchableOpacity
+                        key={bank.id}
+                        style={[
+                          styles.bankCard,
+                          flowState[section.field.id] === bank.id &&
+                            styles.bankCardSelected,
+                        ]}
+                        onPress={() => {
+                          setFlowState({
+                            ...flowState,
+                            [section.field.id]: bank.id,
+                          });
+                        }}
+                      >
+                        <View style={styles.bankIcon}>
+                          <Text style={styles.bankIconText}>🏦</Text>
+                        </View>
+
+                        <View style={styles.bankInfo}>
+                          <Text style={styles.bankName}>{bank.bankName}</Text>
+                          <Text style={styles.accountTitle}>
+                            {bank.accountTitle}
+                          </Text>
+                          <Text style={styles.accountNumber}>
+                            {bank.accountNumber}
+                          </Text>
+                          <Text style={styles.balance}>
+                            Balance: PKR {bank.balance.toLocaleString()}
+                          </Text>
+                        </View>
+
+                        <View
+                          style={[
+                            styles.radioButton,
+                            flowState[section.field.id] === bank.id &&
+                              styles.radioButtonSelected,
+                          ]}
+                        >
+                          {flowState[section.field.id] === bank.id && (
+                            <View style={styles.radioButtonInner} />
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+
+                    <TouchableOpacity
+                      style={styles.addBankButton}
+                      onPress={() => handleNavigate('add-bank-account')}
+                    >
+                      <Text style={styles.addBankButtonText}>
+                        {section.addNewButton.text}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              }
+
+              if (section.type === 'DATE_SELECTION') {
+                return (
+                  <View
+                    key={section.id}
+                    style={{ marginTop: theme.spacing.lg }}
+                  >
+                    <Text style={styles.sectionTitle}>{section.title}</Text>
+
+                    <DynamicFormField
+                      field={{
+                        id: section.field.id,
+                        name: section.field.name,
+                        type: FieldType.DATE,
+                        label: '',
+                        required: section.field.required,
+                        defaultValue: new Date().toISOString(),
+                      }}
+                      value={
+                        flowState[section.field.id] || new Date().toISOString()
+                      }
+                      onChange={value => {
+                        setFlowState({
+                          ...flowState,
+                          [section.field.id]: value,
+                        });
+                      }}
+                      onBlur={() => {}}
+                    />
+                  </View>
+                );
+              }
+
+              return null;
+            })}
+
+            {flowState.bankAccount && flowState.transferDate && (
+              <TouchableOpacity
+                style={styles.proceedButton}
+                onPress={() => {
+                  handleNavigate('confirmation', {
+                    bankAccount: mockBankAccounts.find(
+                      b => b.id === flowState.bankAccount,
+                    ),
+                    transferDate: flowState.transferDate,
+                  });
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.proceedButtonText}>Continue →</Text>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
+        </View>
+      );
+    }
+
+    // Mobile Wallet Screen
+    if (currentScreen.id === 'wallet-selection') {
+      return (
+        <View style={styles.screenContainer}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {sections.map((section: any, index: number) => {
+              // Wallet Type Selection
+              if (section.type === 'SELECTION') {
+                return (
+                  <View key={section.id}>
+                    <Text style={styles.sectionTitle}>{section.title}</Text>
+
+                    <View style={styles.selectionContainer}>
+                      {section.field.options.map((option: any) => (
+                        <TouchableOpacity
+                          key={option.value}
+                          style={[
+                            styles.selectionCard,
+                            flowState[section.field.id] === option.value &&
+                              styles.selectionCardSelected,
+                          ]}
+                          onPress={() => {
+                            setFlowState({
+                              ...flowState,
+                              [section.field.id]: option.value,
+                            });
+                          }}
+                        >
+                          <Text style={styles.selectionIcon}>
+                            {option.icon}
+                          </Text>
+                          <View style={styles.selectionContent}>
+                            <Text style={styles.selectionLabel}>
+                              {option.label}
+                            </Text>
+                          </View>
+                          <View
+                            style={[
+                              styles.checkCircle,
+                              flowState[section.field.id] === option.value &&
+                                styles.checkCircleSelected,
+                            ]}
+                          >
+                            {flowState[section.field.id] === option.value && (
+                              <Text style={styles.checkmark}>✓</Text>
+                            )}
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                );
+              }
+
+              // Custom Wallet Name (shows when "other" selected)
+              if (section.showWhen) {
+                console.log(section.showWhen);
+                console.log(
+                  section.showWhen.replace(
+                    'walletType',
+                    JSON.stringify(flowState.walletType),
+                  ),
+                );
+                const shouldShow = eval(
+                  section.showWhen.replace(
+                    'walletType',
+                    JSON.stringify(flowState.walletType),
+                  ),
+                );
+                if (!shouldShow) return null;
+
+                return (
+                  <View
+                    key={section.id}
+                    style={{ marginTop: theme.spacing.md }}
+                  >
+                    {section.fields.map((field: any) => (
+                      <DynamicFormField
+                        key={field.id}
+                        field={{
+                          ...field,
+                          type: FieldType.TEXT,
+                        }}
+                        value={flowState[field.id] || ''}
+                        onChange={value => {
+                          setFlowState({
+                            ...flowState,
+                            [field.id]: value,
+                          });
+                        }}
+                        onBlur={() => {}}
+                      />
+                    ))}
+                  </View>
+                );
+              }
+
+              // Wallet Account/Phone
+              if (section.id === 'wallet-account-section') {
+                return (
+                  <View
+                    key={section.id}
+                    style={{ marginTop: theme.spacing.md }}
+                  >
+                    {section.fields.map((field: any) => (
+                      <DynamicFormField
+                        key={field.id}
+                        field={{
+                          ...field,
+                          type: FieldType.TEXT,
+                        }}
+                        value={flowState[field.id] || ''}
+                        onChange={value => {
+                          setFlowState({
+                            ...flowState,
+                            [field.id]: value,
+                          });
+                        }}
+                        onBlur={() => {}}
+                      />
+                    ))}
+                  </View>
+                );
+              }
+
+              // Date Selection
+              if (section.type === 'DATE_SELECTION') {
+                return (
+                  <View
+                    key={section.id}
+                    style={{ marginTop: theme.spacing.lg }}
+                  >
+                    <Text style={styles.sectionTitle}>{section.title}</Text>
+
+                    <DynamicFormField
+                      field={{
+                        id: section.field.id,
+                        name: section.field.name,
+                        type: FieldType.DATE,
+                        label: '',
+                        required: section.field.required,
+                        defaultValue: new Date().toISOString(),
+                      }}
+                      value={
+                        flowState[section.field.id] || new Date().toISOString()
+                      }
+                      onChange={value => {
+                        setFlowState({
+                          ...flowState,
+                          [section.field.id]: value,
+                        });
+                      }}
+                      onBlur={() => {}}
+                    />
+                  </View>
+                );
+              }
+
+              return null;
+            })}
+
+            {/* Continue Button */}
+            {flowState.walletType && flowState.walletDate && (
+              <TouchableOpacity
+                style={styles.proceedButton}
+                onPress={() => {
+                  handleNavigate('confirmation', {
+                    walletType: flowState.walletType,
+                    walletAccount: flowState.walletAccount,
+                    walletDate: flowState.walletDate,
+                    customWalletName: flowState.customWalletName,
+                  });
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.proceedButtonText}>Continue →</Text>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
+        </View>
+      );
+    }
+
+    // Default fallback
     return (
       <View style={styles.screenContainer}>
-        <ScrollView style={styles.scrollView}>
-          <Text style={styles.screenTitle}>{currentScreen.title}</Text>
-          <Text style={styles.placeholder}>
-            Compound screen rendering in progress...
-          </Text>
-        </ScrollView>
+        <Text style={styles.screenTitle}>{currentScreen.title}</Text>
+        <Text style={styles.placeholder}>
+          Compound screen rendering in progress...
+        </Text>
       </View>
     );
   };
@@ -531,10 +1006,7 @@ const TransactionManualEntryScreen: React.FC<
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
@@ -639,6 +1111,19 @@ const createStyles = (theme: Theme) => ({
     fontWeight: '600' as const,
     marginBottom: theme.spacing.sm,
     textTransform: 'uppercase' as const,
+  },
+  searchInput: {
+    ...theme.typography.body,
+    color: theme.colors.text.primary,
+    padding: 0,
+  },
+  emptyState: {
+    alignItems: 'center' as const,
+    paddingVertical: theme.spacing.xxl,
+  },
+  emptyText: {
+    ...theme.typography.body,
+    color: theme.colors.text.disabled,
   },
   listContainer: {
     gap: theme.spacing.sm,
@@ -985,6 +1470,107 @@ const createStyles = (theme: Theme) => ({
     ...theme.typography.h3,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
+  },
+  amountDisplayContainer: {
+    marginBottom: theme.spacing.lg,
+  },
+  proceedButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center' as const,
+    marginTop: theme.spacing.lg,
+  },
+  proceedButtonText: {
+    ...theme.typography.button,
+    color: theme.colors.text.inverse,
+  },
+  sectionTitle: {
+    ...theme.typography.body,
+    color: theme.colors.text.primary,
+    fontWeight: '600' as const,
+    marginBottom: theme.spacing.md,
+  },
+  bankCard: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+  },
+  bankCardSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '10',
+  },
+  bankIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.background,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    marginRight: theme.spacing.md,
+  },
+  bankIconText: {
+    fontSize: 24,
+  },
+  bankInfo: {
+    flex: 1,
+  },
+  bankName: {
+    ...theme.typography.body,
+    color: theme.colors.text.primary,
+    fontWeight: '700' as const,
+    marginBottom: theme.spacing.xs,
+  },
+  accountTitle: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+    marginBottom: 2,
+  },
+  accountNumber: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.xs,
+  },
+  balance: {
+    ...theme.typography.caption,
+    color: theme.colors.primary,
+    fontWeight: '600' as const,
+  },
+  radioButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  radioButtonSelected: {
+    borderColor: theme.colors.primary,
+  },
+  radioButtonInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: theme.colors.primary,
+  },
+  addBankButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center' as const,
+    marginTop: theme.spacing.sm,
+  },
+  addBankButtonText: {
+    ...theme.typography.button,
+    color: theme.colors.primary,
   },
 });
 
