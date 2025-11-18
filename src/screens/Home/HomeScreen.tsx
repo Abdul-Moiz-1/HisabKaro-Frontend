@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NavigationProps } from '../../types';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../store/hooks';
 import { ROUTES } from '../../constants/routes';
 import { Container } from '../../components/common';
 import { BottomTabBar } from '../../components/navigation/BottomTabBar';
@@ -24,11 +24,12 @@ import { ScheduledPayments } from './components/ScheduledPayments';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { authService, AuthServiceError } from '../../services/authService';
-import { clearUser } from '../../store/slices/userSlice';
+import { clearUser, logout } from '../../store/slices/userSlice';
 import { clearBiometricProfile } from '../../utils/biometrics';
-import { Theme, useThemedStyles } from '../../theme';
+import { toggleTheme } from '../../store/slices/themeSlice';
 
 const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
+  const theme = useTheme();
   const [selectedPeriod, setSelectedPeriod] = useState<
     'Daily' | 'Weekly' | 'Monthly'
   >('Monthly');
@@ -36,7 +37,6 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { user, refreshToken } = useAppSelector(state => state.user);
   const [logoutLoading, setLogoutLoading] = useState(false);
-  const styles = useThemedStyles(createStyles);
 
   const handleTabPress = (tabId: string) => {
     setActiveTab(tabId);
@@ -63,26 +63,167 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
     }
   };
 
+  // const handleLogout = useCallback(async () => {
+  //   setLogoutLoading(true);
+  //   try {
+  //     if (refreshToken) {
+  //       await authService.logout({ refreshToken });
+
+  //     }
+  //     navigation.replace(ROUTES.LOGIN);
+  //   } catch (error) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Logout failed',
+  //       text2: error?.message ?? 'Please try again',
+  //     });
+  //   } finally {
+  //     setLogoutLoading(false);
+  //   }
+  // }, [refreshToken]);
+
   const handleLogout = useCallback(async () => {
     setLogoutLoading(true);
+
     try {
       if (refreshToken) {
         await authService.logout({ refreshToken });
+        console.log('Backend logout successful');
+        dispatch(logout()); // <---- locally bhi clear kardo token jb logout hojae
       }
-      await clearBiometricProfile();
-      dispatch(clearUser());
-      navigation.replace(ROUTES.LOGIN);
     } catch (error) {
-      const apiError = error as AuthServiceError;
+      console.error('Logout API failed:', error);
       Toast.show({
-        type: 'error',
-        text1: 'Logout failed',
-        text2: apiError.message ?? 'Please try again',
+        type: 'info',
+        text1: 'Logged out locally',
       });
     } finally {
+      // Clear tokens locally
+      dispatch(logout());
+
+      console.log(' Tokens cleared locally');
+
       setLogoutLoading(false);
+      navigation.replace(ROUTES.LOGIN);
     }
-  }, [dispatch, navigation, refreshToken]);
+  }, [refreshToken, dispatch, navigation]);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          backgroundColor: theme.colors.background,
+        },
+        headerRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: theme.spacing.md,
+          paddingVertical: theme.spacing.md,
+        },
+        greetingText: {
+          ...theme.typography.h2,
+          color: theme.colors.text.primary,
+        },
+        subGreeting: {
+          ...theme.typography.caption,
+          color: theme.colors.text.secondary,
+          marginTop: theme.spacing.xs,
+        },
+        headerActions: {
+          flexDirection: 'row',
+          gap: theme.spacing.sm,
+          alignItems: 'center',
+        },
+        themeToggleButton: {
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          backgroundColor: theme.colors.surface,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        themeIcon: {
+          fontSize: 20,
+        },
+        logoutButton: {
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          backgroundColor: theme.colors.surface,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        logoutIcon: {
+          fontSize: 18,
+          color: theme.colors.text.primary,
+        },
+        scrollView: {
+          flex: 1,
+        },
+        scrollContent: {
+          paddingBottom: theme.spacing.xxl,
+        },
+        periodSelector: {
+          flexDirection: 'row',
+          backgroundColor: theme.colors.surface,
+          borderRadius: theme.borderRadius.lg,
+          padding: theme.spacing.xs,
+          marginHorizontal: theme.spacing.md,
+          marginBottom: theme.spacing.md,
+        },
+        periodButton: {
+          flex: 1,
+          paddingVertical: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.md,
+          borderRadius: theme.borderRadius.md,
+          alignItems: 'center',
+        },
+        periodButtonActive: {
+          backgroundColor: theme.colors.primary,
+        },
+        periodText: {
+          ...theme.typography.caption,
+          color: theme.colors.text.secondary,
+          fontWeight: '500',
+        },
+        periodTextActive: {
+          color: theme.colors.text.inverse,
+          fontWeight: '600',
+        },
+        addWidgetButton: {
+          marginHorizontal: theme.spacing.md,
+          marginTop: theme.spacing.lg,
+          borderRadius: theme.borderRadius.lg,
+          borderWidth: 2,
+          borderColor: theme.colors.border,
+          borderStyle: 'dashed',
+          paddingVertical: theme.spacing.xl,
+        },
+        addWidgetContent: {
+          alignItems: 'center',
+        },
+        addIcon: {
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: theme.colors.surface,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: theme.spacing.sm,
+        },
+        addIconText: {
+          fontSize: 20,
+          color: theme.colors.text.secondary,
+          fontWeight: '300',
+        },
+        addWidgetText: {
+          ...theme.typography.body,
+          color: theme.colors.text.secondary,
+        },
+      }),
+    [theme],
+  );
 
   return (
     <Container safeArea edges={['top']} style={styles.container}>
@@ -93,17 +234,28 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
           </Text>
           <Text style={styles.subGreeting}>Welcome back to HisabKaro</Text>
         </View>
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-          disabled={logoutLoading}
-        >
-          {logoutLoading ? (
-            <ActivityIndicator color={theme.colors.text.inverse} />
-          ) : (
-            <Text style={styles.logoutIcon}>⎋</Text>
-          )}
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.themeToggleButton}
+            onPress={() => dispatch(toggleTheme())}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.themeIcon}>
+              {theme.mode === 'dark' ? '🌙' : '☀️'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            disabled={logoutLoading}
+          >
+            {logoutLoading ? (
+              <ActivityIndicator color={theme.colors.text.inverse} />
+            ) : (
+              <Text style={styles.logoutIcon}>⎋</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
       <ScrollView
         style={styles.scrollView}
@@ -204,101 +356,6 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
   );
 };
 
-const createStyles = (theme: Theme) => ({
-  container: {
-    backgroundColor: theme.colors.background,
-  },
-  headerRow: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'center' as const,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-  },
-  greetingText: {
-    ...theme.typography.h2,
-    color: theme.colors.text.primary,
-  },
-  subGreeting: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
-  },
-  logoutButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-  },
-  logoutIcon: {
-    fontSize: 18,
-    color: theme.colors.text.primary,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: theme.spacing.xxl,
-  },
-  periodSelector: {
-    flexDirection: 'row' as const,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.xs,
-    marginHorizontal: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-  },
-  periodButton: {
-    flex: 1,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center' as const,
-  },
-  periodButtonActive: {
-    backgroundColor: theme.colors.primary,
-  },
-  periodText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    fontWeight: '500' as const,
-  },
-  periodTextActive: {
-    color: theme.colors.text.inverse,
-    fontWeight: '600' as const,
-  },
-  addWidgetButton: {
-    marginHorizontal: theme.spacing.md,
-    marginTop: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    borderStyle: 'dashed' as const,
-    paddingVertical: theme.spacing.xl,
-  },
-  addWidgetContent: {
-    alignItems: 'center' as const,
-  },
-  addIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    marginBottom: theme.spacing.sm,
-  },
-  addIconText: {
-    fontSize: 20,
-    color: theme.colors.text.secondary,
-    fontWeight: '300' as const,
-  },
-  addWidgetText: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-  },
-});
+// Styles are now created dynamically in the component
 
 export default HomeScreen;

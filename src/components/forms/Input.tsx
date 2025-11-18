@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback, memo, useMemo } from 'react';
 import {
   View,
   TextInput,
@@ -7,7 +7,7 @@ import {
   TextInputProps,
   TouchableOpacity,
 } from 'react-native';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../store/hooks';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -27,6 +27,7 @@ const InputComponent: React.FC<InputProps> = ({
   style,
   ...textInputProps
 }) => {
+  const theme = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -43,6 +44,53 @@ const InputComponent: React.FC<InputProps> = ({
   }, []);
 
   const displaySecureTextEntry = showPasswordToggle ? !isPasswordVisible && secureTextEntry : secureTextEntry;
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      marginBottom: theme.spacing.md,
+    },
+    label: {
+      ...theme.typography.body,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.xs,
+      fontWeight: '500',
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.md,
+      backgroundColor: theme.colors.surface,
+      paddingHorizontal: theme.spacing.md,
+      minHeight: 48,
+    },
+    inputContainerFocused: {
+      borderColor: theme.colors.primary,
+      borderWidth: 2,
+    },
+    inputContainerError: {
+      borderColor: theme.colors.error,
+    },
+    input: {
+      flex: 1,
+      ...theme.typography.body,
+      color: theme.colors.text.primary,
+      paddingVertical: theme.spacing.sm,
+    },
+    rightIconContainer: {
+      marginLeft: theme.spacing.sm,
+      padding: theme.spacing.xs,
+    },
+    errorText: {
+      ...theme.typography.caption,
+      color: theme.colors.error,
+      marginTop: theme.spacing.xs,
+    },
+    eyeIcon: {
+      fontSize: 20,
+    },
+  }), [theme]);
 
   return (
     <View style={styles.container}>
@@ -84,53 +132,6 @@ const InputComponent: React.FC<InputProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: theme.spacing.md,
-  },
-  label: {
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-    fontWeight: '500',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.md,
-    minHeight: 48,
-  },
-  inputContainerFocused: {
-    borderColor: theme.colors.primary,
-    borderWidth: 2,
-  },
-  inputContainerError: {
-    borderColor: theme.colors.error,
-  },
-  input: {
-    flex: 1,
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-    paddingVertical: theme.spacing.sm,
-  },
-  rightIconContainer: {
-    marginLeft: theme.spacing.sm,
-    padding: theme.spacing.xs,
-  },
-  errorText: {
-    ...theme.typography.caption,
-    color: theme.colors.error,
-    marginTop: theme.spacing.xs,
-  },
-  eyeIcon: {
-    fontSize: 20,
-  },
-});
 
 export const Input = memo(InputComponent);
 

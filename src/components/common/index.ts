@@ -19,4 +19,4 @@ export { ScheduledPaymentCard } from './ScheduledPaymentCard';
 export { NotificationCard } from './NotificationCard';
 export { LineChart } from './LineChart';
 export { PieChart } from './PieChart';
-export { ThemeToggle } from './ThemeToggle';
+export { ThemeStatusBar } from './ThemeStatusBar';

@@ -8,7 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../store/hooks';
 
 interface ContainerProps {
   children: React.ReactNode;
@@ -25,6 +25,15 @@ export const Container: React.FC<ContainerProps> = ({
   safeArea = true,
   edges = ['top', 'bottom'],
 }) => {
+  const theme = useTheme();
+  
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+  });
+
   const content = (
     <KeyboardAvoidingView
       style={styles.keyboardView}
@@ -46,17 +55,13 @@ export const Container: React.FC<ContainerProps> = ({
   );
 
   if (safeArea) {
-    return <SafeAreaView style={styles.container} edges={edges}>{content}</SafeAreaView>;
+    return <SafeAreaView style={dynamicStyles.container} edges={edges}>{content}</SafeAreaView>;
   }
 
-  return <View style={styles.container}>{content}</View>;
+  return <View style={dynamicStyles.container}>{content}</View>;
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
   keyboardView: {
     flex: 1,
   },
