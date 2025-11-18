@@ -30,7 +30,6 @@ import ExpensesScreen from '../screens/Expenses/ExpensesScreen';
 import ScheduledPaymentsScreen from '../screens/ScheduledPayments/ScheduledPaymentsScreen';
 import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
 import BankAccountDetailsScreen from '../screens/BankAccountDetails/BankAccountDetailsScreen';
-import { useTheme } from '../context/ThemeContext';
 import TransactionManualEntryScreen from '../screens/TransactionManualEntry/TransactionManualEntry';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -39,20 +38,7 @@ export const RootNavigator: React.FC = () => {
   const theme = useTheme();
 
   return (
-    <NavigationContainer
-      theme={{
-        dark: isDark,
-        colors: {
-          primary: theme.colors.primary,
-          background: theme.colors.background,
-          card: theme.colors.surface,
-          text: theme.colors.text.primary,
-          border: theme.colors.border,
-          notification: theme.colors.notification,
-        },
-        fonts: isDark ? DarkTheme.fonts : DefaultTheme.fonts,
-      }}
-    >
+    <NavigationContainer>
       <Stack.Navigator
         initialRouteName={ROUTES.SPLASH}
         screenOptions={{
