@@ -3,8 +3,9 @@ import React from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { FormField } from '../../../types/forms';
 
-import { Theme } from '../../../theme/types';
-import { useTheme, useThemedStyles } from '../../../theme';
+import { Theme } from '../../../constants/theme';
+import { useThemedStyles } from '../../../theme';
+import { useTheme } from '../../../store/hooks';
 
 interface NumberInputFieldProps {
   field: FormField;
@@ -21,7 +22,7 @@ const NumberInputField: React.FC<NumberInputFieldProps> = ({
   onChange,
   onBlur,
 }) => {
-  const { theme } = useTheme();
+  const theme = useTheme();
   const styles = useThemedStyles(createStyles);
 
   const handleChange = (text: string) => {

@@ -2,8 +2,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FormField } from '../../../types/forms';
-
-import { Theme } from '../../../theme/types';
+import { Theme } from '../../../constants/theme';
 import { useThemedStyles } from '../../../theme';
 
 interface RadioFieldProps {

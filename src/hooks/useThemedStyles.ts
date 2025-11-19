@@ -1,8 +1,9 @@
 // theme/hooks/useThemedStyles.ts
 import { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
-import { Theme } from '../theme/types';
+// import { Theme } from '../theme/types';
+import { useTheme } from '../store/hooks';
+import { Theme } from '../constants/theme';
 
 /**
  * Custom hook for creating themed styles
@@ -12,7 +13,7 @@ import { Theme } from '../theme/types';
 export const useThemedStyles = <T extends StyleSheet.NamedStyles<T>>(
   stylesFn: (theme: Theme) => T,
 ) => {
-  const { theme } = useTheme();
+  const theme = useTheme();
 
   return useMemo(() => StyleSheet.create(stylesFn(theme)), [theme]);
 };

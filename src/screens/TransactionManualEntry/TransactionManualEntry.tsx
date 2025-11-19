@@ -11,12 +11,17 @@ import {
   TextInput,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Theme, useTheme, useThemedStyles } from '../../theme';
+import { useThemedStyles } from '../../theme';
 import { FieldType, FormConfig } from '../../types/forms';
 import { DynamicForm, DynamicFormField } from '../../components/DynamicForm';
 import { receiptFlowJSON } from '../../config/forms/json/receiptFlow.json';
+import { salesFlowJSON } from '../../config/forms/json/salesFlow.json';
 import { NavigationProps } from '../../types';
-
+import { useTheme } from '../../store/hooks';
+import { Theme } from '../../constants/theme';
+// const SCREEN = salesFlowJSON;
+const SCREEN = receiptFlowJSON;
+const intialScreen = 'customer-selection';
 interface TransactionManualEntryScreenProps {}
 const mockBankAccounts = [
   {
@@ -40,7 +45,7 @@ const TransactionManualEntryScreen: React.FC<
   const navigation = useNavigation();
   const route = useRoute();
   const styles = useThemedStyles(createStyles);
-  const { theme } = useTheme();
+  const theme = useTheme();
 
   // @ts-ignore
   const { screenId, flowData } = route.params || {};
@@ -74,15 +79,15 @@ const TransactionManualEntryScreen: React.FC<
   ]);
 
   useEffect(() => {
-    loadScreen(screenId || 'customer-selection');
+    loadScreen(screenId || intialScreen);
   }, [screenId]);
-
+  console.log(screenId);
   const loadScreen = (screenIdToLoad: string) => {
     setLoading(true);
 
-    const screen = receiptFlowJSON.flow.screens.find(
-      s => s.id === screenIdToLoad,
-    );
+    const screen = SCREEN.flow.screens.find(s => s.id === screenIdToLoad);
+
+    console.log(screen);
 
     if (screen) {
       setCurrentScreen(screen);
@@ -182,7 +187,7 @@ const TransactionManualEntryScreen: React.FC<
             handleNavigate('customer-selection', { newCustomer });
             return;
           }
-
+          console.log(currentScreen.config);
           // Handle navigation based on config
           const action = currentScreen.config.actions.onSubmit;
           const navigate = action.navigate || action.onSuccess?.navigate;

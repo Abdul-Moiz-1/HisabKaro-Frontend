@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { FormConfig } from '../../types/forms';
 import { useDynamicForm } from '../../hooks/useDynamicForm';
-import { Theme } from '../../theme/types';
+import { Theme } from '../../constants/theme';
 import DynamicFormField from './DynamicFormField';
 import { useThemedStyles } from '../../theme';
 

@@ -11,7 +11,7 @@ import {
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { FormField } from '../../../types/forms';
 
-import { Theme } from '../../../theme/types';
+import { Theme } from '../../../constants/theme';
 import { useThemedStyles } from '../../../theme';
 
 interface FileUploadFieldProps {

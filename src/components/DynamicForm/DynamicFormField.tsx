@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { FormField, FieldType } from '../../types/forms';
 
-import { Theme } from '../../theme/types';
+import { Theme } from '../../constants/theme';
 
 import { useThemedStyles } from '../../theme';
 import {

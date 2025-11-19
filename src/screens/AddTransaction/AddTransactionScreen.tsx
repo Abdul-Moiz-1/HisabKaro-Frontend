@@ -1,5 +1,5 @@
 import { NavigationProps } from '../../types';
-import { theme } from '../../constants/theme';
+import { Theme, theme } from '../../constants/theme';
 import { Container, HeaderNavigation } from '../../components/common';
 import React from 'react';
 import {
@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
-import { Theme, useThemedStyles } from '../../theme';
+import { useThemedStyles } from '../../theme';
 import { ROUTES } from '../../constants/routes';
 
 // Menu data structure - easily replaceable with API data

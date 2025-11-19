@@ -31,6 +31,7 @@ import ScheduledPaymentsScreen from '../screens/ScheduledPayments/ScheduledPayme
 import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
 import BankAccountDetailsScreen from '../screens/BankAccountDetails/BankAccountDetailsScreen';
 import TransactionManualEntryScreen from '../screens/TransactionManualEntry/TransactionManualEntry';
+import ReceiptFlowNavigator from '../screens/ManualTranasactions/receipt/ReceiptFlowNavigator';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -61,9 +62,13 @@ export const RootNavigator: React.FC = () => {
           name={ROUTES.ADD_TRANSACTION}
           component={AddTransactionScreen}
         />
-        <Stack.Screen
+        {/* <Stack.Screen
           name={ROUTES.ADD_TRANSACTION_MANUAL}
           component={TransactionManualEntryScreen}
+        /> */}
+        <Stack.Screen
+          name={ROUTES.ADD_TRANSACTION_MANUAL}
+          component={ReceiptFlowNavigator}
         />
         <Stack.Screen
           name={ROUTES.AI_ASSISTANT}

@@ -2,9 +2,10 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 
-import { Theme } from '../../../theme/types';
+import { Theme } from '../../../constants/theme';
 import { FormField } from '../../../types/forms';
-import { useTheme, useThemedStyles } from '../../../theme';
+import { useThemedStyles } from '../../../theme';
+import { useTheme } from '../../../store/hooks';
 
 interface TextAreaFieldProps {
   field: FormField;
@@ -21,7 +22,7 @@ const TextAreaField: React.FC<TextAreaFieldProps> = ({
   onChange,
   onBlur,
 }) => {
-  const { theme } = useTheme();
+  const theme = useTheme();
   const styles = useThemedStyles(createStyles);
 
   return (
