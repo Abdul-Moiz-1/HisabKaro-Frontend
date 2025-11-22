@@ -25,13 +25,13 @@ const menuSections: MenuSection[] = [
         id: 'customer-payment',
         label: 'Customer paid me',
         icon: '👤',
-        route: ROUTES.ADD_TRANSACTION_MANUAL,
+        route: ROUTES.ADD_TRANSACTION_RECEIPT,
       },
       {
         id: 'sales',
         label: 'Sold something',
         icon: '🛍️',
-        route: '/transactions/sales',
+        route: ROUTES.ADD_TRANSACTION_SALES,
       },
       {
         id: 'advance-received',
@@ -50,7 +50,7 @@ const menuSections: MenuSection[] = [
         id: 'bank-deposit',
         label: 'Cash deposited to bank',
         icon: '🏧',
-        route: '/transactions/bank-deposit',
+        route: ROUTES.ADD_TRANSACTION_BANK,
       },
       {
         id: 'other-income',
@@ -70,19 +70,19 @@ const menuSections: MenuSection[] = [
         id: 'supplier-payment',
         label: 'Paid to supplier',
         icon: '🏪',
-        route: '/transactions/supplier-payment',
+        route: ROUTES.ADD_TRANSACTION_SUPPLIER_PAYMENT,
       },
       {
         id: 'purchase',
         label: 'Bought inventory/goods',
         icon: '📦',
-        route: '/transactions/purchase',
+        route: ROUTES.ADD_TRANSACTION_PURCHASE,
       },
       {
         id: 'expense',
         label: 'Paid expense',
         icon: '🧾',
-        route: '/transactions/expense',
+        route: ROUTES.ADD_TRANSACTION_EXPENSE,
       },
       {
         id: 'advance-given',
@@ -115,7 +115,7 @@ const menuSections: MenuSection[] = [
         id: 'transfer',
         label: 'Transfer between accounts',
         icon: '🔄',
-        route: '/transactions/transfer',
+        route: ROUTES.ADD_TRANSACTION_ACCOUNT_TRANSFER,
       },
       {
         id: 'stock-adjust',
@@ -187,7 +187,7 @@ interface MenuItemProps {
   styles: AppStyles;
 }
 
-const AddTransactionScreen: React.FC<NavigationProps<'AddTransaction'>> = ({
+const AddTransactionScreen: React.FC<NavigationProps<'Transactions'>> = ({
   navigation,
 }) => {
   const styles = useThemedStyles(createStyles);

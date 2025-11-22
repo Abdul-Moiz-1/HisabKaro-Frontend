@@ -11,6 +11,7 @@ interface AmountInputFieldProps {
   error?: string;
   onChange: (value: string) => void;
   onBlur: () => void;
+  quickAmounts?: { label: string; value: number }[];
 }
 
 const AmountInputField: React.FC<AmountInputFieldProps> = ({
@@ -19,6 +20,7 @@ const AmountInputField: React.FC<AmountInputFieldProps> = ({
   error,
   onChange,
   onBlur,
+  quickAmounts,
 }) => {
   const styles = useThemedStyles(createStyles);
   const [showKeypad, setShowKeypad] = useState(false);

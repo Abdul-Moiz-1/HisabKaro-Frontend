@@ -5,6 +5,7 @@ export interface Customer {
   phone?: string;
   email?: string;
   outstanding: number;
+  isWalkIn?: boolean;
   dueDate: string;
   creditLimit?: number;
   creditPeriod?: number;

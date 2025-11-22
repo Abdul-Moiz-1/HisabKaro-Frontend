@@ -18,9 +18,16 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   Home?: { userId?: string };
   Analytics: undefined;
-  AddTransaction: undefined;
+  Transactions: undefined;
   AddTransactionManual: undefined;
   AIAssistant: undefined;
+  Receipt: undefined;
+  Sales: undefined;
+  Purchases: undefined;
+  Expense: undefined;
+  Bank: undefined;
+  SupplierPayment: undefined;
+  AccountTransfer: undefined;
   AIChat?: { chatId?: string };
   Menu: undefined;
   Profile: undefined;

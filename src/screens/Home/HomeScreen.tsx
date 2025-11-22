@@ -50,7 +50,7 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         navigation.navigate(ROUTES.ANALYTICS);
         break;
       case 'add':
-        navigation.navigate(ROUTES.ADD_TRANSACTION);
+        navigation.navigate(ROUTES.TRANSCATIONS);
         break;
       case 'ai':
         navigation.navigate(ROUTES.AI_ASSISTANT);

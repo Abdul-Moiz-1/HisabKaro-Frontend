@@ -32,6 +32,12 @@ import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
 import BankAccountDetailsScreen from '../screens/BankAccountDetails/BankAccountDetailsScreen';
 import TransactionManualEntryScreen from '../screens/TransactionManualEntry/TransactionManualEntry';
 import ReceiptFlowNavigator from '../screens/ManualTranasactions/receipt/ReceiptFlowNavigator';
+import SalesFlowNavigator from '../screens/ManualTranasactions/sales/screens/SalesFlowNavigator';
+import PurchaseFlowNavigator from '../screens/ManualTranasactions/purchases/PurchaseFlowNavigator';
+import ExpenseFlowNavigator from '../screens/ManualTranasactions/expense/ExpenseFlowNavigator';
+import BankTransferFlowNavigator from '../screens/ManualTranasactions/bankTransfer/BankTransferFlowNavigator';
+import SupplierPaymentFlowNavigator from '../screens/ManualTranasactions/supplierPayment/SupplierPaymentFlowNavigator';
+import AccountTransferFlowNavigator from '../screens/ManualTranasactions/accountTransfer/AccountTransferFlowNavigator';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -58,17 +64,38 @@ export const RootNavigator: React.FC = () => {
         />
         <Stack.Screen name={ROUTES.HOME} component={HomeScreen} />
         <Stack.Screen name={ROUTES.ANALYTICS} component={AnalyticsScreen} />
+
         <Stack.Screen
-          name={ROUTES.ADD_TRANSACTION}
+          name={ROUTES.TRANSCATIONS}
           component={AddTransactionScreen}
         />
-        {/* <Stack.Screen
-          name={ROUTES.ADD_TRANSACTION_MANUAL}
-          component={TransactionManualEntryScreen}
-        /> */}
         <Stack.Screen
-          name={ROUTES.ADD_TRANSACTION_MANUAL}
+          name={ROUTES.ADD_TRANSACTION_RECEIPT}
           component={ReceiptFlowNavigator}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_TRANSACTION_SALES}
+          component={SalesFlowNavigator}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_TRANSACTION_PURCHASE}
+          component={PurchaseFlowNavigator}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_TRANSACTION_EXPENSE}
+          component={ExpenseFlowNavigator}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_TRANSACTION_BANK}
+          component={BankTransferFlowNavigator}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_TRANSACTION_SUPPLIER_PAYMENT}
+          component={SupplierPaymentFlowNavigator}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_TRANSACTION_ACCOUNT_TRANSFER}
+          component={AccountTransferFlowNavigator}
         />
         <Stack.Screen
           name={ROUTES.AI_ASSISTANT}
