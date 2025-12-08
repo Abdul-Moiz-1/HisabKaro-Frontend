@@ -15,6 +15,11 @@ export const ROUTES = {
   ADD_TRANSACTION_BANK: 'Bank',
   ADD_TRANSACTION_SUPPLIER_PAYMENT: 'SupplierPayment',
   ADD_TRANSACTION_ACCOUNT_TRANSFER: 'AccountTransfer',
+  TRANSACTION_LIST: 'TransactionList',
+  TRANSCATION_DETAIL: 'TransactionDetail',
+  TRANSACTION_FILTER: 'TransactionFilter',
+  TRANSACTION_SEARCH: 'TransactionSearch',
+  TRANSACTION_STATS: 'TransactionStats',
   AI_ASSISTANT: 'AIAssistant',
   AI_CHAT: 'AIChat',
   MENU: 'Menu',
@@ -28,6 +33,13 @@ export const ROUTES = {
   SCHEDULED_PAYMENTS: 'ScheduledPayments',
   NOTIFICATIONS: 'Notifications',
   BANK_ACCOUNT_DETAILS: 'BankAccountDetails',
+  EDIT_TRANSACTION: 'EditTransaction',
+  EDIT_TRANSACTION_SELECT_PARTY: 'SelectParty',
+  EDIT_TRANSACTION_CONFIRM: 'EditConfirmation',
+  EDIT_TRANSACTION_HISTORY: 'EditHistory',
+  EDIT_TRANSACTION_FLOW: 'EditTransactionFlow',
+  EDIT_TRANSACTION_SELECT_CATEGORY: 'SelectCategory',
+  EDIT_TRANSACTION_SELECT_ITEM: 'SelectItems',
 } as const;
 
 export type RouteName = (typeof ROUTES)[keyof typeof ROUTES];

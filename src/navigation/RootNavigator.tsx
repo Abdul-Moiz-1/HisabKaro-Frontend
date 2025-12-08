@@ -38,6 +38,15 @@ import ExpenseFlowNavigator from '../screens/ManualTranasactions/expense/Expense
 import BankTransferFlowNavigator from '../screens/ManualTranasactions/bankTransfer/BankTransferFlowNavigator';
 import SupplierPaymentFlowNavigator from '../screens/ManualTranasactions/supplierPayment/SupplierPaymentFlowNavigator';
 import AccountTransferFlowNavigator from '../screens/ManualTranasactions/accountTransfer/AccountTransferFlowNavigator';
+import TransactionListScreen from '../screens/TransactionManagement/TransactionListScreen';
+import TransactionDetailScreen from '../screens/TransactionManagement/TransactionDetailScreen';
+import TransactionFilterScreen from '../screens/TransactionManagement/TransactionFilterScreen';
+import TransactionSearchScreen from '../screens/TransactionManagement/TransactionSearchScreen';
+import TransactionStatsScreen from '../screens/TransactionManagement/TransactionStatsScreen';
+import EditTransactionScreen from '../screens/EditTransaction/screens/EditTransactionScreen';
+import EditConfirmationScreen from '../screens/EditTransaction/screens/EditConfirmationScreen';
+import EditHistoryScreen from '../screens/EditTransaction/screens/EditHistoryScreen';
+import EditTransactionFlowNavigator from '../screens/EditTransaction/EditTransactionFlowNavigator';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -131,8 +140,33 @@ export const RootNavigator: React.FC = () => {
           component={NotificationsScreen}
         />
         <Stack.Screen
+          name={ROUTES.TRANSACTION_LIST}
+          component={TransactionListScreen}
+        />
+        <Stack.Screen
           name={ROUTES.BANK_ACCOUNT_DETAILS}
           component={BankAccountDetailsScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.TRANSCATION_DETAIL}
+          component={TransactionDetailScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.TRANSACTION_FILTER}
+          component={TransactionFilterScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.TRANSACTION_SEARCH}
+          component={TransactionSearchScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.TRANSACTION_STATS}
+          component={TransactionStatsScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.EDIT_TRANSACTION_FLOW}
+          component={EditTransactionFlowNavigator}
+          options={{ presentation: 'modal' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

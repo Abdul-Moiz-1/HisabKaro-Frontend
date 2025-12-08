@@ -44,6 +44,7 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
     // Navigate to respective screens
     switch (tabId) {
       case 'home':
+        navigation.navigate(ROUTES.TRANSACTION_LIST);
         // Already on home screen
         break;
       case 'analytics':

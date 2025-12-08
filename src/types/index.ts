@@ -1,3 +1,5 @@
+import { NavigatorScreenParams } from '@react-navigation/native';
+
 export interface User {
   id: string;
   email: string;
@@ -8,6 +10,23 @@ export interface User {
   phone?: string;
   avatar?: string;
 }
+
+export type EditTransactionFlowParamList = {
+  EditTransaction: { transaction: any };
+  SelectParty: {
+    currentParty?: any;
+    partyType: 'Customer' | 'Supplier';
+    flowData?: any;
+  };
+  SelectItems: {
+    currentItems?: any[];
+    transactionType: string;
+    flowData?: any;
+  };
+  SelectCategory: { currentCategory?: string; flowData?: any };
+  EditConfirmation: { transaction: any; changes: any };
+  EditHistory: { transaction: any };
+};
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -39,8 +58,23 @@ export type RootStackParamList = {
   Expenses: undefined;
   ScheduledPayments: undefined;
   Notifications: undefined;
+  TransactionList: undefined;
+  TransactionDetail: { transaction: any };
+  TransactionFilter: undefined;
+  TransactionSearch: undefined;
+  TransactionStats: undefined;
   BankAccountDetails: { accountId: string; accountName: string };
+  // EditTransaction: { transaction: any };
+  EditTransactionFlow: NavigatorScreenParams<EditTransactionFlowParamList>;
+  // EditConfirmation: { transaction: any; changes: any };
+  // EditHistory: { transaction: any };
 };
+
+declare global {
+  namespace ReactNavigation {
+    interface RootParamList extends RootStackParamList {}
+  }
+}
 
 export type NavigationProps<T extends keyof RootStackParamList> = {
   navigation: {
