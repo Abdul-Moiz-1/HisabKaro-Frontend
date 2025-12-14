@@ -1,13 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import { NavigationProps } from '../../types';
-import { Container, HeaderNavigation, SearchBar, TabSelector, LineChart, PieChart } from '../../components/common';
+import {
+  Container,
+  HeaderNavigation,
+  SearchBar,
+  TabSelector,
+  LineChart,
+  PieChart,
+} from '../../components/common';
 import { theme } from '../../constants/theme';
 import { ROUTES } from '../../constants/routes';
 import { useAppSelector } from '../../store/hooks';
 
-const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation }) => {
-  const { user } = useAppSelector((state) => state.user);
+const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({
+  navigation,
+}) => {
+  const { user } = useAppSelector(state => state.user);
   const [selectedPeriod, setSelectedPeriod] = useState('Daily');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -38,7 +53,10 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation 
     { id: '6', label: 'Taxi', value: 32, color: '#007AFF' },
   ];
 
-  const totalExpenses = expenseSegments.reduce((sum, seg) => sum + seg.value, 0);
+  const totalExpenses = expenseSegments.reduce(
+    (sum, seg) => sum + seg.value,
+    0,
+  );
 
   return (
     <Container safeArea edges={['top']}>
@@ -58,7 +76,7 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation 
       />
 
       <View style={styles.headerSection}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.userInfo}
           onPress={() => navigation.navigate(ROUTES.PROFILE)}
           activeOpacity={0.7}
@@ -74,10 +92,7 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation 
         </TouchableOpacity>
       </View>
 
-      <SearchBar
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
+      <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
 
       <TabSelector
         tabs={periodTabs}
@@ -114,11 +129,15 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation 
 
         <View style={styles.accountsSection}>
           <Text style={styles.sectionTitle}>Accounts</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.accountsScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.accountsScroll}
+          >
             <View style={styles.accountItem}>
               <Text style={styles.accountIcon}>🏦</Text>
               <Text style={styles.accountName}>PASHABANK USD</Text>
-              <Text style={styles.accountBalance}>$425.35</Text>
+              <Text style={styles.accountBalance}>$425</Text>
             </View>
             <View style={styles.accountItem}>
               <Text style={styles.accountIcon}>🏦</Text>
@@ -150,7 +169,12 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation 
               <Text style={styles.seeAll}>See All</Text>
             </TouchableOpacity>
           </View>
-          <PieChart segments={expenseSegments} total={totalExpenses} size={200} showLegend />
+          <PieChart
+            segments={expenseSegments}
+            total={totalExpenses}
+            size={200}
+            showLegend
+          />
         </View>
       </ScrollView>
     </Container>
@@ -307,4 +331,3 @@ const styles = StyleSheet.create({
 });
 
 export default StatisticsScreen;
-

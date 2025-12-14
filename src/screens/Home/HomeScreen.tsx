@@ -266,7 +266,7 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         {/* Header with Balance */}
         <BalanceCard
           userName="Farida Orojova"
-          balance={425.35}
+          balance={425}
           onAvatarPress={() => navigation.navigate(ROUTES.PROFILE)}
           onNotificationPress={() => navigation.navigate(ROUTES.NOTIFICATIONS)}
           onBalancePress={() => navigation.navigate(ROUTES.BALANCE_ACCOUNTS)}
@@ -339,16 +339,6 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         <ScheduledPayments
           onSeeAll={() => navigation.navigate(ROUTES.SCHEDULED_PAYMENTS)}
         />
-
-        {/* Add Widget Button */}
-        <TouchableOpacity style={styles.addWidgetButton}>
-          <View style={styles.addWidgetContent}>
-            <View style={styles.addIcon}>
-              <Text style={styles.addIconText}>+</Text>
-            </View>
-            <Text style={styles.addWidgetText}>Add widget</Text>
-          </View>
-        </TouchableOpacity>
       </ScrollView>
 
       {/* Bottom Navigation */}

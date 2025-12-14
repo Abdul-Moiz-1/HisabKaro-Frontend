@@ -8,11 +8,12 @@ import {
   StyleSheet,
 } from 'react-native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 interface Account {
   id: string;
@@ -89,7 +90,7 @@ const SourceAccountSelectionScreen: React.FC = () => {
       <View
         style={[styles.accountIcon, { backgroundColor: account.color + '20' }]}
       >
-        <Ionicons name={account.icon as any} size={24} color={account.color} />
+        <Icon name={account.icon as any} size={24} color={account.color} />
       </View>
 
       <View style={styles.accountInfo}>
@@ -102,7 +103,7 @@ const SourceAccountSelectionScreen: React.FC = () => {
         </Text>
       </View>
 
-      <Ionicons name="chevron-forward" size={24} color="#C7C7CC" />
+      <Icon name="chevron-forward" size={24} color="#C7C7CC" />
     </TouchableOpacity>
   );
 
@@ -111,7 +112,7 @@ const SourceAccountSelectionScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Info Card */}
         <View style={styles.infoCard}>
-          <Ionicons name="swap-horizontal" size={24} color="#007AFF" />
+          <Icon name="swap-horizontal" size={24} color="#007AFF" />
           <Text style={styles.infoText}>
             Transfer money between your accounts
           </Text>

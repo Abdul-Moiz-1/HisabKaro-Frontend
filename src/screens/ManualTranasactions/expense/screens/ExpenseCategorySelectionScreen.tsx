@@ -16,7 +16,8 @@ import { TextInputField } from '../../../../components/DynamicForm';
 import { FieldType } from '../../../../types/forms';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../../../components/Icon';
+
 
 interface ExpenseCategory {
   id: string;
@@ -116,7 +117,7 @@ const ExpenseCategorySelectionScreen: React.FC = () => {
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <Ionicons
+          <Icon
             name="search"
             size={20}
             color="#8E8E93"
@@ -131,7 +132,7 @@ const ExpenseCategorySelectionScreen: React.FC = () => {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#8E8E93" />
+              <Icon name="close-circle" size={20} color="#8E8E93" />
             </TouchableOpacity>
           )}
         </View>
@@ -154,7 +155,7 @@ const ExpenseCategorySelectionScreen: React.FC = () => {
                     PKR {expense.amount.toLocaleString()}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+                <Icon name="chevron-forward" size={20} color="#C7C7CC" />
               </TouchableOpacity>
             ))}
           </View>
@@ -188,7 +189,7 @@ const ExpenseCategorySelectionScreen: React.FC = () => {
           style={styles.addCategoryButton}
           onPress={() => setShowAddCategoryModal(true)}
         >
-          <Ionicons name="add-circle-outline" size={20} color="#007AFF" />
+          <Icon name="add-circle-outline" size={20} color="#007AFF" />
           <Text style={styles.addCategoryButtonText}>
             + Add custom category
           </Text>
@@ -217,7 +218,7 @@ const ExpenseCategorySelectionScreen: React.FC = () => {
               }}
               value={newCategoryName}
               onChange={setNewCategoryName}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
 
             <View style={styles.modalButtons}>

@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useThemedStyles } from '../../../../theme';
 import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +17,7 @@ import { DateField, TextAreaField } from '../../../../components/DynamicForm';
 import { FieldType } from '../../../../types/forms';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 interface Account {
   id: string;
@@ -124,7 +124,7 @@ const DestinationAccountSelectionScreen: React.FC = () => {
       <View
         style={[styles.accountIcon, { backgroundColor: account.color + '20' }]}
       >
-        <Ionicons name={account.icon as any} size={24} color={account.color} />
+        <Icon name={account.icon as any} size={24} color={account.color} />
       </View>
 
       <View style={styles.accountInfo}>
@@ -162,13 +162,13 @@ const DestinationAccountSelectionScreen: React.FC = () => {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Ionicons name="arrow-up-circle" size={20} color="#FF3B30" />
+              <Icon name="arrow-up-circle" size={20} color="#FF3B30" />
               <Text style={styles.summaryLabel}>From</Text>
               <Text style={styles.summaryValue}>{sourceAccount?.name}</Text>
             </View>
-            <Ionicons name="swap-horizontal" size={24} color="#8E8E93" />
+            <Icon name="swap-horizontal" size={24} color="#8E8E93" />
             <View style={styles.summaryItem}>
-              <Ionicons name="arrow-down-circle" size={20} color="#34C759" />
+              <Icon name="arrow-down-circle" size={20} color="#34C759" />
               <Text style={styles.summaryLabel}>Amount</Text>
               <Text style={styles.summaryAmount}>
                 PKR {amount?.toLocaleString()}
@@ -237,7 +237,7 @@ const DestinationAccountSelectionScreen: React.FC = () => {
           }}
           value={date.toISOString()}
           onChange={(value: string) => setDate(new Date(value))}
-          onBlur={() => {}}
+          onBlur={() => { }}
         />
 
         {/* Notes */}
@@ -253,7 +253,7 @@ const DestinationAccountSelectionScreen: React.FC = () => {
             }}
             value={notes}
             onChange={setNotes}
-            onBlur={() => {}}
+            onBlur={() => { }}
           />
         </View>
       </ScrollView>

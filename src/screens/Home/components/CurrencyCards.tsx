@@ -12,7 +12,7 @@ interface CurrencyCardData {
 const currencyData: CurrencyCardData[] = [
   {
     id: '1',
-    amount: '$425.35',
+    amount: '$425',
     label: 'PASHABANK USD',
     icon: '🏛️',
   },
@@ -35,12 +35,15 @@ interface CurrencyCardsProps {
   onSeeAll?: () => void;
 }
 
-export const CurrencyCards: React.FC<CurrencyCardsProps> = ({ onCardPress, onSeeAll }) => {
+export const CurrencyCards: React.FC<CurrencyCardsProps> = ({
+  onCardPress,
+  onSeeAll,
+}) => {
   return (
     <View style={styles.container}>
-      {currencyData.map((item) => (
-        <TouchableOpacity 
-          key={item.id} 
+      {currencyData.map(item => (
+        <TouchableOpacity
+          key={item.id}
           style={styles.card}
           onPress={() => onCardPress?.(item.id)}
         >

@@ -263,7 +263,7 @@ const ProfileManagementScreen: React.FC<NavigationProps<'Profile'>> = ({ navigat
                 )}
 
                 <Input
-                  label="E-mail"
+                  label="Email"
                   placeholder="Enter your email"
                   value={values.email}
                   onChangeText={handleChange('email')}

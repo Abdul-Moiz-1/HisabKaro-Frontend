@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../components/Icon';
 import ActionButton from '../../components/common/ActionButton';
 import { useThemedStyles } from '../../theme';
 import { Theme } from '../../constants/theme';
@@ -156,7 +156,7 @@ const TransactionDetailScreen: React.FC = () => {
           <View
             style={[styles.headerIcon, { backgroundColor: icon.color + '20' }]}
           >
-            <Ionicons name={icon.name as any} size={40} color={icon.color} />
+            <Icon name={icon.name as any} size={40} color={icon.color} />
           </View>
           <Text style={styles.headerType}>
             {getTransactionTypeLabel(transaction?.type)}
@@ -173,7 +173,7 @@ const TransactionDetailScreen: React.FC = () => {
               {
                 color:
                   transaction?.type === 'receipt' ||
-                  transaction?.type === 'sale'
+                    transaction?.type === 'sale'
                     ? '#34C759'
                     : '#FF3B30',
               },
@@ -321,41 +321,41 @@ const TransactionDetailScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Actions</Text>
 
           <TouchableOpacity style={styles.actionRow} onPress={handleShare}>
-            <Ionicons name="share-social" size={24} color="#007AFF" />
+            <Icon name="share-social" size={24} color="#007AFF" />
             <Text style={styles.actionText}>Share Receipt</Text>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionRow}
             onPress={handleDownloadPDF}
           >
-            <Ionicons name="document" size={24} color="#5856D6" />
+            <Icon name="document" size={24} color="#5856D6" />
             <Text style={styles.actionText}>Download PDF</Text>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionRow} onPress={handlePrint}>
-            <Ionicons name="print" size={24} color="#34C759" />
+            <Icon name="print" size={24} color="#34C759" />
             <Text style={styles.actionText}>Print</Text>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionRow} onPress={handleEdit}>
-            <Ionicons name="create" size={24} color="#FF9500" />
+            <Icon name="create" size={24} color="#FF9500" />
             <Text style={styles.actionText}>Edit Transaction</Text>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.actionRow, styles.actionRowDanger]}
             onPress={handleDelete}
           >
-            <Ionicons name="trash" size={24} color="#FF3B30" />
+            <Icon name="trash" size={24} color="#FF3B30" />
             <Text style={[styles.actionText, styles.actionTextDanger]}>
               Delete Transaction
             </Text>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         </View>
       </ScrollView>

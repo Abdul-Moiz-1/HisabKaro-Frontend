@@ -9,7 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../Icon';
 import { useThemedStyles } from '../../theme';
 import { Theme } from '../../constants/theme';
 
@@ -43,7 +43,7 @@ function SearchableList<T>({
     <View style={styles.container}>
       {/* Search Input */}
       <View style={styles.searchContainer}>
-        <Ionicons
+        <Icon
           name="search"
           size={20}
           color="#8E8E93"
@@ -58,7 +58,7 @@ function SearchableList<T>({
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={20} color="#8E8E93" />
+            <Icon name="close-circle" size={20} color="#8E8E93" />
           </TouchableOpacity>
         )}
       </View>
@@ -79,12 +79,12 @@ function SearchableList<T>({
             activeOpacity={0.7}
           >
             {renderItem(item)}
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={64} color="#C7C7CC" />
+            <Icon name="search" size={64} color="#C7C7CC" />
             <Text style={styles.emptyText}>{emptyMessage}</Text>
           </View>
         }

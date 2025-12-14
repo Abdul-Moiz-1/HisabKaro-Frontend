@@ -9,11 +9,12 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 const ConfirmationScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -56,7 +57,7 @@ const ConfirmationScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Success Header */}
         <View style={styles.successHeader}>
-          <Ionicons name="checkmark-circle" size={64} color="#34C759" />
+          <Icon name="checkmark-circle" size={64} color="#34C759" />
           <Text style={styles.successTitle}>
             ✅ {isDeposit ? 'Deposit' : 'Withdrawal'} Recorded
           </Text>
@@ -127,7 +128,7 @@ const ConfirmationScreen: React.FC = () => {
           {/* Cash Balance */}
           <View style={styles.balanceItem}>
             <View style={styles.balanceHeader}>
-              <Ionicons
+              <Icon
                 name="wallet"
                 size={20}
                 color={isDeposit ? '#FF3B30' : '#34C759'}
@@ -138,7 +139,7 @@ const ConfirmationScreen: React.FC = () => {
               <Text style={styles.balanceBefore}>
                 PKR {cashBefore?.toLocaleString()}
               </Text>
-              <Ionicons
+              <Icon
                 name="arrow-forward"
                 size={16}
                 color="#8E8E93"
@@ -154,7 +155,7 @@ const ConfirmationScreen: React.FC = () => {
               </Text>
             </View>
             <View style={styles.balanceDiff}>
-              <Ionicons
+              <Icon
                 name={isDeposit ? 'trending-down' : 'trending-up'}
                 size={16}
                 color={isDeposit ? '#FF3B30' : '#34C759'}
@@ -173,7 +174,7 @@ const ConfirmationScreen: React.FC = () => {
           {/* Bank Balance */}
           <View style={styles.balanceItem}>
             <View style={styles.balanceHeader}>
-              <Ionicons
+              <Icon
                 name="business"
                 size={20}
                 color={isDeposit ? '#34C759' : '#FF3B30'}
@@ -186,7 +187,7 @@ const ConfirmationScreen: React.FC = () => {
               <Text style={styles.balanceBefore}>
                 PKR {bankBefore?.toLocaleString()}
               </Text>
-              <Ionicons
+              <Icon
                 name="arrow-forward"
                 size={16}
                 color="#8E8E93"
@@ -202,7 +203,7 @@ const ConfirmationScreen: React.FC = () => {
               </Text>
             </View>
             <View style={styles.balanceDiff}>
-              <Ionicons
+              <Icon
                 name={isDeposit ? 'trending-up' : 'trending-down'}
                 size={16}
                 color={isDeposit ? '#34C759' : '#FF3B30'}
@@ -221,7 +222,7 @@ const ConfirmationScreen: React.FC = () => {
 
         {/* Info Box */}
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color="#007AFF" />
+          <Icon name="information-circle" size={20} color="#007AFF" />
           <Text style={styles.infoText}>
             This transaction has been recorded in your books. Both cash and bank
             balances have been updated.
@@ -232,32 +233,32 @@ const ConfirmationScreen: React.FC = () => {
         <Text style={styles.actionsTitle}>Quick Actions</Text>
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="receipt" size={24} color="#007AFF" />
+          <Icon name="receipt" size={24} color="#007AFF" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>View Transaction Receipt</Text>
             <Text style={styles.actionDescription}>See complete details</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="document-text" size={24} color="#5856D6" />
+          <Icon name="document-text" size={24} color="#5856D6" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>View Bank Statement</Text>
             <Text style={styles.actionDescription}>
               See {bankAccount?.bankName} transactions
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="create" size={24} color="#34C759" />
+          <Icon name="create" size={24} color="#34C759" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>Add Note</Text>
             <Text style={styles.actionDescription}>Add additional details</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
       </ScrollView>
 

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import { AmountInputField } from '../../../../components/DynamicForm';
 import { FieldType } from '../../../../types/forms';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 const PurchaseBillSummaryScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -67,7 +68,7 @@ const PurchaseBillSummaryScreen: React.FC = () => {
         {/* Supplier Info */}
         {supplier && (
           <View style={styles.supplierCard}>
-            <Ionicons name="business" size={20} color="#007AFF" />
+            <Icon name="business" size={20} color="#007AFF" />
             <Text style={styles.supplierName}>{supplier.name}</Text>
           </View>
         )}
@@ -77,7 +78,7 @@ const PurchaseBillSummaryScreen: React.FC = () => {
 
         {bill.length === 0 ? (
           <View style={styles.emptyBill}>
-            <Ionicons name="receipt-outline" size={64} color="#C7C7CC" />
+            <Icon name="receipt-outline" size={64} color="#C7C7CC" />
             <Text style={styles.emptyText}>No items in bill</Text>
             <TouchableOpacity
               style={styles.addButton}
@@ -93,7 +94,7 @@ const PurchaseBillSummaryScreen: React.FC = () => {
                 <View style={styles.itemHeader}>
                   <Text style={styles.itemName}>{item.name}</Text>
                   <TouchableOpacity onPress={() => handleRemoveItem(item.id)}>
-                    <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+                    <Icon name="trash-outline" size={20} color="#FF3B30" />
                   </TouchableOpacity>
                 </View>
 
@@ -119,7 +120,7 @@ const PurchaseBillSummaryScreen: React.FC = () => {
               style={styles.addMoreButton}
               onPress={handleAddMoreItems}
             >
-              <Ionicons name="add-circle-outline" size={20} color="#007AFF" />
+              <Icon name="add-circle-outline" size={20} color="#007AFF" />
               <Text style={styles.addMoreText}>Add more items</Text>
             </TouchableOpacity>
           </>
@@ -133,12 +134,12 @@ const PurchaseBillSummaryScreen: React.FC = () => {
               onPress={() => setShowExpenses(!showExpenses)}
             >
               <View style={styles.expensesHeaderLeft}>
-                <Ionicons name="wallet-outline" size={20} color="#007AFF" />
+                <Icon name="wallet-outline" size={20} color="#007AFF" />
                 <Text style={styles.expensesHeaderText}>
                   Additional Expenses (Optional)
                 </Text>
               </View>
-              <Ionicons
+              <Icon
                 name={showExpenses ? 'chevron-up' : 'chevron-down'}
                 size={20}
                 color="#8E8E93"
@@ -158,7 +159,7 @@ const PurchaseBillSummaryScreen: React.FC = () => {
                   }}
                   value={freight}
                   onChange={setFreight}
-                  onBlur={() => {}}
+                  onBlur={() => { }}
                 />
 
                 <AmountInputField
@@ -172,7 +173,7 @@ const PurchaseBillSummaryScreen: React.FC = () => {
                   }}
                   value={loading}
                   onChange={setLoading}
-                  onBlur={() => {}}
+                  onBlur={() => { }}
                 />
 
                 <AmountInputField
@@ -186,11 +187,11 @@ const PurchaseBillSummaryScreen: React.FC = () => {
                   }}
                   value={tax}
                   onChange={setTax}
-                  onBlur={() => {}}
+                  onBlur={() => { }}
                 />
 
                 <View style={styles.expensesInfo}>
-                  <Ionicons
+                  <Icon
                     name="information-circle-outline"
                     size={16}
                     color="#007AFF"

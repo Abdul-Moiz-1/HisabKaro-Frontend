@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../../components/Icon';
 import { useThemedStyles } from '../../../theme';
 import { useFlowNavigation } from '../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -217,7 +217,7 @@ const SelectItemsScreen: React.FC = () => {
                   })
                 }
               >
-                <Ionicons name="remove" size={24} color="#007AFF" />
+                <Icon name="remove" size={24} color="#007AFF" />
               </TouchableOpacity>
               <Text style={styles.quantityValue}>{editingItem.quantity}</Text>
               <TouchableOpacity
@@ -229,7 +229,7 @@ const SelectItemsScreen: React.FC = () => {
                   })
                 }
               >
-                <Ionicons name="add" size={24} color="#007AFF" />
+                <Icon name="add" size={24} color="#007AFF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -265,7 +265,7 @@ const SelectItemsScreen: React.FC = () => {
           {transactionType === 'sale' &&
             editingItem.quantity > editingItem.stockQuantity && (
               <View style={styles.warningCard}>
-                <Ionicons name="warning" size={20} color="#FF9500" />
+                <Icon name="warning" size={20} color="#FF9500" />
                 <Text style={styles.warningText}>
                   Quantity exceeds available stock ({editingItem.stockQuantity}{' '}
                   {editingItem.unit})
@@ -328,7 +328,7 @@ const SelectItemsScreen: React.FC = () => {
                     style={styles.removeButton}
                     onPress={() => handleRemoveItem(item.id)}
                   >
-                    <Ionicons name="close-circle" size={20} color="#FF3B30" />
+                    <Icon name="close-circle" size={20} color="#FF3B30" />
                   </TouchableOpacity>
                 </TouchableOpacity>
               ))}

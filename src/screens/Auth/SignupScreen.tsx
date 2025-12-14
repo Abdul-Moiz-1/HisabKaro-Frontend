@@ -146,7 +146,7 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
           />
 
           <Input
-            label="E-mail"
+            label="Email"
             placeholder="Enter your email"
             value={email}
             onChangeText={(text) => {

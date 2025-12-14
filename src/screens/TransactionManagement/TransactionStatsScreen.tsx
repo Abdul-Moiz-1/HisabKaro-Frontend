@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../components/Icon';
 import { useThemedStyles } from '../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Theme } from '../../constants/theme';
@@ -90,13 +90,13 @@ const TransactionStatsScreen: React.FC = () => {
         {/* Summary Cards */}
         <View style={styles.summaryCards}>
           <View style={[styles.summaryCard, styles.incomeCard]}>
-            <Ionicons name="trending-up" size={24} color="#34C759" />
+            <Icon name="trending-up" size={24} color="#34C759" />
             <Text style={styles.summaryLabel}>Total Income</Text>
             <Text style={styles.summaryValue}>
               PKR {stats.totalIncome.toLocaleString()}
             </Text>
             <View style={styles.changeContainer}>
-              <Ionicons name="arrow-up" size={16} color="#34C759" />
+              <Icon name="arrow-up" size={16} color="#34C759" />
               <Text style={[styles.changeText, { color: '#34C759' }]}>
                 {stats.incomeChange}%
               </Text>
@@ -104,13 +104,13 @@ const TransactionStatsScreen: React.FC = () => {
           </View>
 
           <View style={[styles.summaryCard, styles.expenseCard]}>
-            <Ionicons name="trending-down" size={24} color="#FF3B30" />
+            <Icon name="trending-down" size={24} color="#FF3B30" />
             <Text style={styles.summaryLabel}>Total Expense</Text>
             <Text style={styles.summaryValue}>
               PKR {stats.totalExpense.toLocaleString()}
             </Text>
             <View style={styles.changeContainer}>
-              <Ionicons name="arrow-down" size={16} color="#34C759" />
+              <Icon name="arrow-down" size={16} color="#34C759" />
               <Text style={[styles.changeText, { color: '#34C759' }]}>
                 {Math.abs(stats.expenseChange)}%
               </Text>
@@ -122,8 +122,8 @@ const TransactionStatsScreen: React.FC = () => {
         <View style={styles.profitCard}>
           <View style={styles.profitHeader}>
             <Text style={styles.profitLabel}>Net Profit</Text>
-            <Ionicons
-              name="information-circle-outline"
+            <Icon
+              name="search"
               size={20}
               color="#8E8E93"
             />

@@ -9,11 +9,12 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 const ConfirmationScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -47,7 +48,7 @@ const ConfirmationScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Success Header */}
         <View style={styles.successHeader}>
-          <Ionicons name="checkmark-circle" size={64} color="#34C759" />
+          <Icon name="checkmark-circle" size={64} color="#34C759" />
           <Text style={styles.successTitle}>✅ Transfer Complete</Text>
           <Text style={styles.successSubtitle}>
             Money transferred successfully
@@ -73,7 +74,7 @@ const ConfirmationScreen: React.FC = () => {
                   { backgroundColor: sourceAccount?.color + '20' },
                 ]}
               >
-                <Ionicons
+                <Icon
                   name={sourceAccount?.icon as any}
                   size={24}
                   color={sourceAccount?.color}
@@ -87,7 +88,7 @@ const ConfirmationScreen: React.FC = () => {
 
             {/* Arrow */}
             <View style={styles.flowArrow}>
-              <Ionicons name="arrow-forward" size={32} color="#007AFF" />
+              <Icon name="arrow-forward" size={32} color="#007AFF" />
               <Text style={styles.flowAmount}>
                 PKR {amount?.toLocaleString()}
               </Text>
@@ -101,7 +102,7 @@ const ConfirmationScreen: React.FC = () => {
                   { backgroundColor: destinationAccount?.color + '20' },
                 ]}
               >
-                <Ionicons
+                <Icon
                   name={destinationAccount?.icon as any}
                   size={24}
                   color={destinationAccount?.color}
@@ -160,7 +161,7 @@ const ConfirmationScreen: React.FC = () => {
                   { backgroundColor: sourceAccount?.color + '20' },
                 ]}
               >
-                <Ionicons
+                <Icon
                   name={sourceAccount?.icon as any}
                   size={16}
                   color={sourceAccount?.color}
@@ -172,7 +173,7 @@ const ConfirmationScreen: React.FC = () => {
               <Text style={styles.balanceBefore}>
                 PKR {sourceAccount?.balance.toLocaleString()}
               </Text>
-              <Ionicons
+              <Icon
                 name="arrow-forward"
                 size={16}
                 color="#8E8E93"
@@ -183,7 +184,7 @@ const ConfirmationScreen: React.FC = () => {
               </Text>
             </View>
             <View style={styles.balanceDiff}>
-              <Ionicons name="trending-down" size={16} color="#FF3B30" />
+              <Icon name="trending-down" size={16} color="#FF3B30" />
               <Text style={[styles.balanceDiffText, { color: '#FF3B30' }]}>
                 -PKR {amount?.toLocaleString()}
               </Text>
@@ -199,7 +200,7 @@ const ConfirmationScreen: React.FC = () => {
                   { backgroundColor: destinationAccount?.color + '20' },
                 ]}
               >
-                <Ionicons
+                <Icon
                   name={destinationAccount?.icon as any}
                   size={16}
                   color={destinationAccount?.color}
@@ -213,7 +214,7 @@ const ConfirmationScreen: React.FC = () => {
               <Text style={styles.balanceBefore}>
                 PKR {destinationAccount?.balance.toLocaleString()}
               </Text>
-              <Ionicons
+              <Icon
                 name="arrow-forward"
                 size={16}
                 color="#8E8E93"
@@ -224,7 +225,7 @@ const ConfirmationScreen: React.FC = () => {
               </Text>
             </View>
             <View style={styles.balanceDiff}>
-              <Ionicons name="trending-up" size={16} color="#34C759" />
+              <Icon name="trending-up" size={16} color="#34C759" />
               <Text style={[styles.balanceDiffText, { color: '#34C759' }]}>
                 +PKR {amount?.toLocaleString()}
               </Text>
@@ -234,7 +235,7 @@ const ConfirmationScreen: React.FC = () => {
 
         {/* Info Box */}
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color="#007AFF" />
+          <Icon name="information-circle" size={20} color="#007AFF" />
           <Text style={styles.infoText}>
             Both accounts have been updated. This transfer is recorded in your
             transaction history.
@@ -245,30 +246,30 @@ const ConfirmationScreen: React.FC = () => {
         <Text style={styles.actionsTitle}>Quick Actions</Text>
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="receipt" size={24} color="#007AFF" />
+          <Icon name="receipt" size={24} color="#007AFF" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>View Transfer Receipt</Text>
             <Text style={styles.actionDescription}>See complete details</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="list" size={24} color="#5856D6" />
+          <Icon name="list" size={24} color="#5856D6" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>View Transaction History</Text>
             <Text style={styles.actionDescription}>See all transfers</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="create" size={24} color="#34C759" />
+          <Icon name="create" size={24} color="#34C759" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>Add Note</Text>
             <Text style={styles.actionDescription}>Add additional details</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
       </ScrollView>
 

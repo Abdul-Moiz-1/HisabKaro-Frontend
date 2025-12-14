@@ -9,12 +9,13 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSalesFlow } from '../context/SalesFlowContext';
+import Icon from '../../../../components/Icon';
 
 const ShoppingCartScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -45,7 +46,7 @@ const ShoppingCartScreen: React.FC = () => {
         {/* Customer Info */}
         {customer && (
           <View style={styles.customerCard}>
-            <Ionicons name="person" size={20} color="#007AFF" />
+            <Icon name="person" size={20} color="#007AFF" />
             <Text style={styles.customerName}>{customer.name}</Text>
           </View>
         )}
@@ -55,7 +56,7 @@ const ShoppingCartScreen: React.FC = () => {
 
         {cart.length === 0 ? (
           <View style={styles.emptyCart}>
-            <Ionicons name="cart-outline" size={64} color="#C7C7CC" />
+            <Icon name="cart-outline" size={64} color="#C7C7CC" />
             <Text style={styles.emptyText}>Your cart is empty</Text>
             <TouchableOpacity
               style={styles.addButton}
@@ -71,7 +72,7 @@ const ShoppingCartScreen: React.FC = () => {
                 <View style={styles.itemHeader}>
                   <Text style={styles.itemName}>{item.name}</Text>
                   <TouchableOpacity onPress={() => handleRemoveItem(item.id)}>
-                    <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+                    <Icon name="trash-outline" size={20} color="#FF3B30" />
                   </TouchableOpacity>
                 </View>
 
@@ -107,7 +108,7 @@ const ShoppingCartScreen: React.FC = () => {
               style={styles.addMoreButton}
               onPress={handleAddMoreProducts}
             >
-              <Ionicons name="add-circle-outline" size={20} color="#007AFF" />
+              <Icon name="add-circle-outline" size={20} color="#007AFF" />
               <Text style={styles.addMoreText}>Add more products</Text>
             </TouchableOpacity>
           </>

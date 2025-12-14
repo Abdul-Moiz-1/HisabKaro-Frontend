@@ -129,7 +129,7 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
         activeOpacity={0.7}
       >
         <Text style={styles.balanceLabel}>Balance</Text>
-        <Text style={styles.balanceAmount}>${balance.toFixed(2)}</Text>
+        <Text style={styles.balanceAmount}>${balance}</Text>
       </TouchableOpacity>
     </View>
   );

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../components/Icon';
 import { useThemedStyles } from '../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Theme } from '../../constants/theme';
@@ -218,7 +218,7 @@ const TransactionListScreen: React.FC = () => {
         <View
           style={[styles.iconContainer, { backgroundColor: icon.color + '20' }]}
         >
-          <Ionicons name={icon.name as any} size={24} color={icon.color} />
+          <Icon name={icon.name as any} size={24} color={icon.color} />
         </View>
 
         <View style={styles.transactionInfo}>
@@ -232,7 +232,7 @@ const TransactionListScreen: React.FC = () => {
                 {
                   color:
                     transaction.type === 'receipt' ||
-                    transaction.type === 'sale'
+                      transaction.type === 'sale'
                       ? '#34C759'
                       : '#FF3B30',
                 },
@@ -273,7 +273,7 @@ const TransactionListScreen: React.FC = () => {
           </View>
         </View>
 
-        <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+        <Icon name="chevron-forward" size={20} color="#C7C7CC" />
       </TouchableOpacity>
     );
   };
@@ -290,13 +290,13 @@ const TransactionListScreen: React.FC = () => {
             style={styles.headerButton}
             onPress={handleSearchPress}
           >
-            <Ionicons name="search" size={24} color="#007AFF" />
+            <Icon name="search" size={24} color="#007AFF" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
             onPress={handleFilterPress}
           >
-            <Ionicons name="funnel" size={24} color="#007AFF" />
+            <Icon name="funnel" size={24} color="#007AFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -381,7 +381,7 @@ const TransactionListScreen: React.FC = () => {
         {/* Empty State */}
         {transactions.length === 0 && (
           <View style={styles.emptyState}>
-            <Ionicons name="document-text-outline" size={64} color="#C7C7CC" />
+            <Icon name="document-text-outline" size={64} color="#C7C7CC" />
             <Text style={styles.emptyText}>No transactions yet</Text>
             <Text style={styles.emptySubtext}>
               Your transactions will appear here

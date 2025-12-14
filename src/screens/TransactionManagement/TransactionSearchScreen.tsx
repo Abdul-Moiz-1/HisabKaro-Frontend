@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../components/Icon';
 import { useThemedStyles } from '../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Theme } from '../../constants/theme';
@@ -128,7 +128,7 @@ const TransactionSearchScreen: React.FC = () => {
         <View
           style={[styles.resultIcon, { backgroundColor: icon.color + '20' }]}
         >
-          <Ionicons name={icon.name as any} size={24} color={icon.color} />
+          <Icon name={icon.name as any} size={24} color={icon.color} />
         </View>
 
         <View style={styles.resultInfo}>
@@ -169,7 +169,7 @@ const TransactionSearchScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Search Bar */}
       <View style={styles.searchBar}>
-        <Ionicons
+        <Icon
           name="search"
           size={20}
           color="#8E8E93"
@@ -185,7 +185,7 @@ const TransactionSearchScreen: React.FC = () => {
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={clearSearch}>
-            <Ionicons name="close-circle" size={20} color="#8E8E93" />
+            <Icon name="close-circle" size={20} color="#8E8E93" />
           </TouchableOpacity>
         )}
       </View>
@@ -208,8 +208,8 @@ const TransactionSearchScreen: React.FC = () => {
             </>
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons
-                name="search-outline"
+              <Icon
+                name="search"
                 size={64}
                 color="#C7C7CC"
                 style={styles.emptyIcon}
@@ -230,9 +230,9 @@ const TransactionSearchScreen: React.FC = () => {
               style={styles.recentSearchItem}
               onPress={() => handleRecentSearchPress(query)}
             >
-              <Ionicons name="time-outline" size={20} color="#8E8E93" />
+              <Icon name="time-outline" size={20} color="#8E8E93" />
               <Text style={styles.recentSearchText}>{query}</Text>
-              <Ionicons name="arrow-forward" size={20} color="#C7C7CC" />
+              <Icon name="arrow-forward" size={20} color="#C7C7CC" />
             </TouchableOpacity>
           ))}
 

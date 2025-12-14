@@ -8,12 +8,13 @@ import {
   StyleSheet,
 } from 'react-native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 const ConfirmationScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -31,7 +32,7 @@ const ConfirmationScreen: React.FC = () => {
     paidAmount,
     remainingAmount,
     dueDate,
-    
+
   } =
     // @ts-ignore
     route.params?.flowData || {};
@@ -97,7 +98,7 @@ const ConfirmationScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Success Header */}
         <View style={styles.successHeader}>
-          <Ionicons name="checkmark-circle" size={64} color="#34C759" />
+          <Icon name="checkmark-circle" size={64} color="#34C759" />
           <Text style={styles.successTitle}>✅ Purchase Recorded</Text>
           <Text style={styles.successSubtitle}>Bill created successfully</Text>
         </View>
@@ -202,56 +203,56 @@ const ConfirmationScreen: React.FC = () => {
         <Text style={styles.actionsTitle}>What's next?</Text>
 
         <TouchableOpacity style={styles.actionCard} onPress={handleShareBill}>
-          <Ionicons name="share-social" size={24} color="#007AFF" />
+          <Icon name="share-social" size={24} color="#007AFF" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>Share Bill</Text>
             <Text style={styles.actionDescription}>
               Send to supplier or save
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionCard} onPress={handleAttachPhoto}>
-          <Ionicons name="camera" size={24} color="#5856D6" />
+          <Icon name="camera" size={24} color="#5856D6" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>📸 Attach Bill Photo</Text>
             <Text style={styles.actionDescription}>
               Upload supplier's physical bill
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="document-text" size={24} color="#34C759" />
+          <Icon name="document-text" size={24} color="#34C759" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>View Bill Details</Text>
             <Text style={styles.actionDescription}>See complete bill</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         {paymentStatus !== 'paid' && (
           <TouchableOpacity style={styles.actionCard}>
-            <Ionicons name="notifications" size={24} color="#FF9500" />
+            <Icon name="notifications" size={24} color="#FF9500" />
             <View style={styles.actionContent}>
               <Text style={styles.actionLabel}>Set Payment Reminder</Text>
               <Text style={styles.actionDescription}>
                 Remind before due date
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         )}
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="create" size={24} color="#8E8E93" />
+          <Icon name="create" size={24} color="#8E8E93" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>Add Note</Text>
             <Text style={styles.actionDescription}>Optional memo</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
       </ScrollView>
 

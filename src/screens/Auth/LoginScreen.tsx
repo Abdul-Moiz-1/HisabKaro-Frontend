@@ -167,9 +167,8 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
     Toast.show({
       type: 'info',
       text1: 'Social Login',
-      text2: `${
-        provider.charAt(0).toUpperCase() + provider.slice(1)
-      } login coming soon`,
+      text2: `${provider.charAt(0).toUpperCase() + provider.slice(1)
+        } login coming soon`,
     });
   };
 
@@ -315,7 +314,7 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
 
         <View style={styles.form}>
           <Input
-            label="E-mail"
+            label="Email"
             placeholder="Enter your email"
             value={email}
             onChangeText={text => {

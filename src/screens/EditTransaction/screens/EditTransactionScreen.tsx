@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../../components/Icon';
 import { useThemedStyles } from '../../../theme';
 import { useFlowNavigation } from '../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -253,7 +253,7 @@ const EditTransactionScreen: React.FC = () => {
           <View
             style={[styles.headerIcon, { backgroundColor: icon.color + '20' }]}
           >
-            <Ionicons name={icon.name as any} size={32} color={icon.color} />
+            <Icon name={icon.name as any} size={32} color={icon.color} />
           </View>
           <Text style={styles.headerType}>
             Edit{' '}
@@ -265,7 +265,7 @@ const EditTransactionScreen: React.FC = () => {
 
         {/* Warning Banner */}
         <View style={styles.warningBanner}>
-          <Ionicons name="warning" size={20} color="#FF9500" />
+          <Icon name="warning" size={20} color="#FF9500" />
           <Text style={styles.warningText}>
             Editing this transaction will update your accounts and reports. An
             audit trail will be maintained.
@@ -304,7 +304,7 @@ const EditTransactionScreen: React.FC = () => {
                   <Text style={styles.comparisonOld}>
                     PKR {transaction?.amount.toLocaleString()}
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={styles.comparisonNew}>
                     PKR {amount.toLocaleString()}
                   </Text>
@@ -325,7 +325,7 @@ const EditTransactionScreen: React.FC = () => {
                   <Text style={styles.comparisonOld}>
                     {transaction?.party?.name || 'None'}
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={styles.comparisonNew}>
                     {party?.name || 'None'}
                   </Text>
@@ -340,7 +340,7 @@ const EditTransactionScreen: React.FC = () => {
                   <Text style={styles.comparisonOld}>
                     {transaction?.items?.length || 0} item(s)
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={styles.comparisonNew}>
                     {items?.length || 0} item(s)
                   </Text>
@@ -364,14 +364,14 @@ const EditTransactionScreen: React.FC = () => {
                 onPress={handleChangeParty}
               >
                 <Text style={styles.changeButtonText}>Change</Text>
-                <Ionicons name="chevron-forward" size={16} color="#007AFF" />
+                <Icon name="chevron-forward" size={16} color="#007AFF" />
               </TouchableOpacity>
             </View>
 
             {party ? (
               <View style={styles.partyCard}>
                 <View style={styles.partyIcon}>
-                  <Ionicons name="person" size={24} color="#007AFF" />
+                  <Icon name="person" size={24} color="#007AFF" />
                 </View>
                 <View style={styles.partyInfo}>
                   <Text style={styles.partyName}>{party.name}</Text>
@@ -416,7 +416,7 @@ const EditTransactionScreen: React.FC = () => {
                 <Text style={styles.changeButtonText}>
                   {items?.length > 0 ? 'Edit Items' : 'Add Items'}
                 </Text>
-                <Ionicons name="chevron-forward" size={16} color="#007AFF" />
+                <Icon name="chevron-forward" size={16} color="#007AFF" />
               </TouchableOpacity>
             </View>
 
@@ -452,7 +452,7 @@ const EditTransactionScreen: React.FC = () => {
               </View>
             ) : (
               <View style={styles.emptyItems}>
-                <Ionicons name="cart-outline" size={48} color="#C7C7CC" />
+                <Icon name="cart-outline" size={48} color="#C7C7CC" />
                 <Text style={styles.emptyItemsText}>No items added</Text>
               </View>
             )}
@@ -473,7 +473,7 @@ const EditTransactionScreen: React.FC = () => {
                 onPress={handleChangeCategory}
               >
                 <Text style={styles.changeButtonText}>Change</Text>
-                <Ionicons name="chevron-forward" size={16} color="#007AFF" />
+                <Icon name="chevron-forward" size={16} color="#007AFF" />
               </TouchableOpacity>
             </View>
 
@@ -631,17 +631,17 @@ const EditTransactionScreen: React.FC = () => {
             style={styles.historyButton}
             onPress={handleViewHistory}
           >
-            <Ionicons name="time" size={20} color="#007AFF" />
+            <Icon name="time" size={20} color="#007AFF" />
             <Text style={styles.historyButtonText}>
               View Edit History ({transaction.editHistory.length})
             </Text>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         )}
 
         {/* Info Box */}
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color="#007AFF" />
+          <Icon name="information-circle" size={20} color="#007AFF" />
           <Text style={styles.infoText}>
             All changes are tracked and can be audited. The original transaction
             details will be preserved in the edit history.

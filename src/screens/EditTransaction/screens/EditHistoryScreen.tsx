@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../../components/Icon';
 import { useThemedStyles } from '../../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Theme } from '../../../constants/theme';
@@ -89,7 +89,7 @@ const EditHistoryScreen: React.FC = () => {
         <View style={styles.changeFieldOld}>
           <Text style={styles.changeFieldOldValue}>{change.oldValue}</Text>
         </View>
-        <Ionicons name="arrow-forward" size={14} color="#8E8E93" />
+        <Icon name="arrow-forward" size={14} color="#8E8E93" />
         <View style={styles.changeFieldNew}>
           <Text style={styles.changeFieldNewValue}>{change.newValue}</Text>
         </View>
@@ -110,7 +110,7 @@ const EditHistoryScreen: React.FC = () => {
 
         {/* Info Banner */}
         <View style={styles.infoBanner}>
-          <Ionicons name="information-circle" size={20} color="#007AFF" />
+          <Icon name="information-circle" size={20} color="#007AFF" />
           <Text style={styles.infoBannerText}>
             All edits are tracked for compliance and auditing purposes. Original
             transaction details are always preserved.
@@ -138,7 +138,7 @@ const EditHistoryScreen: React.FC = () => {
               >
                 <View style={styles.editHeader}>
                   <View style={styles.editHeaderLeft}>
-                    <Ionicons name="create" size={20} color="#007AFF" />
+                    <Icon name="create" size={20} color="#007AFF" />
                     <Text style={styles.editId}>{entry.id}</Text>
                   </View>
                   <Text style={styles.editDate}>
@@ -152,12 +152,12 @@ const EditHistoryScreen: React.FC = () => {
 
                 <View style={styles.editBody}>
                   <View style={styles.editMetaRow}>
-                    <Ionicons name="person" size={16} color="#8E8E93" />
+                    <Icon name="person" size={16} color="#8E8E93" />
                     <Text style={styles.editMeta}>{entry.editedBy}</Text>
                   </View>
 
                   <View style={styles.editMetaRow}>
-                    <Ionicons name="time" size={16} color="#8E8E93" />
+                    <Icon name="time" size={16} color="#8E8E93" />
                     <Text style={styles.editMeta}>
                       {new Date(entry.editedAt).toLocaleTimeString('en-US', {
                         hour: '2-digit',
@@ -186,13 +186,13 @@ const EditHistoryScreen: React.FC = () => {
           {/* Original Transaction */}
           <View style={styles.timelineItem}>
             <View style={[styles.timelineDot, styles.timelineDotOriginal]}>
-              <Ionicons name="document" size={16} color="#34C759" />
+              <Icon name="document" size={16} color="#34C759" />
             </View>
 
             <View style={[styles.editCard, styles.originalCard]}>
               <View style={styles.editHeader}>
                 <View style={styles.editHeaderLeft}>
-                  <Ionicons name="add-circle" size={20} color="#34C759" />
+                  <Icon name="add-circle" size={20} color="#34C759" />
                   <Text style={styles.editId}>Original Transaction</Text>
                 </View>
               </View>
@@ -249,14 +249,14 @@ const EditHistoryScreen: React.FC = () => {
           <Text style={styles.exportTitle}>Export History</Text>
 
           <TouchableOpacity style={styles.exportButton}>
-            <Ionicons name="download" size={20} color="#007AFF" />
+            <Icon name="download" size={20} color="#007AFF" />
             <Text style={styles.exportButtonText}>
               Download Audit Report (PDF)
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.exportButton}>
-            <Ionicons name="mail" size={20} color="#007AFF" />
+            <Icon name="mail" size={20} color="#007AFF" />
             <Text style={styles.exportButtonText}>Email Audit Trail</Text>
           </TouchableOpacity>
         </View>
