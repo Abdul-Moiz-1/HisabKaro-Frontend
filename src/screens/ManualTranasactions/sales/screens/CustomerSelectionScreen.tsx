@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { Customer } from '../../../../types/flow';
 import { useThemedStyles } from '../../../../theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import SearchableList from '../../../../components/common/SearchableList';
+import { useSalesFlow } from '../context/SalesFlowContext';
 
 // Mock data - replace with API call
 const mockCustomers: Customer[] = [
@@ -37,27 +38,32 @@ const mockCustomers: Customer[] = [
 
 const CustomerSelectionScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const { navigateToScreen } = useFlowNavigation();
+  const navigation = useNavigation();
+  const { setCustomer } = useSalesFlow();
   const [customers] = useState<Customer[]>(mockCustomers);
 
   const handleCustomerSelect = (customer: Customer) => {
-    navigateToScreen('ProductSelection', { customer });
+    setCustomer(customer);
+    // @ts-ignore
+    navigation.navigate('ProductSelection');
   };
 
   const handleAddCustomer = () => {
-    navigateToScreen('AddCustomer');
+    // @ts-ignore
+    navigation.navigate('AddCustomer');
   };
 
   const handleWalkIn = () => {
-    navigateToScreen('ProductSelection', {
-      customer: {
-        id: 'walk-in',
-        name: 'Walk-in Customer',
-        isWalkIn: true,
-        outstanding: 0,
-        dueDate: '',
-      },
-    });
+    const walkInCustomer: Customer = {
+      id: 'walk-in',
+      name: 'Walk-in Customer',
+      isWalkIn: true,
+      outstanding: 0,
+      dueDate: '',
+    };
+    setCustomer(walkInCustomer);
+    // @ts-ignore
+    navigation.navigate('ProductSelection');
   };
 
   const renderCustomerItem = (customer: Customer) => {

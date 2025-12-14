@@ -1,6 +1,7 @@
 // flows/receipt/screens/WalletSelectionScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import {
   DateField,
   RadioField,
@@ -8,10 +9,10 @@ import {
 } from '../../../../components/DynamicForm';
 import ActionButton from '../../../../components/common/ActionButton';
 import { useThemedStyles } from '../../../../theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import { Theme } from '../../../../constants/theme';
 import { FieldType } from '../../../../types/forms';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useOptionalReceiptFlow } from '../context/ReceiptFlowContext';
 
 const walletOptions = [
   { label: 'JazzCash', value: 'jazzcash' },
@@ -23,7 +24,11 @@ const walletOptions = [
 
 const WalletSelectionScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const { navigateToScreen } = useFlowNavigation();
+  const navigation = useNavigation();
+  const route = useRoute();
+  
+  // Use optional context - works with or without ReceiptFlowProvider
+  const receiptFlow = useOptionalReceiptFlow();
 
   const [walletType, setWalletType] = useState('');
   const [customWalletName, setCustomWalletName] = useState('');
@@ -31,10 +36,23 @@ const WalletSelectionScreen: React.FC = () => {
   const [walletDate, setWalletDate] = useState(new Date());
 
   const handleContinue = () => {
-    navigateToScreen('Confirmation', {
+    const walletDetails = {
       walletType: walletType === 'other' ? customWalletName : walletType,
       walletAccount,
       walletDate: walletDate.toISOString(),
+    };
+    
+    // If context is available (Receipt flow), use it
+    if (receiptFlow) {
+      receiptFlow.setWalletPayment(walletDetails);
+    }
+    
+    // @ts-ignore - Navigate with wallet details for flows without context
+    navigation.navigate('Confirmation', {
+      walletDetails,
+      paymentMethod: 'wallet',
+      // Pass through any existing route params
+      ...route.params,
     });
   };
 

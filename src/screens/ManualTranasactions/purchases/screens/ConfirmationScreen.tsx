@@ -23,22 +23,28 @@ const ConfirmationScreen: React.FC = () => {
   const {
     supplier,
     bill,
-    grandTotal,
-    directTotal,
+    totalAmount,
+    // grandTotal,
+    // directTotal,
     paymentStatus,
     paymentMethod,
     paidAmount,
     remainingAmount,
     dueDate,
+    
   } =
     // @ts-ignore
     route.params?.flowData || {};
 
-  const totalAmount = grandTotal || directTotal || 0;
+
+
+
+
+  // const totalAmount = grandTotal || directTotal || 0;                <---- totalamount direct peeche se araha hai 
 
   const handleDone = () => {
     // @ts-ignore
-    navigation.navigate('Dashboard');
+    navigation.navigate('Home');
   };
 
   const handleUndo = () => {

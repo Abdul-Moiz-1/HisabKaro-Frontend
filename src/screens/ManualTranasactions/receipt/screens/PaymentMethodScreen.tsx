@@ -1,13 +1,13 @@
 // flows/receipt/screens/PaymentMethodScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useThemedStyles } from '../../../../theme';
 import { Theme } from '../../../../constants/theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import SelectionCard from '../../../../components/common/SelectionCard';
 import ActionButton from '../../../../components/common/ActionButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useReceiptFlow } from '../context/ReceiptFlowContext';
 
 const paymentMethods = [
   {
@@ -49,19 +49,18 @@ const paymentMethods = [
 
 const PaymentMethodScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const route = useRoute();
-  const { navigateToScreen } = useFlowNavigation();
+  const navigation = useNavigation();
+  const { data, setPaymentMethod } = useReceiptFlow();
 
-  // @ts-ignore
-  const { customer } = route.params?.flowData || {};
+  const customer = data.customer;
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
 
   const handleContinue = () => {
     const method = paymentMethods.find(m => m.value === selectedMethod);
-    if (method) {
-      navigateToScreen(method.navigateTo, {
-        paymentMethod: selectedMethod ?? undefined,
-      });
+    if (method && selectedMethod) {
+      setPaymentMethod(selectedMethod as 'cash' | 'bank' | 'wallet' | 'cheque' | 'card');
+      // @ts-ignore
+      navigation.navigate(method.navigateTo);
     }
   };
 

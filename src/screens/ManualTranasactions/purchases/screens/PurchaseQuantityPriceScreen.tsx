@@ -27,7 +27,7 @@ const PurchaseQuantityPriceScreen: React.FC = () => {
   const { navigateToScreen } = useFlowNavigation();
 
   // @ts-ignore
-  const { product, bill = [] } = route.params?.flowData || {};
+  const { product, bill = [] , supplier} = route.params?.flowData || {};
 
   const [quantity, setQuantity] = useState('1');
   const [cost, setCost] = useState(product?.purchasePrice?.toString() || '');
@@ -45,7 +45,7 @@ const PurchaseQuantityPriceScreen: React.FC = () => {
     };
 
     const updatedBill = [...bill, billItem];
-    navigateToScreen('PurchaseBillSummary', { bill: updatedBill });
+    navigateToScreen('PurchaseBillSummary', { bill: updatedBill , supplier});
   };
 
   const quickQuantities = [1, 5, 10, 20, 50];

@@ -60,7 +60,7 @@ const ProductSelectionScreen: React.FC = () => {
   const [products] = useState<Product[]>(mockProducts);
 
   const handleProductSelect = (product: Product) => {
-    navigateToScreen('PurchaseQuantityPrice', { product });
+    navigateToScreen('PurchaseQuantityPrice', { product , supplier});
   };
 
   const handleAddProduct = () => {

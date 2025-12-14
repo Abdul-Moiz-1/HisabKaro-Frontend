@@ -1,29 +1,34 @@
 // flows/sales/screens/DirectTotalScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useThemedStyles } from '../../../../theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import { AmountInputField } from '../../../../components/DynamicForm';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { FieldType } from '../../../../types/forms';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSalesFlow } from '../context/SalesFlowContext';
 
 const DirectTotalScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const route = useRoute();
-  const { navigateToScreen } = useFlowNavigation();
+  const navigation = useNavigation();
+  const { data, setDirectTotal, clearNavigationFlags } = useSalesFlow();
 
-  // @ts-ignore
-  const { customer } = route.params?.flowData || {};
+  const customer = data.customer;
   const [totalAmount, setTotalAmount] = useState(0);
 
+  // Navigate when directTotal is set in context
+  useEffect(() => {
+    if (data.isDirectTotalSet && data.directTotal !== null) {
+      clearNavigationFlags();
+      // @ts-ignore
+      navigation.navigate('CreditTerms');
+    }
+  }, [data.isDirectTotalSet, data.directTotal, navigation, clearNavigationFlags]);
+
   const handleContinue = () => {
-    navigateToScreen('CreditTerms', {
-      directTotal: totalAmount,
-      skipCart: true,
-    });
+    setDirectTotal(totalAmount);
   };
 
   const quickAmounts = [

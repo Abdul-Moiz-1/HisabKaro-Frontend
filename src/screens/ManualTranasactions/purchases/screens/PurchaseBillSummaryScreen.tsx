@@ -44,6 +44,7 @@ const PurchaseBillSummaryScreen: React.FC = () => {
 
   const handleContinue = () => {
     navigateToScreen('PaymentTerms', {
+      supplier,
       bill,
       subtotal,
       expenses: {

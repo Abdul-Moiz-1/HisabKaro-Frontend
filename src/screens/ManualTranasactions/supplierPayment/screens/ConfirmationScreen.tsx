@@ -32,9 +32,12 @@ const ConfirmationScreen: React.FC = () => {
     // @ts-ignore
     route.params?.flowData || {};
 
+
+
+
   const handleDone = () => {
     // @ts-ignore
-    navigation.navigate('Dashboard');
+    navigation.navigate('Home');
   };
 
   const handleUndo = () => {

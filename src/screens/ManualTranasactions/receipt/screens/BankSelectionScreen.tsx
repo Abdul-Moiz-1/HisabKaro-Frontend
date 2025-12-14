@@ -7,15 +7,15 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { DateField } from '../../../../components/DynamicForm';
 import { useThemedStyles } from '../../../../theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { FieldType } from '../../../../types/forms';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useOptionalReceiptFlow } from '../context/ReceiptFlowContext';
 
 const mockBankAccounts = [
   {
@@ -38,23 +38,36 @@ const mockBankAccounts = [
 
 const BankSelectionScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
+  const navigation = useNavigation();
   const route = useRoute();
-  const { navigateToScreen } = useFlowNavigation();
+  
+  // Use optional context - works with or without ReceiptFlowProvider
+  const receiptFlow = useOptionalReceiptFlow();
 
   const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
   const [transferDate, setTransferDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleContinue = () => {
     const selectedBank = mockBankAccounts.find(b => b.id === selectedBankId);
-    navigateToScreen('Confirmation', {
-      bankAccount: selectedBank,
-      transferDate: transferDate.toISOString(),
-    });
+    if (selectedBank) {
+      // If context is available (Receipt flow), use it
+      if (receiptFlow) {
+        receiptFlow.setBankTransfer(selectedBank, transferDate.toISOString());
+      }
+      // @ts-ignore - Navigate with bank details for flows without context
+      navigation.navigate('Confirmation', {
+        bankAccount: selectedBank,
+        transferDate: transferDate.toISOString(),
+        paymentMethod: 'bank',
+        // Pass through any existing route params
+        ...route.params,
+      });
+    }
   };
 
   const handleAddBank = () => {
-    navigateToScreen('AddBankAccount');
+    // @ts-ignore
+    navigation.navigate('AddBankAccount');
   };
 
   const quickDateOptions = [
@@ -133,7 +146,7 @@ const BankSelectionScreen: React.FC = () => {
             ))}
             <TouchableOpacity
               style={styles.quickDateButton}
-              onPress={() => setShowDatePicker(true)}
+              onPress={() => {}}
             >
               <Text style={styles.quickDateButtonText}>Pick date</Text>
             </TouchableOpacity>

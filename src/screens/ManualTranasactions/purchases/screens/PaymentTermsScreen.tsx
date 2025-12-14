@@ -22,11 +22,11 @@ const PaymentTermsScreen: React.FC = () => {
 
   const handleContinue = () => {
     if (paymentType === 'full') {
-      navigateToScreen('FullPayment', { totalAmount });
+      navigateToScreen('FullPayment', { totalAmount , supplier });
     } else if (paymentType === 'credit') {
-      navigateToScreen('CreditTerms', { totalAmount });
+      navigateToScreen('CreditTerms', { totalAmount, supplier });
     } else if (paymentType === 'partial') {
-      navigateToScreen('PartialPayment', { totalAmount });
+      navigateToScreen('PartialPayment', { totalAmount, supplier });
     }
   };
 

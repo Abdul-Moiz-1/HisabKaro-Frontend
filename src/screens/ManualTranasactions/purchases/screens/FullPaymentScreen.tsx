@@ -15,7 +15,7 @@ const FullPaymentScreen: React.FC = () => {
   const { navigateToScreen } = useFlowNavigation();
 
   // @ts-ignore
-  const { totalAmount } = route.params?.flowData || {};
+  const { totalAmount, supplier } = route.params?.flowData || {};
 
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
 
@@ -23,6 +23,8 @@ const FullPaymentScreen: React.FC = () => {
     navigateToScreen('Confirmation', {
       paymentMethod: paymentMethod ?? undefined,
       paymentStatus: 'paid',
+      supplier,
+      totalAmount
     });
   };
 

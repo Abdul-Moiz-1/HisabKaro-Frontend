@@ -7,11 +7,10 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useThemedStyles } from '../../../../theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import {
   AmountInputField,
   NumberInputField,
@@ -20,14 +19,14 @@ import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { FieldType } from '../../../../types/forms';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSalesFlow } from '../context/SalesFlowContext';
 
 const ProductQuantityPriceScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const route = useRoute();
-  const { navigateToScreen } = useFlowNavigation();
+  const navigation = useNavigation();
+  const { data, addToCart } = useSalesFlow();
 
-  // @ts-ignore
-  const { product, cart = [] } = route.params?.flowData || {};
+  const product = data.currentProduct;
 
   const [quantity, setQuantity] = useState('1');
   const [price, setPrice] = useState(product?.salePrice?.toString() || '');
@@ -38,16 +37,19 @@ const ProductQuantityPriceScreen: React.FC = () => {
   const total = subtotal - discountAmount;
 
   const handleAddToCart = () => {
+    if (!product) return;
+    
     const cartItem = {
       ...product,
       quantity: parseInt(quantity),
       price: parseFloat(price),
       discount: discountAmount,
-      total: total,
+      total: total
     };
-
-    const updatedCart = [...cart, cartItem];
-    navigateToScreen('ShoppingCart', { cart: updatedCart });
+    
+    addToCart(cartItem);
+    // @ts-ignore
+    navigation.navigate('ShoppingCart');
   };
 
   const quickQuantities = [1, 2, 5, 10];

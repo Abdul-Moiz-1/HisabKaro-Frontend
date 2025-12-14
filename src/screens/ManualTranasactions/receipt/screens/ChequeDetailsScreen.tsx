@@ -7,8 +7,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useThemedStyles } from '../../../../theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import {
   DateField,
   DropdownField,
@@ -20,10 +20,15 @@ import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { FieldType } from '../../../../types/forms';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useOptionalReceiptFlow } from '../context/ReceiptFlowContext';
 
 const ChequeDetailsScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const { navigateToScreen, goBack } = useFlowNavigation();
+  const navigation = useNavigation();
+  const route = useRoute();
+  
+  // Use optional context - works with or without ReceiptFlowProvider
+  const receiptFlow = useOptionalReceiptFlow();
 
   const [chequeNumber, setChequeNumber] = useState('');
   const [chequeDate, setChequeDate] = useState(new Date());
@@ -40,12 +45,18 @@ const ChequeDetailsScreen: React.FC = () => {
       chequePhoto,
     };
 
-    // Navigate based on cheque status
-    if (chequeStatus === 'cleared') {
-      navigateToScreen('ChequeBankSelection', { chequeDetails });
-    } else {
-      navigateToScreen('Confirmation', { chequeDetails });
+    // If context is available (Receipt flow), use it
+    if (receiptFlow) {
+      receiptFlow.setChequePayment(chequeDetails);
     }
+    
+    // @ts-ignore - Navigate with cheque details for flows without context
+    navigation.navigate('Confirmation', {
+      chequeDetails,
+      paymentMethod: 'cheque',
+      // Pass through any existing route params
+      ...route.params,
+    });
   };
 
   const bankOptions = [

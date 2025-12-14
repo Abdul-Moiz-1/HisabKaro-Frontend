@@ -38,7 +38,7 @@ const ConfirmationScreen: React.FC = () => {
 
   const handleDone = () => {
     // @ts-ignore
-    navigation.navigate('Dashboard');
+    navigation.navigate('Home');
   };
 
   const handleUndo = () => {

@@ -13,10 +13,11 @@ import ChequeDetailsScreen from './screens/ChequeDetailsScreen';
 import ConfirmationScreen from './screens/ConfirmationScreen';
 import { useTheme } from '../../../store/hooks';
 import AddBankAccountScreen from './screens/AddBankAccountScreen';
+import { ReceiptFlowProvider } from './context/ReceiptFlowContext';
 
 const Stack = createStackNavigator();
 
-const ReceiptFlowNavigator: React.FC = () => {
+const ReceiptFlowStack: React.FC = () => {
   const theme = useTheme();
   return (
     <Stack.Navigator
@@ -79,6 +80,15 @@ const ReceiptFlowNavigator: React.FC = () => {
         options={{ title: 'Payment Recorded' }}
       />
     </Stack.Navigator>
+  );
+};
+
+// Wrap the navigator with the ReceiptFlowProvider
+const ReceiptFlowNavigator: React.FC = () => {
+  return (
+    <ReceiptFlowProvider>
+      <ReceiptFlowStack />
+    </ReceiptFlowProvider>
   );
 };
 

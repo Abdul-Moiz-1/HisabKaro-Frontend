@@ -1,13 +1,14 @@
 // flows/receipt/screens/CustomerSelectionScreen.tsx
 import React, { useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useThemedStyles } from '../../../../theme';
 import { Theme } from '../../../../constants/theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import SearchableList from '../../../../components/common/SearchableList';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Customer } from '../../../../types/flow';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useReceiptFlow } from '../context/ReceiptFlowContext';
 
 // Mock data - replace with API call
 const mockCustomers: Customer[] = [
@@ -36,15 +37,19 @@ const mockCustomers: Customer[] = [
 
 const CustomerSelectionScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const { navigateToScreen } = useFlowNavigation();
+  const navigation = useNavigation();
+  const { setCustomer } = useReceiptFlow();
   const [customers] = useState<Customer[]>(mockCustomers);
 
   const handleCustomerSelect = (customer: Customer) => {
-    navigateToScreen('AmountEntry', { customer });
+    setCustomer(customer);
+    // @ts-ignore
+    navigation.navigate('AmountEntry');
   };
 
   const handleAddCustomer = () => {
-    navigateToScreen('AddCustomer');
+    // @ts-ignore
+    navigation.navigate('AddCustomer');
   };
 
   const renderCustomerItem = (customer: Customer) => {

@@ -1,5 +1,5 @@
 // flows/sales/screens/CreditTermsScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,24 +7,24 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useThemedStyles } from '../../../../theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import SelectionCard from '../../../../components/common/SelectionCard';
 import { DateField, TextAreaField } from '../../../../components/DynamicForm';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { FieldType } from '../../../../types/forms';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSalesFlow } from '../context/SalesFlowContext';
 
 const CreditTermsScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const route = useRoute();
-  const { navigateToScreen } = useFlowNavigation();
+  const navigation = useNavigation();
+  const { data, setPaymentDetails, clearNavigationFlags } = useSalesFlow();
 
-  const { customer, cartTotal, directTotal, cart } =
-    // @ts-ignore
-    route.params?.flowData || {};
+  const customer = data.customer;
+  const cartTotal = data.cartTotal;
+  const directTotal = data.directTotal;
 
   const totalAmount = cartTotal || directTotal || 0;
 
@@ -36,19 +36,23 @@ const CreditTermsScreen: React.FC = () => {
   );
   const [notes, setNotes] = useState('');
 
-  const handleContinue = () => {
-    const saleData = {
-      customer,
-      cart,
-      directTotal,
-      totalAmount,
-      paymentType,
-      dueDate: paymentType === 'credit' ? dueDate.toISOString() : null,
-      notes,
-      status: paymentType === 'cash' ? 'paid' : 'pending',
-    };
+  // Navigate when payment details are set in context
+  useEffect(() => {
+    if (data.isReadyForConfirmation && data.paymentType !== null) {
+      clearNavigationFlags();
+      // @ts-ignore
+      navigation.navigate('Confirmation');
+    }
+  }, [data.isReadyForConfirmation, data.paymentType, navigation, clearNavigationFlags]);
 
-    navigateToScreen('Confirmation', saleData);
+  const handleContinue = () => {
+    if (!paymentType) return;
+    
+    setPaymentDetails({
+      paymentType,
+      dueDate: paymentType === 'credit' ? dueDate.toISOString() : undefined,
+      notes,
+    });
   };
 
   return (

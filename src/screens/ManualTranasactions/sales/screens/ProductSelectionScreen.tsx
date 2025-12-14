@@ -1,13 +1,13 @@
 // flows/sales/screens/ProductSelectionScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useThemedStyles } from '../../../../theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import SearchableList from '../../../../components/common/SearchableList';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSalesFlow } from '../context/SalesFlowContext';
 
 interface Product {
   id: string;
@@ -56,23 +56,24 @@ const mockProducts: Product[] = [
 
 const ProductSelectionScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const route = useRoute();
-  const { navigateToScreen } = useFlowNavigation();
-
-  // @ts-ignore
-  const { customer } = route.params?.flowData || {};
+  const navigation = useNavigation();
+  const { setCurrentProduct } = useSalesFlow();
   const [products] = useState<Product[]>(mockProducts);
 
   const handleProductSelect = (product: Product) => {
-    navigateToScreen('ProductQuantityPrice', { product });
+    setCurrentProduct(product);
+    // @ts-ignore
+    navigation.navigate('ProductQuantityPrice');
   };
 
   const handleAddProduct = () => {
-    navigateToScreen('AddProduct');
+    // @ts-ignore
+    navigation.navigate('AddProduct');
   };
 
   const handleSkipToTotal = () => {
-    navigateToScreen('DirectTotal');
+    // @ts-ignore
+    navigation.navigate('DirectTotal');
   };
 
   const getStockColor = (quantity: number) => {

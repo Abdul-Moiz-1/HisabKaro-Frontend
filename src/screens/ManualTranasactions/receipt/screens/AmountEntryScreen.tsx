@@ -7,29 +7,31 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useThemedStyles } from '../../../../theme';
 import { Theme } from '../../../../constants/theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import ActionButton from '../../../../components/common/ActionButton';
 import { AmountInputField } from '../../../../components/DynamicForm';
 import { FieldType } from '../../../../types/forms';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useReceiptFlow } from '../context/ReceiptFlowContext';
 
 const AmountEntryScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const route = useRoute();
-  const { navigateToScreen } = useFlowNavigation();
+  const navigation = useNavigation();
+  const { data, setAmountInfo } = useReceiptFlow();
 
-  // @ts-ignore
-  const { customer } = route.params?.flowData || {};
+  const customer = data.customer;
   const [amount, setAmount] = useState<number>(0);
 
-  const remaining = customer?.outstanding - amount || 0;
+  const remaining =
+    typeof amount === 'number' && !isNaN(amount)
+      ? (customer?.outstanding || 0) - amount
+      : customer?.outstanding ?? 0;
 
   const quickAmounts = [
     {
-      label: `Full ${customer?.outstanding.toLocaleString()}`,
+      label: `Full ${customer?.outstanding?.toLocaleString() || 0}`,
       value: customer?.outstanding || 0,
     },
     {
@@ -38,13 +40,16 @@ const AmountEntryScreen: React.FC = () => {
       ).toLocaleString()}`,
       value: Math.floor((customer?.outstanding || 0) / 2),
     },
-    ...(customer?.outstanding >= 25000 ? [{ label: '25k', value: 25000 }] : []),
-    ...(customer?.outstanding >= 10000 ? [{ label: '10k', value: 10000 }] : []),
+    ...(customer?.outstanding && customer.outstanding >= 25000 ? [{ label: '25k', value: 25000 }] : []),
+    ...(customer?.outstanding && customer.outstanding >= 10000 ? [{ label: '10k', value: 10000 }] : []),
   ];
 
   const handleContinue = () => {
-    navigateToScreen('PaymentMethod', { amount, remaining });
+    setAmountInfo(amount, remaining);
+    // @ts-ignore
+    navigation.navigate('PaymentMethod');
   };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -70,7 +75,12 @@ const AmountEntryScreen: React.FC = () => {
             required: true,
           }}
           value={amount.toString()}
-          onChange={(value: string) => setAmount(Number(value))}
+          // onChange={(value: string) => setAmount(Number(value))}
+          onChange={(value: string) => {
+  const numeric = Number(value.replace(/,/g, ''));
+  setAmount(isNaN(numeric) ? 0 : numeric);
+}}
+
           onBlur={() => {}}
         />
 

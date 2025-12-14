@@ -7,37 +7,52 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useThemedStyles } from '../../../../theme';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSalesFlow } from '../context/SalesFlowContext';
 
 const ConfirmationScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const route = useRoute();
   const navigation = useNavigation();
+  const { getSaleData, resetFlow } = useSalesFlow();
 
-  const { customer, cart, totalAmount, paymentType, dueDate, status } =
-    // @ts-ignore
-    route.params?.flowData || {};
+  // Get sale data from context
+  const { saleData, customer } = getSaleData();
+
+  const {
+    cart,
+    totalAmount,
+    paymentType,
+    dueDate,
+    notes,
+    status,
+  } = saleData;
+
+
 
   const handleDone = () => {
+    resetFlow();
     // @ts-ignore
-    navigation.navigate('Dashboard');
+    navigation.navigate('Home');
   };
 
   const handleUndo = () => {
     // Show confirmation dialog then navigate
+    resetFlow();
     // @ts-ignore
     navigation.navigate('Dashboard');
   };
 
   const handleAddAnother = () => {
+    // Reset the flow data and start fresh
+    resetFlow();
     // @ts-ignore
-    navigation.navigate('SalesFlow');
+    navigation.navigate('CustomerSelection');
   };
 
   const handleShareInvoice = () => {

@@ -54,14 +54,23 @@ const PaymentMethodScreen: React.FC = () => {
 
   // @ts-ignore
   const { supplier, amount, remaining } = route.params?.flowData || {};
+
+
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
 
   const handleContinue = () => {
     const method = paymentMethods.find(m => m.value === selectedMethod);
     if (method) {
+      // navigateToScreen(method.navigateTo, {
+      //   paymentMethod: selectedMethod ?? undefined,
+      // });
+
       navigateToScreen(method.navigateTo, {
-        paymentMethod: selectedMethod ?? undefined,
-      });
+  supplier,
+  amount,
+  remaining,
+  paymentMethod: selectedMethod ?? undefined,
+});
     }
   };
 

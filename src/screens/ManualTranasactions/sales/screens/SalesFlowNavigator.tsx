@@ -10,12 +10,11 @@ import ShoppingCartScreen from './ShoppingCartScreen';
 import DirectTotalScreen from './DirectTotalScreen';
 import CreditTermsScreen from './CreditTermsScreen';
 import ConfirmationScreen from './ConfirmationScreen';
-
-// Import all screens
+import { SalesFlowProvider } from '../context/SalesFlowContext';
 
 const Stack = createStackNavigator();
 
-const SalesFlowNavigator: React.FC = () => {
+const SalesFlowStack: React.FC = () => {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -75,6 +74,15 @@ const SalesFlowNavigator: React.FC = () => {
         options={{ title: 'Sale Recorded' }}
       />
     </Stack.Navigator>
+  );
+};
+
+// Wrap the navigator with the SalesFlowProvider
+const SalesFlowNavigator: React.FC = () => {
+  return (
+    <SalesFlowProvider>
+      <SalesFlowStack />
+    </SalesFlowProvider>
   );
 };
 

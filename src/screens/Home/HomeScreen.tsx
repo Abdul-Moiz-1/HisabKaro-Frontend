@@ -233,7 +233,7 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
           <Text style={styles.greetingText}>
             Hi {user?.firstName ?? user?.name ?? 'there'}
           </Text>
-          <Text style={styles.subGreeting}>Welcome back to HisabKaro</Text>
+          <Text style={styles.subGreeting}>Welcome To HisabKaro!</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity

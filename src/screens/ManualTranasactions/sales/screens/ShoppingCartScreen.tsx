@@ -7,39 +7,36 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useThemedStyles } from '../../../../theme';
-import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSalesFlow } from '../context/SalesFlowContext';
 
 const ShoppingCartScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const route = useRoute();
-  const { navigateToScreen } = useFlowNavigation();
+  const navigation = useNavigation();
+  const { data, removeFromCart } = useSalesFlow();
 
-  // @ts-ignore
-  const { cart = [], customer } = route.params?.flowData || {};
-
-  const cartTotal = cart.reduce(
-    (sum: number, item: any) => sum + item.total,
-    0,
-  );
+  const cart = data.cart;
+  const customer = data.customer;
+  const cartTotal = data.cartTotal;
 
   const handleAddMoreProducts = () => {
-    navigateToScreen('ProductSelection');
+    // @ts-ignore
+    navigation.navigate('ProductSelection');
   };
 
   const handleContinue = () => {
-    navigateToScreen('CreditTerms', { cart, cartTotal });
+    // @ts-ignore
+    navigation.navigate('CreditTerms');
   };
 
   const handleRemoveItem = (itemId: string) => {
-    const updatedCart = cart.filter((item: any) => item.id !== itemId);
-    navigateToScreen('ShoppingCart', { cart: updatedCart });
+    removeFromCart(itemId);
   };
 
   return (

@@ -7,38 +7,75 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useThemedStyles } from '../../../../theme';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useReceiptFlow } from '../context/ReceiptFlowContext';
 
 const ConfirmationScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
-  const route = useRoute();
   const navigation = useNavigation();
+  const { getReceiptData, resetFlow } = useReceiptFlow();
 
-  const { customer, amount, remaining, paymentMethod } =
-    // @ts-ignore
-    route.params?.flowData || {};
+  // Get all data from context
+  const { customer, amount, remaining, paymentMethod, paymentDetails } = getReceiptData();
+
+  // Get payment method label
+  const getPaymentMethodLabel = () => {
+    switch (paymentMethod) {
+      case 'cash':
+        return 'Cash';
+      case 'bank':
+        return 'Bank Transfer';
+      case 'wallet':
+        return 'Mobile Wallet';
+      case 'cheque':
+        return 'Cheque';
+      case 'card':
+        return 'Card/POS';
+      default:
+        return paymentMethod || 'Unknown';
+    }
+  };
+
+  // Get additional payment details for display
+  const getPaymentDetailsText = () => {
+    if (paymentMethod === 'bank' && paymentDetails.bankAccount) {
+      return `${paymentDetails.bankAccount.bankName} - ${paymentDetails.bankAccount.accountNumber}`;
+    }
+    if (paymentMethod === 'wallet' && paymentDetails.walletDetails) {
+      const walletName = paymentDetails.walletDetails.walletType;
+      return walletName.charAt(0).toUpperCase() + walletName.slice(1);
+    }
+    if (paymentMethod === 'cheque' && paymentDetails.chequeDetails) {
+      return `Cheque #${paymentDetails.chequeDetails.chequeNumber} - ${paymentDetails.chequeDetails.chequeBankName}`;
+    }
+    return null;
+  };
 
   const handleDone = () => {
+    resetFlow();
     // @ts-ignore
-    navigation.navigate('Dashboard');
+    navigation.navigate('Home');
   };
 
   const handleUndo = () => {
-    // Show confirmation dialog then navigate
+    resetFlow();
     // @ts-ignore
     navigation.navigate('Dashboard');
   };
 
   const handleAddAnother = () => {
+    resetFlow();
     // @ts-ignore
     navigation.navigate('CustomerSelection');
   };
+
+  const paymentDetailsText = getPaymentDetailsText();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -56,22 +93,78 @@ const ConfirmationScreen: React.FC = () => {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Customer</Text>
-            <Text style={styles.summaryValue}>{customer?.name}</Text>
+            <Text style={styles.summaryValue}>{customer?.name || 'N/A'}</Text>
           </View>
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Amount Received</Text>
             <Text style={[styles.summaryValue, styles.summaryValueLarge]}>
-              PKR {amount?.toLocaleString()}
+              PKR {Number(amount || 0).toLocaleString()}
             </Text>
           </View>
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Payment Method</Text>
-            <Text style={styles.summaryValue}>
-              {paymentMethod?.charAt(0).toUpperCase() + paymentMethod?.slice(1)}
-            </Text>
+            <Text style={styles.summaryValue}>{getPaymentMethodLabel()}</Text>
           </View>
+
+          {/* Additional payment details */}
+          {paymentDetailsText && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Payment Details</Text>
+              <Text style={styles.summaryValue}>{paymentDetailsText}</Text>
+            </View>
+          )}
+
+          {/* Show transfer date for bank transfers */}
+          {paymentMethod === 'bank' && paymentDetails.transferDate && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Transfer Date</Text>
+              <Text style={styles.summaryValue}>
+                {new Date(paymentDetails.transferDate).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </Text>
+            </View>
+          )}
+
+          {/* Show wallet date for wallet payments */}
+          {paymentMethod === 'wallet' && paymentDetails.walletDetails?.walletDate && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Payment Date</Text>
+              <Text style={styles.summaryValue}>
+                {new Date(paymentDetails.walletDetails.walletDate).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </Text>
+            </View>
+          )}
+
+          {/* Show cheque date and status for cheque payments */}
+          {paymentMethod === 'cheque' && paymentDetails.chequeDetails && (
+            <>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Cheque Date</Text>
+                <Text style={styles.summaryValue}>
+                  {new Date(paymentDetails.chequeDetails.chequeDate).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Cheque Status</Text>
+                <Text style={styles.summaryValue}>
+                  {paymentDetails.chequeDetails.chequeStatus === 'cleared' ? 'Cleared' : 'Received (Not Cleared)'}
+                </Text>
+              </View>
+            </>
+          )}
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Date</Text>
@@ -102,7 +195,7 @@ const ConfirmationScreen: React.FC = () => {
                 },
               ]}
             >
-              PKR {remaining?.toLocaleString()}
+              PKR {Number(remaining || 0).toLocaleString()}
             </Text>
           </View>
         </View>
@@ -114,7 +207,7 @@ const ConfirmationScreen: React.FC = () => {
           <Ionicons name="send" size={24} color="#007AFF" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>
-              Send Receipt to {customer?.name}
+              Send Receipt to {customer?.name || 'Customer'}
             </Text>
             <Text style={styles.actionDescription}>WhatsApp / SMS / Email</Text>
           </View>
@@ -126,10 +219,10 @@ const ConfirmationScreen: React.FC = () => {
             <Ionicons name="notifications" size={24} color="#FF9500" />
             <View style={styles.actionContent}>
               <Text style={styles.actionLabel}>
-                Remind {customer?.name} for remaining
+                Remind {customer?.name || 'Customer'} for remaining
               </Text>
               <Text style={styles.actionDescription}>
-                Set reminder for PKR {remaining?.toLocaleString()}
+                Set reminder for PKR {Number(remaining || 0).toLocaleString()}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
@@ -211,6 +304,8 @@ const createStyles = (theme: Theme) => ({
     ...theme.typography.body,
     color: theme.colors.text.primary,
     textAlign: 'right' as const,
+    flex: 1,
+    marginLeft: theme.spacing.sm,
   },
   summaryValueLarge: {
     ...theme.typography.h3,
