@@ -1,3 +1,4 @@
+import { NavigatorScreenParams } from '@react-navigation/native';
 
 export interface User {
   id: string;
@@ -10,6 +11,23 @@ export interface User {
   avatar?: string;
 }
 
+export type EditTransactionFlowParamList = {
+  EditTransaction: { transaction: any };
+  SelectParty: {
+    currentParty?: any;
+    partyType: 'Customer' | 'Supplier';
+    flowData?: any;
+  };
+  SelectItems: {
+    currentItems?: any[];
+    transactionType: string;
+    flowData?: any;
+  };
+  SelectCategory: { currentCategory?: string; flowData?: any };
+  EditConfirmation: { transaction: any; changes: any };
+  EditHistory: { transaction: any };
+};
+
 export type RootStackParamList = {
   Splash: undefined;
   Splash2: undefined;
@@ -19,8 +37,16 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   Home?: { userId?: string };
   Analytics: undefined;
-  AddTransaction: undefined;
+  Transactions: undefined;
+  AddTransactionManual: undefined;
   AIAssistant: undefined;
+  Receipt: undefined;
+  Sales: undefined;
+  Purchases: undefined;
+  Expense: undefined;
+  Bank: undefined;
+  SupplierPayment: undefined;
+  AccountTransfer: undefined;
   AIChat?: { chatId?: string };
   Menu: undefined;
   Profile: undefined;
@@ -32,18 +58,37 @@ export type RootStackParamList = {
   Expenses: undefined;
   ScheduledPayments: undefined;
   Notifications: undefined;
+  TransactionList: undefined;
+  TransactionDetail: { transaction: any };
+  TransactionFilter: undefined;
+  TransactionSearch: undefined;
+  TransactionStats: undefined;
   BankAccountDetails: { accountId: string; accountName: string };
+  // EditTransaction: { transaction: any };
+  EditTransactionFlow: NavigatorScreenParams<EditTransactionFlowParamList>;
+  // EditConfirmation: { transaction: any; changes: any };
+  // EditHistory: { transaction: any };
 };
+
+declare global {
+  namespace ReactNavigation {
+    interface RootParamList extends RootStackParamList {}
+  }
+}
 
 export type NavigationProps<T extends keyof RootStackParamList> = {
   navigation: {
-    navigate: <R extends keyof RootStackParamList>(screen: R, params?: RootStackParamList[R]) => void;
+    navigate: <R extends keyof RootStackParamList>(
+      screen: R,
+      params?: RootStackParamList[R],
+    ) => void;
     goBack: () => void;
-    replace: <R extends keyof RootStackParamList>(screen: R, params?: RootStackParamList[R]) => void;
+    replace: <R extends keyof RootStackParamList>(
+      screen: R,
+      params?: RootStackParamList[R],
+    ) => void;
   };
   route: {
     params?: RootStackParamList[T];
   };
 };
-
-

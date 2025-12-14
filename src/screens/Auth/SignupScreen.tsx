@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Keyboard } from 'react-native';
 import { NavigationProps } from '../../types';
 import { ROUTES } from '../../constants/routes';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../store/hooks';
 import { Container, Button, Logo } from '../../components/common';
 import { Input } from '../../components/forms';
 import { isValidEmail, isValidPassword } from '../../utils';
@@ -12,6 +12,7 @@ import Toast from 'react-native-toast-message';
 import { authService, AuthServiceError } from '../../services/authService';
 
 const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -22,6 +23,8 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
   const [passwordError, setPasswordError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [loading, setLocalLoading] = useState(false);
+
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   const validateForm = (): boolean => {
     let isValid = true;
@@ -205,7 +208,8 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+// Helper function to create styles with theme
+const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
   container: {
     backgroundColor: theme.colors.background,
   },

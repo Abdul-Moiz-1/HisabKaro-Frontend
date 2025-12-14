@@ -47,9 +47,6 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation 
         showBackButton={false}
         rightComponent={
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerIcon}>
-              <Text style={styles.iconText}>🌙</Text>
-            </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerIcon}
               onPress={() => navigation.navigate(ROUTES.NOTIFICATIONS)}

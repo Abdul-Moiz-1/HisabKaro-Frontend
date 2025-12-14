@@ -7,7 +7,19 @@ export const ROUTES = {
   FORGOT_PASSWORD: 'ForgotPassword',
   HOME: 'Home',
   ANALYTICS: 'Analytics',
-  ADD_TRANSACTION: 'AddTransaction',
+  TRANSCATIONS: 'Transactions',
+  ADD_TRANSACTION_SALES: 'Sales',
+  ADD_TRANSACTION_RECEIPT: 'Receipt',
+  ADD_TRANSACTION_PURCHASE: 'Purchases',
+  ADD_TRANSACTION_EXPENSE: 'Expense',
+  ADD_TRANSACTION_BANK: 'Bank',
+  ADD_TRANSACTION_SUPPLIER_PAYMENT: 'SupplierPayment',
+  ADD_TRANSACTION_ACCOUNT_TRANSFER: 'AccountTransfer',
+  TRANSACTION_LIST: 'TransactionList',
+  TRANSCATION_DETAIL: 'TransactionDetail',
+  TRANSACTION_FILTER: 'TransactionFilter',
+  TRANSACTION_SEARCH: 'TransactionSearch',
+  TRANSACTION_STATS: 'TransactionStats',
   AI_ASSISTANT: 'AIAssistant',
   AI_CHAT: 'AIChat',
   MENU: 'Menu',
@@ -21,8 +33,13 @@ export const ROUTES = {
   SCHEDULED_PAYMENTS: 'ScheduledPayments',
   NOTIFICATIONS: 'Notifications',
   BANK_ACCOUNT_DETAILS: 'BankAccountDetails',
+  EDIT_TRANSACTION: 'EditTransaction',
+  EDIT_TRANSACTION_SELECT_PARTY: 'SelectParty',
+  EDIT_TRANSACTION_CONFIRM: 'EditConfirmation',
+  EDIT_TRANSACTION_HISTORY: 'EditHistory',
+  EDIT_TRANSACTION_FLOW: 'EditTransactionFlow',
+  EDIT_TRANSACTION_SELECT_CATEGORY: 'SelectCategory',
+  EDIT_TRANSACTION_SELECT_ITEM: 'SelectItems',
 } as const;
 
-export type RouteName = typeof ROUTES[keyof typeof ROUTES];
-
-
+export type RouteName = (typeof ROUTES)[keyof typeof ROUTES];
