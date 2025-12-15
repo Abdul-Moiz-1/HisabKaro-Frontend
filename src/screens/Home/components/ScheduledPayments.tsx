@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../../constants/theme';
+import { formatCurrency } from '../../../utils';
 
 interface ScheduledPayment {
   id: string;
@@ -67,7 +68,7 @@ export const ScheduledPayments: React.FC<ScheduledPaymentsProps> = ({ onSeeAll }
               <Text style={styles.paymentSubtitle}>{payment.subtitle}</Text>
             </View>
             <View style={styles.paymentRight}>
-              <Text style={styles.paymentAmount}>${Math.abs(payment.amount)}</Text>
+              <Text style={styles.paymentAmount}>{formatCurrency(Math.abs(payment.amount))}</Text>
               <Text style={styles.paymentDate}>{payment.dueDate}</Text>
             </View>
             <TouchableOpacity style={styles.chevron}>

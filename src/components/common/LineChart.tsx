@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../constants/theme';
+import { formatCurrency } from '../../utils';
 
 export interface ChartDataPoint {
   label: string;
@@ -44,7 +45,7 @@ export const LineChart: React.FC<LineChartProps> = ({
             const value = maxValue - (index + 1) * valueStep;
             return (
               <View key={index} style={[styles.gridLine, { top: yPos }]}>
-                <Text style={styles.gridLabel}>${Math.round(value)}</Text>
+                <Text style={styles.gridLabel}>{formatCurrency(Math.round(value))}</Text>
               </View>
             );
           })}

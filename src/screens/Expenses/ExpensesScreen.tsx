@@ -20,58 +20,37 @@ const ExpensesScreen: React.FC<NavigationProps<'Expenses'>> = ({ navigation, rou
   const expenseCategories: ExpenseCategory[] = [
     {
       id: '1',
-      name: 'Groceries',
-      amount: 67.0,
+      name: 'Expense',
+      amount: 850.0,
       percentage: 15,
       percentageChange: 15,
-      color: theme.colors.primary,
-      icon: '🛒',
+      color: theme.colors.primary
     },
     {
       id: '2',
-      name: 'Shopping',
-      amount: 158.0,
+      name: 'Credit',
+      amount: 450.0,
       percentage: 8,
       percentageChange: -8,
-      color: '#FF3B30',
-      icon: '🛍️',
+      color: '#FF3B30'
     },
     {
       id: '3',
-      name: 'Food',
-      amount: 125.0,
+      name: 'Bills',
+      amount: 1200.0,
       percentage: 2,
       percentageChange: -2,
-      color: '#FF9500',
-      icon: '🍕',
+      color: '#FF9500'
     },
     {
       id: '4',
-      name: 'Health',
-      amount: 28.0,
+      name: 'Miscellaneous',
+      amount: 600,
       percentage: 1,
       percentageChange: -1,
-      color: '#5AC8FA',
-      icon: '🏥',
+      color: '#5AC8FA'
     },
-    {
-      id: '5',
-      name: 'Travel',
-      amount: 685.0,
-      percentage: 12,
-      percentageChange: 12,
-      color: '#AF52DE',
-      icon: '✈️',
-    },
-    {
-      id: '6',
-      name: 'Taxi',
-      amount: 32.0,
-      percentage: 4,
-      percentageChange: 4,
-      color: '#007AFF',
-      icon: '🚗',
-    },
+
   ];
 
   const totalExpenses = expenseCategories.reduce((sum, cat) => sum + cat.amount, 0);

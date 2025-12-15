@@ -45,3 +45,24 @@ export const extractUserFromToken = (token: string): User | null => {
   }
 };
 
+// Currency configuration
+export const CURRENCY = {
+  symbol: 'Rs.',
+  code: 'PKR',
+  name: 'Pakistani Rupee',
+};
+
+/**
+ * Format a number as PKR currency
+ * @param amount - The amount to format
+ * @param showSymbol - Whether to show the currency symbol (default: true)
+ * @returns Formatted currency string
+ */
+export const formatCurrency = (amount: number, showSymbol: boolean = true): string => {
+  const formattedAmount = Math.abs(amount).toLocaleString('en-PK', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+  return showSymbol ? `${CURRENCY.symbol}${formattedAmount}` : formattedAmount;
+};
+

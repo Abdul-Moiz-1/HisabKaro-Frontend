@@ -3,14 +3,15 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { NavigationProps } from '../../types';
 import { Container, HeaderNavigation, AccountCard } from '../../components/common';
 import { theme } from '../../constants/theme';
+import { formatCurrency } from '../../utils';
 
 const BalanceAccountsScreen: React.FC<NavigationProps<'BalanceAccounts'>> = ({ navigation }) => {
   const accounts = [
-    { id: '1', name: 'PASHABANK USD', balance: 425.35, icon: '🏦' },
-    { id: '2', name: 'Cash USD', balance: 600, icon: '💵' },
-    { id: '3', name: 'LEOBANK USD', balance: 775.79, icon: '🏦' },
-    { id: '4', name: 'KAPITALBank USD', balance: 591.33, icon: '🏦' },
-    { id: '5', name: 'CENTRALBANK USD', balance: 15.98, icon: '🏦' },
+    { id: '1', name: 'HBL PKR', balance: 42500, icon: '🏦' },
+    { id: '2', name: 'Cash PKR', balance: 60000, icon: '💵' },
+    { id: '3', name: 'Meezan Bank PKR', balance: 77579, icon: '🏦' },
+    { id: '4', name: 'UBL PKR', balance: 59133, icon: '🏦' },
+    { id: '5', name: 'JazzCash', balance: 77500, icon: '📱' },
   ];
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
@@ -41,7 +42,7 @@ const BalanceAccountsScreen: React.FC<NavigationProps<'BalanceAccounts'>> = ({ n
       >
         <View style={styles.balanceSection}>
           <Text style={styles.balanceLabel}>Balance</Text>
-          <Text style={styles.balanceAmount}>${totalBalance.toFixed(2)}</Text>
+          <Text style={styles.balanceAmount}>{formatCurrency(totalBalance)}</Text>
         </View>
 
         <View style={styles.accountsGrid}>

@@ -4,12 +4,13 @@ import { NavigationProps } from '../../types';
 import { Container, HeaderNavigation, TransactionItem } from '../../components/common';
 import { Transaction } from '../../components/common/TransactionItem';
 import { theme } from '../../constants/theme';
+import { formatCurrency } from '../../utils';
 
 const BankAccountDetailsScreen: React.FC<NavigationProps<'BankAccountDetails'>> = ({ navigation, route }) => {
   const { accountId, accountName } = route.params || {};
 
   // Mock account data
-  const accountBalance = 425.35;
+  const accountBalance = 42535;
   const accountIcon = '🏦';
 
   // Mock transactions grouped by date
@@ -133,7 +134,7 @@ const BankAccountDetailsScreen: React.FC<NavigationProps<'BankAccountDetails'>> 
             <Text style={styles.accountIcon}>{accountIcon}</Text>
           </View>
           <View style={styles.accountDetails}>
-            <Text style={styles.accountBalance}>${accountBalance.toFixed(2)}</Text>
+            <Text style={styles.accountBalance}>{formatCurrency(accountBalance)}</Text>
             <Text style={styles.accountName}>{accountName || 'Account'}</Text>
           </View>
         </View>

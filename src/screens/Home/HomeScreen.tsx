@@ -266,7 +266,7 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         {/* Header with Balance */}
         <BalanceCard
           userName="Farida Orojova"
-          balance={425}
+          balance={316712}
           onAvatarPress={() => navigation.navigate(ROUTES.PROFILE)}
           onNotificationPress={() => navigation.navigate(ROUTES.NOTIFICATIONS)}
           onBalancePress={() => navigation.navigate(ROUTES.BALANCE_ACCOUNTS)}
@@ -290,12 +290,12 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         />
 
         {/* Action Buttons */}
-        <ActionButtons />
+        {/* <ActionButtons /> */}
 
-        {/* Transaction History */}
+        {/* Transaction History
         <TransactionHistory
           onSeeAll={() => navigation.navigate(ROUTES.TRANSACTION_HISTORY)}
-        />
+        /> */}
 
         {/* Monthly Budget */}
         <MonthlyBudget
@@ -336,9 +336,9 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         />
 
         {/* Scheduled Payments */}
-        <ScheduledPayments
+        {/* <ScheduledPayments
           onSeeAll={() => navigation.navigate(ROUTES.SCHEDULED_PAYMENTS)}
-        />
+        /> */}
       </ScrollView>
 
       {/* Bottom Navigation */}

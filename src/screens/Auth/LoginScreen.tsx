@@ -94,53 +94,35 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
   };
 
   const handleLogin = async () => {
-    Keyboard.dismiss();
+  Keyboard.dismiss();
 
-    if (!validateForm()) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Please check your email and password',
-      });
-      return;
-    }
+  if (!validateForm()) {
+    Toast.show({
+      type: 'error',
+      text1: 'Validation Error',
+      text2: 'Please check your email and password',
+    });
+    return;
+  }
 
-    setLocalLoading(true);
-    dispatch(setLoading(true));
+  setLocalLoading(true);
+  dispatch(setLoading(true));
 
-    try {
-      const response = await authService.login({
-        username: email.trim(),
-        password,
-      });
+  try {
+    // ✅ MOCK LOGIN (DEMO MODE)
+    if (email.trim() === 'test@example.com' && password === '12345678') {
+      const mockAccessToken = 'mock_access_token_123';
+      const mockRefreshToken = 'mock_refresh_token_123';
 
-      const tokens = response.data;
+      const mockUser = {
+        id: 'mock_user_001',
+        email: 'test@example.com',
+        name: 'Test User',
+      };
 
-      dispatch(setToken(tokens.access_token));
-      dispatch(setRefreshToken(tokens.refresh_token));
-
-      const parsedUser = extractUserFromToken(tokens.access_token);
-      console.log('=== Login - User Extraction ===');
-      console.log('Parsed user from token:', parsedUser);
-      console.log('User ID (sub):', parsedUser?.id);
-
-      if (parsedUser && parsedUser.id) {
-        dispatch(setUser(parsedUser));
-        console.log('✅ User set in Redux with ID from token sub claim');
-      } else {
-        console.warn('⚠️ Token missing sub claim, using fallback ID');
-        // If token doesn't have user info, create a fallback user with a generated ID
-        const fallbackUserId = `user_${Date.now()}_${Math.random()
-          .toString(36)
-          .substr(2, 9)}`;
-        dispatch(
-          setUser({
-            id: fallbackUserId,
-            email,
-            name: email,
-          }),
-        );
-      }
+      dispatch(setToken(mockAccessToken));
+      dispatch(setRefreshToken(mockRefreshToken));
+      dispatch(setUser(mockUser));
 
       Toast.show({
         type: 'success',
@@ -149,19 +131,121 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
       });
 
       navigation.replace(ROUTES.HOME);
-    } catch (error) {
-      const apiError = error as AuthServiceError;
-      Toast.show({
-        type: 'error',
-        text1: 'Login Failed',
-        text2: apiError.message,
-      });
-      navigation.replace(ROUTES.HOME);
-    } finally {
-      setLocalLoading(false);
-      dispatch(setLoading(false));
+      return; // ⛔ stop here, don’t hit API
     }
-  };
+
+    // 🔐 REAL API LOGIN (will run when API is available)
+    const response = await authService.login({
+      username: email.trim(),
+      password,
+    });
+
+    const tokens = response.data;
+
+    dispatch(setToken(tokens.access_token));
+    dispatch(setRefreshToken(tokens.refresh_token));
+
+    const parsedUser = extractUserFromToken(tokens.access_token);
+
+    if (parsedUser && parsedUser.id) {
+      dispatch(setUser(parsedUser));
+    } else {
+      dispatch(
+        setUser({
+          id: `user_${Date.now()}`,
+          email,
+          name: email,
+        })
+      );
+    }
+
+    Toast.show({
+      type: 'success',
+      text1: 'Login Successful',
+      text2: 'Welcome back!',
+    });
+
+    navigation.replace(ROUTES.HOME);
+  } catch (error) {
+    const apiError = error as AuthServiceError;
+    Toast.show({
+      type: 'error',
+      text1: 'Login Failed',
+      text2: apiError.message,
+    });
+  } finally {
+    setLocalLoading(false);
+    dispatch(setLoading(false));
+  }
+};
+
+
+  // const handleLogin = async () => {
+  //   Keyboard.dismiss();
+
+  //   if (!validateForm()) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Validation Error',
+  //       text2: 'Please check your email and password',
+  //     });
+  //     return;
+  //   }
+
+  //   setLocalLoading(true);
+  //   dispatch(setLoading(true));
+
+  //   try {
+  //     const response = await authService.login({
+  //       username: email.trim(),
+  //       password,
+  //     });
+
+  //     const tokens = response.data;
+
+  //     dispatch(setToken(tokens.access_token));
+  //     dispatch(setRefreshToken(tokens.refresh_token));
+
+  //     const parsedUser = extractUserFromToken(tokens.access_token);
+  //     console.log('=== Login - User Extraction ===');
+  //     console.log('Parsed user from token:', parsedUser);
+  //     console.log('User ID (sub):', parsedUser?.id);
+
+  //     if (parsedUser && parsedUser.id) {
+  //       dispatch(setUser(parsedUser));
+  //       console.log('✅ User set in Redux with ID from token sub claim');
+  //     } else {
+  //       console.warn('⚠️ Token missing sub claim, using fallback ID');
+  //       // If token doesn't have user info, create a fallback user with a generated ID
+  //       const fallbackUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  //       dispatch(
+  //         setUser({
+  //           id: fallbackUserId,
+  //           email,
+  //           name: email,
+  //         })
+  //       );
+  //     }
+
+  //     Toast.show({
+  //       type: 'success',
+  //       text1: 'Login Successful',
+  //       text2: 'Welcome back!',
+  //     });
+
+  //     navigation.replace(ROUTES.HOME);
+  //   } catch (error) {
+  //     const apiError = error as AuthServiceError;
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Login Failed',
+  //       text2: apiError.message,
+  //     });
+  //   } finally {
+  //     setLocalLoading(false);
+  //     dispatch(setLoading(false));
+  //   }
+  // };
 
   const handleSocialLogin = (provider: 'facebook' | 'google' | 'linkedin') => {
     Toast.show({
@@ -381,9 +465,9 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
             </View>
           )}
 
-          <Divider text="or continue with" />
+          {/* <Divider text="or continue with" /> */}
 
-          <View style={styles.socialContainer}>
+          {/* <View style={styles.socialContainer}>
             <SocialLoginButton
               provider="facebook"
               onPress={() => handleSocialLogin('facebook')}
@@ -396,12 +480,12 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
               provider="linkedin"
               onPress={() => handleSocialLogin('linkedin')}
             />
-          </View>
+          </View> */}
 
           <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>or </Text>
+            <Text style={styles.signupText}>If you are not registered, </Text>
             <TouchableOpacity onPress={navigateToSignup}>
-              <Text style={styles.signupLink}>Create account</Text>
+              <Text style={styles.signupLink}>Create an account</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -492,11 +576,11 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     biometricIcon: {
       fontSize: 20,
     },
-    socialContainer: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      gap: theme.spacing.md,
-    },
+    // socialContainer: {
+    //   flexDirection: 'row',
+    //   justifyContent: 'center',
+    //   gap: theme.spacing.md,
+    // },
     signupContainer: {
       flexDirection: 'row',
       justifyContent: 'center',

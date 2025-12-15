@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../constants/theme';
+import { formatCurrency } from '../../utils';
 
 interface AccountCardProps {
   name: string;
@@ -44,7 +45,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({
       <View style={styles.iconContainer}>
         <Text style={styles.iconText}>{icon || '🏦'}</Text>
       </View>
-      <Text style={styles.balance}>${balance.toFixed(2)}</Text>
+      <Text style={styles.balance}>{formatCurrency(balance)}</Text>
       <Text style={styles.name}>{name}</Text>
     </TouchableOpacity>
   );

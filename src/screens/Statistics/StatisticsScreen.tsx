@@ -18,6 +18,7 @@ import {
 import { theme } from '../../constants/theme';
 import { ROUTES } from '../../constants/routes';
 import { useAppSelector } from '../../store/hooks';
+import { formatCurrency } from '../../utils';
 
 const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({
   navigation,
@@ -124,7 +125,7 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({
 
         <View style={styles.balanceSection}>
           <Text style={styles.balanceLabel}>Balance</Text>
-          <Text style={styles.balanceAmount}>$2408.45</Text>
+          <Text style={styles.balanceAmount}>{formatCurrency(240845)}</Text>
         </View>
 
         <View style={styles.accountsSection}>
@@ -136,28 +137,28 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({
           >
             <View style={styles.accountItem}>
               <Text style={styles.accountIcon}>🏦</Text>
-              <Text style={styles.accountName}>PASHABANK USD</Text>
-              <Text style={styles.accountBalance}>$425</Text>
+              <Text style={styles.accountName}>HBL PKR</Text>
+              <Text style={styles.accountBalance}>{formatCurrency(42535)}</Text>
             </View>
             <View style={styles.accountItem}>
               <Text style={styles.accountIcon}>🏦</Text>
-              <Text style={styles.accountName}>LEOBANK</Text>
-              <Text style={styles.accountBalance}>$775.79</Text>
+              <Text style={styles.accountName}>Meezan Bank</Text>
+              <Text style={styles.accountBalance}>{formatCurrency(77579)}</Text>
             </View>
             <View style={styles.accountItem}>
               <Text style={styles.accountIcon}>💵</Text>
-              <Text style={styles.accountName}>Cash USD</Text>
-              <Text style={styles.accountBalance}>$600</Text>
+              <Text style={styles.accountName}>Cash PKR</Text>
+              <Text style={styles.accountBalance}>{formatCurrency(60000)}</Text>
             </View>
             <View style={styles.accountItem}>
               <Text style={styles.accountIcon}>🏦</Text>
-              <Text style={styles.accountName}>KAPITALBANK USD</Text>
-              <Text style={styles.accountBalance}>$591.33</Text>
+              <Text style={styles.accountName}>UBL PKR</Text>
+              <Text style={styles.accountBalance}>{formatCurrency(59133)}</Text>
             </View>
             <View style={styles.accountItem}>
-              <Text style={styles.accountIcon}>🏦</Text>
-              <Text style={styles.accountName}>CENTRALBANK USD</Text>
-              <Text style={styles.accountBalance}>$15.98</Text>
+              <Text style={styles.accountIcon}>📱</Text>
+              <Text style={styles.accountName}>JazzCash</Text>
+              <Text style={styles.accountBalance}>{formatCurrency(1598)}</Text>
             </View>
           </ScrollView>
         </View>

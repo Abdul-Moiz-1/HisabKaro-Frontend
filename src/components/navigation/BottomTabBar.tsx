@@ -58,7 +58,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabPres
   const tabs: TabItem[] = [
     {
       id: 'home',
-      icon: '$',
+      icon: 'Rs',
       label: 'Home',
       isActive: activeTab === 'home',
       onPress: () => onTabPress('home'),
@@ -105,7 +105,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabPres
               styles.homeIconText,
               { color: tab.isActive ? theme.colors.text.inverse : theme.colors.text.primary }
             ]}>
-              $
+              Rs
             </Text>
           </View>
         </AnimatedTabIcon>

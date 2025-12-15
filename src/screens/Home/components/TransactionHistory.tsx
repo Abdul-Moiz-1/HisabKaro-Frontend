@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { useTheme } from '../../../store/hooks';
+import { formatCurrency } from '../../../utils';
 
 interface Transaction {
   id: string;
@@ -168,7 +169,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ onSeeAll
             styles.transactionAmount,
             { color: item.type === 'income' ? theme.colors.success : theme.colors.text.primary }
           ]}>
-            {item.amount > 0 ? '+' : ''}${Math.abs(item.amount)}
+            {item.amount > 0 ? '+' : '-'}{formatCurrency(Math.abs(item.amount))}
           </Text>
           <Text style={styles.transactionTime}>{item.time}</Text>
         </View>
