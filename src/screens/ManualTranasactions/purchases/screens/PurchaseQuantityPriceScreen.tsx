@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +20,7 @@ import {
 import { FieldType } from '../../../../types/forms';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 const PurchaseQuantityPriceScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -27,7 +28,7 @@ const PurchaseQuantityPriceScreen: React.FC = () => {
   const { navigateToScreen } = useFlowNavigation();
 
   // @ts-ignore
-  const { product, bill = [] , supplier} = route.params?.flowData || {};
+  const { product, bill = [], supplier } = route.params?.flowData || {};
 
   const [quantity, setQuantity] = useState('1');
   const [cost, setCost] = useState(product?.purchasePrice?.toString() || '');
@@ -45,7 +46,7 @@ const PurchaseQuantityPriceScreen: React.FC = () => {
     };
 
     const updatedBill = [...bill, billItem];
-    navigateToScreen('PurchaseBillSummary', { bill: updatedBill , supplier});
+    navigateToScreen('PurchaseBillSummary', { bill: updatedBill, supplier });
   };
 
   const quickQuantities = [1, 5, 10, 20, 50];
@@ -82,7 +83,7 @@ const PurchaseQuantityPriceScreen: React.FC = () => {
                 setQuantity(Math.max(1, parseInt(quantity) - 1).toString())
               }
             >
-              <Ionicons name="remove" size={24} color="#007AFF" />
+              <Icon name="remove" size={24} color="#007AFF" />
             </TouchableOpacity>
 
             <View style={styles.quantityInputContainer}>
@@ -96,7 +97,7 @@ const PurchaseQuantityPriceScreen: React.FC = () => {
                 }}
                 value={quantity}
                 onChange={setQuantity}
-                onBlur={() => {}}
+                onBlur={() => { }}
               />
             </View>
 
@@ -104,7 +105,7 @@ const PurchaseQuantityPriceScreen: React.FC = () => {
               style={styles.quantityButton}
               onPress={() => setQuantity((parseInt(quantity) + 1).toString())}
             >
-              <Ionicons name="add" size={24} color="#007AFF" />
+              <Icon name="add" size={24} color="#007AFF" />
             </TouchableOpacity>
           </View>
 
@@ -136,7 +137,7 @@ const PurchaseQuantityPriceScreen: React.FC = () => {
             }}
             value={cost}
             onChange={setCost}
-            onBlur={() => {}}
+            onBlur={() => { }}
           />
         </View>
 
@@ -148,7 +149,7 @@ const PurchaseQuantityPriceScreen: React.FC = () => {
               {product?.stockQuantity} {product?.unit}
             </Text>
           </View>
-          <Ionicons name="arrow-down" size={20} color="#34C759" />
+          <Icon name="arrow-down" size={20} color="#34C759" />
           <View style={styles.stockImpactRow}>
             <Text style={styles.stockImpactLabel}>After Purchase:</Text>
             <Text style={[styles.stockImpactValue, styles.stockImpactIncrease]}>

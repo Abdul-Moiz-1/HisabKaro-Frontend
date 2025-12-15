@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +24,7 @@ import {
 import { FieldType } from '../../../../types/forms';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 const ExpenseDetailsScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -175,13 +176,13 @@ const ExpenseDetailsScreen: React.FC = () => {
   const quickAmounts =
     category?.id === 'electricity'
       ? [
-          { label: 'Last: 7.8k', value: lastMonthAmount },
-          { label: 'Avg: 8.2k', value: averageAmount },
-        ]
+        { label: 'Last: 7.8k', value: lastMonthAmount },
+        { label: 'Avg: 8.2k', value: averageAmount },
+      ]
       : [
-          { label: '5,000', value: 5000 },
-          { label: '10,000', value: 10000 },
-        ];
+        { label: '5,000', value: 5000 },
+        { label: '10,000', value: 10000 },
+      ];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -223,7 +224,7 @@ const ExpenseDetailsScreen: React.FC = () => {
           }}
           value={amount}
           onChange={setAmount}
-          onBlur={() => {}}
+          onBlur={() => { }}
           quickAmounts={quickAmounts}
         />
 
@@ -238,7 +239,7 @@ const ExpenseDetailsScreen: React.FC = () => {
               },
             ]}
           >
-            <Ionicons
+            <Icon
               name={variance > 0 ? 'arrow-up' : 'arrow-down'}
               size={20}
               color={variance > 0 ? '#FF9500' : '#34C759'}
@@ -353,7 +354,7 @@ const ExpenseDetailsScreen: React.FC = () => {
           }}
           value={date.toISOString()}
           onChange={(value: string) => setDate(new Date(value))}
-          onBlur={() => {}}
+          onBlur={() => { }}
         />
 
         {/* Optional Details */}
@@ -362,7 +363,7 @@ const ExpenseDetailsScreen: React.FC = () => {
           onPress={() => setShowOptionalDetails(!showOptionalDetails)}
         >
           <Text style={styles.optionalDetailsText}>Optional details</Text>
-          <Ionicons
+          <Icon
             name={showOptionalDetails ? 'chevron-up' : 'chevron-down'}
             size={20}
             color="#8E8E93"
@@ -382,7 +383,7 @@ const ExpenseDetailsScreen: React.FC = () => {
               }}
               value={vendorName}
               onChange={setVendorName}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
 
             <TextInputField
@@ -395,7 +396,7 @@ const ExpenseDetailsScreen: React.FC = () => {
               }}
               value={billNumber}
               onChange={setBillNumber}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
 
             <TextAreaField
@@ -410,7 +411,7 @@ const ExpenseDetailsScreen: React.FC = () => {
               }}
               value={notes}
               onChange={setNotes}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
           </View>
         )}
@@ -420,7 +421,7 @@ const ExpenseDetailsScreen: React.FC = () => {
           style={styles.attachPhotoButton}
           onPress={handleAttachPhoto}
         >
-          <Ionicons name="camera-outline" size={20} color="#007AFF" />
+          <Icon name="camera-outline" size={20} color="#007AFF" />
           <Text style={styles.attachPhotoText}>
             📸 Attach bill photo (optional)
           </Text>
@@ -429,7 +430,7 @@ const ExpenseDetailsScreen: React.FC = () => {
         {billPhoto && (
           <View style={styles.photoPreview}>
             <View style={styles.photoPlaceholder}>
-              <Ionicons name="image" size={32} color="#8E8E93" />
+              <Icon name="image" size={32} color="#8E8E93" />
               <Text style={styles.photoPlaceholderText}>
                 Bill photo attached
               </Text>
@@ -438,7 +439,7 @@ const ExpenseDetailsScreen: React.FC = () => {
               style={styles.removePhotoButton}
               onPress={handleRemovePhoto}
             >
-              <Ionicons name="close-circle" size={24} color="#FF3B30" />
+              <Icon name="close-circle" size={24} color="#FF3B30" />
             </TouchableOpacity>
           </View>
         )}

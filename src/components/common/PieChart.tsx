@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../constants/theme';
+import { formatCurrency } from '../../utils';
 
 export interface PieChartSegment {
   id: string;
@@ -61,7 +62,7 @@ export const PieChart: React.FC<PieChartProps> = ({
             })}
           </View>
           <View style={[styles.center, { width: size, height: size }]}>
-            <Text style={styles.totalAmount}>${total.toFixed(2)}</Text>
+            <Text style={styles.totalAmount}>{formatCurrency(total)}</Text>
             <Text style={styles.totalLabel}>Total</Text>
           </View>
         </View>

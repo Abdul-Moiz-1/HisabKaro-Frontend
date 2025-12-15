@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useThemedStyles } from '../../../../theme';
 import {
   AmountInputField,
@@ -20,6 +19,7 @@ import { Theme } from '../../../../constants/theme';
 import { FieldType } from '../../../../types/forms';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSalesFlow } from '../context/SalesFlowContext';
+import Icon from '../../../../components/Icon';
 
 const ProductQuantityPriceScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -38,7 +38,7 @@ const ProductQuantityPriceScreen: React.FC = () => {
 
   const handleAddToCart = () => {
     if (!product) return;
-    
+
     const cartItem = {
       ...product,
       quantity: parseInt(quantity),
@@ -46,7 +46,7 @@ const ProductQuantityPriceScreen: React.FC = () => {
       discount: discountAmount,
       total: total
     };
-    
+
     addToCart(cartItem);
     // @ts-ignore
     navigation.navigate('ShoppingCart');
@@ -84,7 +84,7 @@ const ProductQuantityPriceScreen: React.FC = () => {
                 setQuantity(Math.max(1, parseInt(quantity) - 1).toString())
               }
             >
-              <Ionicons name="remove" size={24} color="#007AFF" />
+              <Icon name="remove" size={24} color="#007AFF" />
             </TouchableOpacity>
 
             <View style={styles.quantityInputContainer}>
@@ -98,7 +98,7 @@ const ProductQuantityPriceScreen: React.FC = () => {
                 }}
                 value={quantity}
                 onChange={setQuantity}
-                onBlur={() => {}}
+                onBlur={() => { }}
               />
             </View>
 
@@ -106,7 +106,7 @@ const ProductQuantityPriceScreen: React.FC = () => {
               style={styles.quantityButton}
               onPress={() => setQuantity((parseInt(quantity) + 1).toString())}
             >
-              <Ionicons name="add" size={24} color="#007AFF" />
+              <Icon name="add" size={24} color="#007AFF" />
             </TouchableOpacity>
           </View>
 
@@ -138,7 +138,7 @@ const ProductQuantityPriceScreen: React.FC = () => {
             }}
             value={price}
             onChange={setPrice}
-            onBlur={() => {}}
+            onBlur={() => { }}
           />
         </View>
 
@@ -156,7 +156,7 @@ const ProductQuantityPriceScreen: React.FC = () => {
             }}
             value={discount}
             onChange={setDiscount}
-            onBlur={() => {}}
+            onBlur={() => { }}
           />
         </View>
 

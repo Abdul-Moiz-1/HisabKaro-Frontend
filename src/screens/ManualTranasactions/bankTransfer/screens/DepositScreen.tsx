@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import {
@@ -21,6 +21,7 @@ import { FieldType } from '../../../../types/forms';
 import ActionButton from '../../../../components/common/ActionButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 interface BankAccount {
   id: string;
@@ -106,7 +107,7 @@ const DepositScreen: React.FC = () => {
         {/* Header Info */}
         <View style={styles.headerCard}>
           <View style={styles.headerRow}>
-            <Ionicons name="wallet" size={24} color="#34C759" />
+            <Icon name="wallet" size={24} color="#34C759" />
             <View style={styles.headerInfo}>
               <Text style={styles.headerLabel}>Cash in Hand</Text>
               <Text style={styles.headerValue}>
@@ -129,13 +130,13 @@ const DepositScreen: React.FC = () => {
           value={amount.toString()}
           onChange={(value: string) => setAmount(Number(value))}
           quickAmounts={quickAmounts}
-          onBlur={() => {}}
+          onBlur={() => { }}
         />
 
         {/* Warning if exceeds cash */}
         {amount > cashInHand && (
           <View style={styles.warningCard}>
-            <Ionicons name="warning" size={20} color="#FF3B30" />
+            <Icon name="warning" size={20} color="#FF3B30" />
             <Text style={styles.warningText}>
               Amount exceeds available cash in hand
             </Text>
@@ -207,7 +208,7 @@ const DepositScreen: React.FC = () => {
           }}
           value={date.toISOString()}
           onChange={(value: string) => setDate(new Date(value))}
-          onBlur={() => {}}
+          onBlur={() => { }}
         />
 
         {/* Notes */}
@@ -223,7 +224,7 @@ const DepositScreen: React.FC = () => {
             }}
             value={notes}
             onChange={setNotes}
-            onBlur={() => {}}
+            onBlur={() => { }}
           />
         </View>
 
@@ -239,7 +240,7 @@ const DepositScreen: React.FC = () => {
                   <Text style={styles.previewBefore}>
                     {cashInHand.toLocaleString()}
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={styles.previewAfter}>
                     {(cashInHand - amount).toLocaleString()}
                   </Text>
@@ -254,7 +255,7 @@ const DepositScreen: React.FC = () => {
                   <Text style={styles.previewBefore}>
                     {selectedBank?.balance.toLocaleString()}
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={[styles.previewAfter, styles.previewIncrease]}>
                     {((selectedBank?.balance || 0) + amount).toLocaleString()}
                   </Text>

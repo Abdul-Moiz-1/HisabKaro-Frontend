@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../../components/Icon';
 import { useThemedStyles } from '../../../theme';
 import { useFlowNavigation } from '../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -66,7 +66,7 @@ const SelectCategoryScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Info Banner */}
         <View style={styles.infoBanner}>
-          <Ionicons name="information-circle" size={20} color="#007AFF" />
+          <Icon name="information-circle" size={20} color="#007AFF" />
           <Text style={styles.infoBannerText}>
             Select a new category for this expense
           </Text>
@@ -101,7 +101,7 @@ const SelectCategoryScreen: React.FC = () => {
                     { backgroundColor: category.color },
                   ]}
                 >
-                  <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                  <Icon name="checkmark" size={16} color="#FFFFFF" />
                 </View>
               )}
             </TouchableOpacity>

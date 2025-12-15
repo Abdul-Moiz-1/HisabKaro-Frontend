@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../../components/Icon';
 import { useThemedStyles } from '../../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ActionButton from '../../../components/common/ActionButton';
@@ -72,7 +72,7 @@ const EditConfirmationScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Success Header */}
         <View style={styles.successHeader}>
-          <Ionicons name="checkmark-circle" size={64} color="#34C759" />
+          <Icon name="checkmark-circle" size={64} color="#34C759" />
           <Text style={styles.successTitle}>✅ Transaction Updated</Text>
           <Text style={styles.successSubtitle}>Changes saved successfully</Text>
         </View>
@@ -85,7 +85,7 @@ const EditConfirmationScreen: React.FC = () => {
               { backgroundColor: icon.color + '20' },
             ]}
           >
-            <Ionicons name={icon.name as any} size={32} color={icon.color} />
+            <Icon name={icon.name as any} size={32} color={icon.color} />
           </View>
           <Text style={styles.transactionType}>
             {transaction?.type?.charAt(0).toUpperCase() +
@@ -103,7 +103,7 @@ const EditConfirmationScreen: React.FC = () => {
           {hasAmountChange && (
             <View style={styles.changeItem}>
               <View style={styles.changeHeader}>
-                <Ionicons name="cash" size={20} color="#007AFF" />
+                <Icon name="cash" size={20} color="#007AFF" />
                 <Text style={styles.changeLabel}>Amount</Text>
               </View>
               <View style={styles.changeValues}>
@@ -113,7 +113,7 @@ const EditConfirmationScreen: React.FC = () => {
                     PKR {changes?.original.amount.toLocaleString()}
                   </Text>
                 </View>
-                <Ionicons name="arrow-forward" size={20} color="#8E8E93" />
+                <Icon name="arrow-forward" size={20} color="#8E8E93" />
                 <View style={styles.changeNewContainer}>
                   <Text style={styles.changeNewLabel}>After</Text>
                   <Text style={styles.changeNewValue}>
@@ -127,7 +127,7 @@ const EditConfirmationScreen: React.FC = () => {
           {hasDateChange && (
             <View style={styles.changeItem}>
               <View style={styles.changeHeader}>
-                <Ionicons name="calendar" size={20} color="#007AFF" />
+                <Icon name="calendar" size={20} color="#007AFF" />
                 <Text style={styles.changeLabel}>Date</Text>
               </View>
               <View style={styles.changeValues}>
@@ -137,7 +137,7 @@ const EditConfirmationScreen: React.FC = () => {
                     {new Date(changes?.original.date).toLocaleDateString()}
                   </Text>
                 </View>
-                <Ionicons name="arrow-forward" size={20} color="#8E8E93" />
+                <Icon name="arrow-forward" size={20} color="#8E8E93" />
                 <View style={styles.changeNewContainer}>
                   <Text style={styles.changeNewLabel}>After</Text>
                   <Text style={styles.changeNewValue}>
@@ -151,7 +151,7 @@ const EditConfirmationScreen: React.FC = () => {
           {hasDescriptionChange && (
             <View style={styles.changeItem}>
               <View style={styles.changeHeader}>
-                <Ionicons name="document-text" size={20} color="#007AFF" />
+                <Icon name="document-text" size={20} color="#007AFF" />
                 <Text style={styles.changeLabel}>Description</Text>
               </View>
               <View style={styles.changeValues}>
@@ -161,7 +161,7 @@ const EditConfirmationScreen: React.FC = () => {
                     {changes?.original.description}
                   </Text>
                 </View>
-                <Ionicons name="arrow-forward" size={20} color="#8E8E93" />
+                <Icon name="arrow-forward" size={20} color="#8E8E93" />
                 <View style={styles.changeNewContainer}>
                   <Text style={styles.changeNewLabel}>After</Text>
                   <Text style={styles.changeNewValue} numberOfLines={2}>
@@ -175,7 +175,7 @@ const EditConfirmationScreen: React.FC = () => {
           {hasPaymentMethodChange && (
             <View style={styles.changeItem}>
               <View style={styles.changeHeader}>
-                <Ionicons name="card" size={20} color="#007AFF" />
+                <Icon name="card" size={20} color="#007AFF" />
                 <Text style={styles.changeLabel}>Payment Method</Text>
               </View>
               <View style={styles.changeValues}>
@@ -185,7 +185,7 @@ const EditConfirmationScreen: React.FC = () => {
                     {changes?.original.paymentMethod}
                   </Text>
                 </View>
-                <Ionicons name="arrow-forward" size={20} color="#8E8E93" />
+                <Icon name="arrow-forward" size={20} color="#8E8E93" />
                 <View style={styles.changeNewContainer}>
                   <Text style={styles.changeNewLabel}>After</Text>
                   <Text style={styles.changeNewValue}>
@@ -227,7 +227,7 @@ const EditConfirmationScreen: React.FC = () => {
 
         {/* Audit Trail Notice */}
         <View style={styles.auditNotice}>
-          <Ionicons name="shield-checkmark" size={20} color="#34C759" />
+          <Icon name="shield-checkmark" size={20} color="#34C759" />
           <Text style={styles.auditText}>
             This edit has been recorded in the audit trail. Original transaction
             details are preserved for compliance and can be viewed in the edit
@@ -241,21 +241,21 @@ const EditConfirmationScreen: React.FC = () => {
             style={styles.actionRow}
             onPress={handleViewTransaction}
           >
-            <Ionicons name="eye" size={24} color="#007AFF" />
+            <Icon name="eye" size={24} color="#007AFF" />
             <Text style={styles.actionText}>View Updated Transaction</Text>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionRow}>
-            <Ionicons name="time" size={24} color="#5856D6" />
+            <Icon name="time" size={24} color="#5856D6" />
             <Text style={styles.actionText}>View Edit History</Text>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionRow}>
-            <Ionicons name="share-social" size={24} color="#34C759" />
+            <Icon name="share-social" size={24} color="#34C759" />
             <Text style={styles.actionText}>Share Updated Receipt</Text>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         </View>
       </ScrollView>

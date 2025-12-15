@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../constants/theme';
+import { formatCurrency } from '../../utils';
 
 export interface Transaction {
   id: string;
@@ -46,7 +47,7 @@ export const TransactionItem: React.FC<TransactionItemProps> = ({
       </View>
       <View style={styles.right}>
         <Text style={[styles.amount, { color: amountColor }]}>
-          {amountPrefix}${Math.abs(transaction.amount).toFixed(2)}
+          {amountPrefix}{formatCurrency(Math.abs(transaction.amount))}
         </Text>
         <Text style={styles.time}>{transaction.time}</Text>
       </View>

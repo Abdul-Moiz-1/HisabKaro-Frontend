@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../constants/theme';
+import { formatCurrency } from '../../utils';
 
 export interface ExpenseCategory {
   id: string;
@@ -9,7 +10,6 @@ export interface ExpenseCategory {
   percentage: number;
   percentageChange: number;
   color: string;
-  icon: string;
 }
 
 interface ExpenseCategoryItemProps {
@@ -31,12 +31,12 @@ export const ExpenseCategoryItem: React.FC<ExpenseCategoryItemProps> = ({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <View style={[styles.iconContainer, { backgroundColor: category.color }]}>
+      {/* <View style={[styles.iconContainer, { backgroundColor: category.color }]}>
         <Text style={styles.iconText}>{category.icon}</Text>
-      </View>
+      </View> */}
       <View style={styles.details}>
         <Text style={styles.name}>{category.name}</Text>
-        <Text style={styles.amount}>${category.amount.toFixed(2)}</Text>
+        <Text style={styles.amount}>{formatCurrency(category.amount)}</Text>
       </View>
       <View style={styles.right}>
         <Text style={[styles.percentageChange, { color: changeColor }]}>
@@ -57,14 +57,14 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
     ...theme.shadows.sm,
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.md,
-  },
+  // iconContainer: {
+  //   width: 40,
+  //   height: 40,
+  //   borderRadius: theme.borderRadius.md,
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  //   marginRight: theme.spacing.md,
+  // },
   iconText: {
     fontSize: 20,
   },

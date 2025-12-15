@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../../components/Icon';
 import { useThemedStyles } from '../../../theme';
 import { useFlowNavigation } from '../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,10 +18,12 @@ import {
   AmountInputField,
   DateField,
   TextAreaField,
+  TextInputField,
 } from '../../../components/DynamicForm';
 import { FieldType } from '../../../types/forms';
 import ActionButton from '../../../components/common/ActionButton';
 import { Theme } from '../../../constants/theme';
+import { ROUTES } from '../../../constants/routes';
 
 const EditTransactionScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -32,8 +34,15 @@ const EditTransactionScreen: React.FC = () => {
   // @ts-ignore
   const { transaction } = route.params || {};
 
-  // State for ALL editable fields
-  const [amount, setAmount] = useState(transaction?.amount || 0);
+  // Initialize party as object (handle both string and object formats)
+  const initialParty = transaction?.party
+    ? typeof transaction.party === 'string'
+      ? { id: transaction.party, name: transaction.party, phone: '', outstanding: 0 }
+      : transaction.party
+    : null;
+
+  // State for ALL editable fields - Amount as string for AmountInputField
+  const [amount, setAmount] = useState(String(transaction?.amount || 0));
   const [date, setDate] = useState(new Date(transaction?.date) || new Date());
   const [description, setDescription] = useState(
     transaction?.description || '',
@@ -43,7 +52,7 @@ const EditTransactionScreen: React.FC = () => {
   );
 
   // Customer/Supplier/Party
-  const [party, setParty] = useState(transaction?.party || null);
+  const [party, setParty] = useState(initialParty);
 
   // Items (for sale/purchase transactions)
   const [items, setItems] = useState(transaction?.items || []);
@@ -82,16 +91,38 @@ const EditTransactionScreen: React.FC = () => {
     }
   };
 
-  const checkForChanges = () => {
+  const checkForChanges = (
+    newAmount?: string,
+    newDate?: Date,
+    newDescription?: string,
+    newPaymentMethod?: string,
+    newParty?: any,
+    newItems?: any[],
+    newCategory?: string,
+    newNotes?: string,
+  ) => {
+    const currentAmount = newAmount !== undefined ? newAmount : amount;
+    const currentDate = newDate !== undefined ? newDate : date;
+    const currentDescription = newDescription !== undefined ? newDescription : description;
+    const currentPaymentMethod = newPaymentMethod !== undefined ? newPaymentMethod : paymentMethod;
+    const currentParty = newParty !== undefined ? newParty : party;
+    const currentItems = newItems !== undefined ? newItems : items;
+    const currentCategory = newCategory !== undefined ? newCategory : category;
+    const currentNotes = newNotes !== undefined ? newNotes : notes;
+
+    const originalPartyId = typeof transaction?.party === 'string' 
+      ? transaction.party 
+      : transaction?.party?.id;
+
     const changed =
-      amount !== transaction?.amount ||
-      date.toISOString() !== new Date(transaction?.date).toISOString() ||
-      description !== transaction?.description ||
-      paymentMethod !== transaction?.paymentMethod ||
-      party?.id !== transaction?.party?.id ||
-      JSON.stringify(items) !== JSON.stringify(transaction?.items) ||
-      category !== transaction?.category ||
-      notes !== transaction?.notes;
+      parseFloat(currentAmount) !== transaction?.amount ||
+      currentDate.toISOString() !== new Date(transaction?.date).toISOString() ||
+      currentDescription !== transaction?.description ||
+      currentPaymentMethod !== transaction?.paymentMethod ||
+      currentParty?.id !== originalPartyId ||
+      JSON.stringify(currentItems) !== JSON.stringify(transaction?.items) ||
+      currentCategory !== transaction?.category ||
+      currentNotes !== transaction?.notes;
     setHasChanges(changed);
   };
 
@@ -169,6 +200,8 @@ const EditTransactionScreen: React.FC = () => {
   };
 
   const handleSaveChanges = () => {
+    const numericAmount = parseFloat(amount) || 0;
+
     if (!hasChanges) {
       Alert.alert(
         'No Changes',
@@ -177,7 +210,7 @@ const EditTransactionScreen: React.FC = () => {
       return;
     }
 
-    if (amount === 0) {
+    if (numericAmount === 0) {
       Alert.alert('Invalid Amount', 'Amount cannot be zero.');
       return;
     }
@@ -215,7 +248,7 @@ const EditTransactionScreen: React.FC = () => {
         notes: transaction?.notes,
       },
       updated: {
-        amount,
+        amount: numericAmount,
         date: date.toISOString(),
         description,
         paymentMethod,
@@ -229,7 +262,20 @@ const EditTransactionScreen: React.FC = () => {
       editedBy: 'Current User',
     };
 
-    navigateToScreen('EditConfirmation', { transaction, changes });
+    // Show success message and navigate back to transaction list
+    Alert.alert(
+      'Changes Saved',
+      'Transaction has been updated successfully.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Navigate back to transaction list
+            navigation.navigate(ROUTES.TRANSACTION_LIST as never);
+          },
+        },
+      ],
+    );
   };
 
   const handleViewHistory = () => {
@@ -253,7 +299,7 @@ const EditTransactionScreen: React.FC = () => {
           <View
             style={[styles.headerIcon, { backgroundColor: icon.color + '20' }]}
           >
-            <Ionicons name={icon.name as any} size={32} color={icon.color} />
+            <Icon name={icon.name as any} size={32} color={icon.color} />
           </View>
           <Text style={styles.headerType}>
             Edit{' '}
@@ -265,7 +311,7 @@ const EditTransactionScreen: React.FC = () => {
 
         {/* Warning Banner */}
         <View style={styles.warningBanner}>
-          <Ionicons name="warning" size={20} color="#FF9500" />
+          <Icon name="warning" size={20} color="#FF9500" />
           <Text style={styles.warningText}>
             Editing this transaction will update your accounts and reports. An
             audit trail will be maintained.
@@ -279,12 +325,12 @@ const EditTransactionScreen: React.FC = () => {
               📝 Changes Summary (
               {
                 Object.keys({
-                  ...(amount !== transaction?.amount && { amount: true }),
+                  ...(parseFloat(amount) !== transaction?.amount && { amount: true }),
                   ...(date.toISOString() !==
                     new Date(transaction?.date).toISOString() && {
                     date: true,
                   }),
-                  ...(party?.id !== transaction?.party?.id && { party: true }),
+                  ...((party?.id !== (typeof transaction?.party === 'string' ? transaction.party : transaction?.party?.id)) && { party: true }),
                   ...(JSON.stringify(items) !==
                     JSON.stringify(transaction?.items) && { items: true }),
                   ...(paymentMethod !== transaction?.paymentMethod && {
@@ -297,22 +343,22 @@ const EditTransactionScreen: React.FC = () => {
             </Text>
 
             {/* Show all changes */}
-            {amount !== transaction?.amount && (
+            {parseFloat(amount) !== transaction?.amount && (
               <View style={styles.comparisonRow}>
                 <Text style={styles.comparisonLabel}>Amount</Text>
                 <View style={styles.comparisonValues}>
                   <Text style={styles.comparisonOld}>
-                    PKR {transaction?.amount.toLocaleString()}
+                    PKR {transaction?.amount?.toLocaleString()}
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={styles.comparisonNew}>
-                    PKR {amount.toLocaleString()}
+                    PKR {parseFloat(amount).toLocaleString()}
                   </Text>
                 </View>
               </View>
             )}
 
-            {party?.id !== transaction?.party?.id && (
+            {party?.id !== (typeof transaction?.party === 'string' ? transaction.party : transaction?.party?.id) && (
               <View style={styles.comparisonRow}>
                 <Text style={styles.comparisonLabel}>
                   {canEditParty &&
@@ -323,9 +369,9 @@ const EditTransactionScreen: React.FC = () => {
                 </Text>
                 <View style={styles.comparisonValues}>
                   <Text style={styles.comparisonOld}>
-                    {transaction?.party?.name || 'None'}
+                    {typeof transaction?.party === 'string' ? transaction.party : transaction?.party?.name || 'None'}
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={styles.comparisonNew}>
                     {party?.name || 'None'}
                   </Text>
@@ -340,7 +386,7 @@ const EditTransactionScreen: React.FC = () => {
                   <Text style={styles.comparisonOld}>
                     {transaction?.items?.length || 0} item(s)
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={styles.comparisonNew}>
                     {items?.length || 0} item(s)
                   </Text>
@@ -359,35 +405,47 @@ const EditTransactionScreen: React.FC = () => {
                   ? '👤 Customer'
                   : '🏢 Supplier'}
               </Text>
-              <TouchableOpacity
-                style={styles.changeButton}
-                onPress={handleChangeParty}
-              >
-                <Text style={styles.changeButtonText}>Change</Text>
-                <Ionicons name="chevron-forward" size={16} color="#007AFF" />
-              </TouchableOpacity>
             </View>
 
-            {party ? (
-              <View style={styles.partyCard}>
-                <View style={styles.partyIcon}>
-                  <Ionicons name="person" size={24} color="#007AFF" />
-                </View>
-                <View style={styles.partyInfo}>
-                  <Text style={styles.partyName}>{party.name}</Text>
-                  {party.phone && (
-                    <Text style={styles.partyDetail}>📞 {party.phone}</Text>
-                  )}
-                  {party.outstanding && (
-                    <Text style={styles.partyOutstanding}>
-                      Outstanding: PKR {party.outstanding.toLocaleString()}
-                    </Text>
-                  )}
-                </View>
+            {/* Editable Customer Name Field */}
+            <Text style={styles.fieldLabel}>
+              {transaction?.type === 'receipt' || transaction?.type === 'sale'
+                ? 'Customer Name *'
+                : 'Supplier Name *'}
+            </Text>
+            <TextInputField
+              field={{
+                id: 'partyName',
+                name: 'partyName',
+                label: '',
+                type: FieldType.TEXT,
+                placeholder: transaction?.type === 'receipt' || transaction?.type === 'sale'
+                  ? 'Enter customer name'
+                  : 'Enter supplier name',
+              }}
+              value={party?.name || ''}
+              onChange={val => {
+                const newParty = {
+                  ...party,
+                  id: party?.id || val,
+                  name: val,
+                };
+                setParty(newParty);
+                checkForChanges(undefined, undefined, undefined, undefined, newParty);
+              }}
+              onBlur={() => {}}
+            />
+
+            {party?.phone && (
+              <View style={styles.partyDetailRow}>
+                <Text style={styles.partyDetail}>📞 {party.phone}</Text>
               </View>
-            ) : (
-              <View style={styles.emptyParty}>
-                <Text style={styles.emptyPartyText}>No party selected</Text>
+            )}
+            {party?.outstanding && party.outstanding > 0 && (
+              <View style={styles.partyDetailRow}>
+                <Text style={styles.partyOutstanding}>
+                  Outstanding: PKR {party.outstanding.toLocaleString()}
+                </Text>
               </View>
             )}
 
@@ -416,7 +474,7 @@ const EditTransactionScreen: React.FC = () => {
                 <Text style={styles.changeButtonText}>
                   {items?.length > 0 ? 'Edit Items' : 'Add Items'}
                 </Text>
-                <Ionicons name="chevron-forward" size={16} color="#007AFF" />
+                <Icon name="chevron-forward" size={16} color="#007AFF" />
               </TouchableOpacity>
             </View>
 
@@ -452,7 +510,7 @@ const EditTransactionScreen: React.FC = () => {
               </View>
             ) : (
               <View style={styles.emptyItems}>
-                <Ionicons name="cart-outline" size={48} color="#C7C7CC" />
+                <Icon name="cart-outline" size={48} color="#C7C7CC" />
                 <Text style={styles.emptyItemsText}>No items added</Text>
               </View>
             )}
@@ -473,7 +531,7 @@ const EditTransactionScreen: React.FC = () => {
                 onPress={handleChangeCategory}
               >
                 <Text style={styles.changeButtonText}>Change</Text>
-                <Ionicons name="chevron-forward" size={16} color="#007AFF" />
+                <Icon name="chevron-forward" size={16} color="#007AFF" />
               </TouchableOpacity>
             </View>
 
@@ -495,13 +553,14 @@ const EditTransactionScreen: React.FC = () => {
             field={{
               id: 'amount',
               name: 'amount',
-              label: 'amount',
+              label: '',
               type: FieldType.AMOUNT,
+              suffix: 'PKR',
             }}
             value={amount}
             onChange={val => {
               setAmount(val);
-              checkForChanges();
+              checkForChanges(val);
             }}
             quickAmounts={[]}
             onBlur={() => {}}
@@ -513,13 +572,14 @@ const EditTransactionScreen: React.FC = () => {
             field={{
               id: 'date',
               name: 'date',
-              label: 'date',
+              label: '',
               type: FieldType.DATE,
             }}
             value={date.toISOString()}
             onChange={val => {
-              setDate(new Date(val));
-              checkForChanges();
+              const newDate = new Date(val);
+              setDate(newDate);
+              checkForChanges(undefined, newDate);
             }}
             onBlur={() => {}}
           />
@@ -530,7 +590,7 @@ const EditTransactionScreen: React.FC = () => {
             field={{
               id: 'description',
               name: 'description',
-              label: 'description',
+              label: '',
               type: FieldType.TEXTAREA,
               placeholder: 'Transaction description...',
               numberOfLines: 3,
@@ -538,7 +598,7 @@ const EditTransactionScreen: React.FC = () => {
             value={description}
             onChange={val => {
               setDescription(val);
-              checkForChanges();
+              checkForChanges(undefined, undefined, val);
             }}
             onBlur={() => {}}
           />
@@ -558,7 +618,7 @@ const EditTransactionScreen: React.FC = () => {
                     ]}
                     onPress={() => {
                       setPaymentMethod(method.value);
-                      checkForChanges();
+                      checkForChanges(undefined, undefined, undefined, method.value);
                     }}
                   >
                     <Text style={styles.paymentMethodIcon}>{method.icon}</Text>
@@ -592,7 +652,7 @@ const EditTransactionScreen: React.FC = () => {
             }}
             onChange={val => {
               setNotes(val);
-              checkForChanges();
+              checkForChanges(undefined, undefined, undefined, undefined, undefined, undefined, undefined, val);
             }}
             onBlur={() => {}}
             value={notes}
@@ -631,17 +691,17 @@ const EditTransactionScreen: React.FC = () => {
             style={styles.historyButton}
             onPress={handleViewHistory}
           >
-            <Ionicons name="time" size={20} color="#007AFF" />
+            <Icon name="time" size={20} color="#007AFF" />
             <Text style={styles.historyButtonText}>
               View Edit History ({transaction.editHistory.length})
             </Text>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         )}
 
         {/* Info Box */}
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color="#007AFF" />
+          <Icon name="information-circle" size={20} color="#007AFF" />
           <Text style={styles.infoText}>
             All changes are tracked and can be audited. The original transaction
             details will be preserved in the edit history.
@@ -815,6 +875,10 @@ const createStyles = (theme: Theme) => ({
     ...theme.typography.caption,
     color: theme.colors.error,
     fontWeight: '600' as const,
+  },
+  partyDetailRow: {
+    marginTop: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
   },
   emptyParty: {
     backgroundColor: theme.colors.background,

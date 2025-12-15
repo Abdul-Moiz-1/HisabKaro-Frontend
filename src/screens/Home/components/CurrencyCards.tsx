@@ -6,27 +6,23 @@ interface CurrencyCardData {
   id: string;
   amount: string;
   label: string;
-  icon: string;
 }
 
 const currencyData: CurrencyCardData[] = [
   {
     id: '1',
-    amount: '$425.35',
-    label: 'PASHABANK USD',
-    icon: '🏛️',
+    amount: 'Rs.42,535',
+    label: 'Bank Account'
   },
   {
     id: '2',
-    amount: '$600',
-    label: 'Cash USD',
-    icon: '💵',
+    amount: 'Rs.60,000',
+    label: 'Cash PKR'
   },
   {
     id: '3',
-    amount: '$775',
-    label: 'LEON',
-    icon: '🦁',
+    amount: 'Rs.77,500',
+    label: 'Jazzcash'
   },
 ];
 
@@ -35,18 +31,21 @@ interface CurrencyCardsProps {
   onSeeAll?: () => void;
 }
 
-export const CurrencyCards: React.FC<CurrencyCardsProps> = ({ onCardPress, onSeeAll }) => {
+export const CurrencyCards: React.FC<CurrencyCardsProps> = ({
+  onCardPress,
+  onSeeAll,
+}) => {
   return (
     <View style={styles.container}>
-      {currencyData.map((item) => (
-        <TouchableOpacity 
-          key={item.id} 
+      {currencyData.map(item => (
+        <TouchableOpacity
+          key={item.id}
           style={styles.card}
           onPress={() => onCardPress?.(item.id)}
         >
-          <View style={styles.iconContainer}>
+          {/* <View style={styles.iconContainer}>
             <Text style={styles.icon}>{item.icon}</Text>
-          </View>
+          </View> */}
           <Text style={styles.amount}>{item.amount}</Text>
           <Text style={styles.label}>{item.label}</Text>
         </TouchableOpacity>
@@ -76,23 +75,24 @@ const styles = StyleSheet.create({
     minHeight: 100,
     justifyContent: 'space-between',
   },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.xs,
-  },
-  icon: {
-    fontSize: 16,
-  },
+  // iconContainer: {
+  //   width: 32,
+  //   height: 32,
+  //   borderRadius: 16,
+  //   backgroundColor: theme.colors.background,
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  //   marginBottom: theme.spacing.xs,
+  // },
+  // icon: {
+  //   fontSize: 16,
+  // },
   amount: {
     ...theme.typography.body,
     color: theme.colors.text.primary,
     fontWeight: 'bold',
     marginBottom: theme.spacing.xs,
+    fontSize: 12,
   },
   label: {
     ...theme.typography.caption,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../../constants/theme';
+import { formatCurrency } from '../../../utils';
 
 interface ExpenseCategory {
   id: string;
@@ -8,33 +9,29 @@ interface ExpenseCategory {
   amount: number;
   percentage: number;
   color: string;
-  icon: string;
 }
 
 const expenseCategories: ExpenseCategory[] = [
   {
     id: '1',
-    name: 'Groceries',
-    amount: 67.00,
+    name: 'Expense',
+    amount: 850.00,
     percentage: 15,
-    color: theme.colors.primary,
-    icon: '🛒',
+    color: theme.colors.primary
   },
   {
     id: '2',
-    name: 'Shopping',
-    amount: 158.00,
+    name: 'Credit',
+    amount: 450.00,
     percentage: 8,
-    color: theme.colors.error,
-    icon: '🛍️',
+    color: theme.colors.error
   },
   {
     id: '3',
-    name: 'Food',
-    amount: 125.00,
+    name: 'Bills',
+    amount: 1200.00,
     percentage: 2,
-    color: '#FF9500',
-    icon: '🍕',
+    color: '#FF9500'
   },
 ];
 
@@ -55,11 +52,11 @@ export const ExpensesSection: React.FC<ExpensesSectionProps> = ({ onSeeAll }) =>
       <View style={styles.categoriesContainer}>
         {expenseCategories.map((category) => (
           <TouchableOpacity key={category.id} style={styles.categoryCard}>
-            <View style={[styles.iconContainer, { backgroundColor: category.color }]}>
+            {/* <View style={[styles.iconContainer, { backgroundColor: category.color }]}>
               <Text style={styles.icon}>{category.icon}</Text>
-            </View>
+            </View> */}
             <Text style={styles.categoryName}>{category.name}</Text>
-            <Text style={styles.categoryAmount}>${category.amount.toFixed(2)}</Text>
+            <Text style={styles.categoryAmount}>{formatCurrency(category.amount)}</Text>
             <Text style={styles.categoryPercentage}>{category.percentage}% ↓</Text>
           </TouchableOpacity>
         ))}
@@ -101,17 +98,17 @@ const styles = StyleSheet.create({
     minHeight: 120,
     justifyContent: 'space-between',
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  icon: {
-    fontSize: 18,
-  },
+  // iconContainer: {
+  //   width: 40,
+  //   height: 40,
+  //   borderRadius: 20,
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  //   marginBottom: theme.spacing.sm,
+  // },
+  // icon: {
+  //   fontSize: 18,
+  // },
   categoryName: {
     ...theme.typography.body,
     color: theme.colors.text.primary,

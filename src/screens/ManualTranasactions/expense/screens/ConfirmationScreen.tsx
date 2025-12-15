@@ -9,11 +9,11 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useThemedStyles } from '../../../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 const ConfirmationScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -92,7 +92,7 @@ const ConfirmationScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Success Header */}
         <View style={styles.successHeader}>
-          <Ionicons name="checkmark-circle" size={64} color="#34C759" />
+          <Icon name="checkmark-circle" size={64} color="#34C759" />
           <Text style={styles.successTitle}>✅ Expense Recorded</Text>
           <Text style={styles.successSubtitle}>Your books are updated</Text>
         </View>
@@ -158,7 +158,7 @@ const ConfirmationScreen: React.FC = () => {
         {(paymentMethod === 'cash' || paymentMethod === 'bank') && (
           <View style={styles.balanceImpactCard}>
             <View style={styles.balanceImpactHeader}>
-              <Ionicons name="trending-down" size={20} color="#FF3B30" />
+              <Icon name="trending-down" size={20} color="#FF3B30" />
               <Text style={styles.balanceImpactTitle}>Balance Impact</Text>
             </View>
 
@@ -171,7 +171,7 @@ const ConfirmationScreen: React.FC = () => {
                   <Text style={styles.balancePrevious}>
                     PKR {previousBalance.toLocaleString()}
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={styles.balanceNew}>
                     PKR {newBalance.toLocaleString()}
                   </Text>
@@ -185,32 +185,32 @@ const ConfirmationScreen: React.FC = () => {
         <Text style={styles.actionsTitle}>Quick Actions</Text>
 
         <TouchableOpacity style={styles.actionCard} onPress={handleViewReport}>
-          <Ionicons name="bar-chart" size={24} color="#007AFF" />
+          <Icon name="bar-chart" size={24} color="#007AFF" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>📊 View Expense Report</Text>
             <Text style={styles.actionDescription}>See expense trends</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         {billPhoto && (
           <TouchableOpacity style={styles.actionCard} onPress={handleViewBill}>
-            <Ionicons name="image" size={24} color="#5856D6" />
+            <Icon name="image" size={24} color="#5856D6" />
             <View style={styles.actionContent}>
               <Text style={styles.actionLabel}>📸 View Attached Bill</Text>
               <Text style={styles.actionDescription}>See bill photo</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         )}
 
         <TouchableOpacity style={styles.actionCard} onPress={handleAddNote}>
-          <Ionicons name="create" size={24} color="#34C759" />
+          <Icon name="create" size={24} color="#34C759" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>📝 Add Note</Text>
             <Text style={styles.actionDescription}>Add additional details</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
       </ScrollView>
 

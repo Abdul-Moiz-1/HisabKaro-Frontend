@@ -24,7 +24,7 @@ const SplashScreen: React.FC<NavigationProps<'Splash'>> = ({ navigation }) => {
         <View style={styles.textContainer}>
           <Text style={styles.title}>Take Control of Your Finances</Text>
           <Text style={styles.description}>
-            Welcome to Fintrack! Your personal financial companion. Take control of your money
+            Welcome to HisabKaro! Your personal financial companion. Take control of your money
             effortlessly and plus, our AI-powered chat is here to assist you along the way
           </Text>
         </View>

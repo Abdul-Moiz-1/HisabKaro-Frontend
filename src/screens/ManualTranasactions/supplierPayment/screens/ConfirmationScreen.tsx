@@ -9,11 +9,12 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 const ConfirmationScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -69,7 +70,7 @@ const ConfirmationScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Success Header */}
         <View style={styles.successHeader}>
-          <Ionicons name="checkmark-circle" size={64} color="#34C759" />
+          <Icon name="checkmark-circle" size={64} color="#34C759" />
           <Text style={styles.successTitle}>✅ Payment Recorded</Text>
           <Text style={styles.successSubtitle}>Payment sent successfully</Text>
         </View>
@@ -125,8 +126,8 @@ const ConfirmationScreen: React.FC = () => {
                     remaining === 0
                       ? '#34C759'
                       : remaining < 0
-                      ? '#007AFF'
-                      : '#FF3B30',
+                        ? '#007AFF'
+                        : '#FF3B30',
                 },
               ]}
             >
@@ -161,47 +162,47 @@ const ConfirmationScreen: React.FC = () => {
           style={styles.actionCard}
           onPress={handleShareReceipt}
         >
-          <Ionicons name="share-social" size={24} color="#007AFF" />
+          <Icon name="share-social" size={24} color="#007AFF" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>Share Payment Receipt</Text>
             <Text style={styles.actionDescription}>
               Send to {supplier?.name}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="document-text" size={24} color="#5856D6" />
+          <Icon name="document-text" size={24} color="#5856D6" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>View Payment Details</Text>
             <Text style={styles.actionDescription}>
               See complete payment info
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         {remaining > 0 && (
           <TouchableOpacity style={styles.actionCard}>
-            <Ionicons name="notifications" size={24} color="#FF9500" />
+            <Icon name="notifications" size={24} color="#FF9500" />
             <View style={styles.actionContent}>
               <Text style={styles.actionLabel}>Set Reminder</Text>
               <Text style={styles.actionDescription}>
                 For remaining PKR {remaining?.toLocaleString()}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         )}
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="create" size={24} color="#34C759" />
+          <Icon name="create" size={24} color="#34C759" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>Add Note</Text>
             <Text style={styles.actionDescription}>Optional memo</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
       </ScrollView>
 

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../store/hooks';
+import { formatCurrency } from '../../../utils';
 
 interface BalanceCardProps {
   userName: string;
@@ -129,7 +130,7 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
         activeOpacity={0.7}
       >
         <Text style={styles.balanceLabel}>Balance</Text>
-        <Text style={styles.balanceAmount}>${balance.toFixed(2)}</Text>
+        <Text style={styles.balanceAmount}>{formatCurrency(balance)}</Text>
       </TouchableOpacity>
     </View>
   );

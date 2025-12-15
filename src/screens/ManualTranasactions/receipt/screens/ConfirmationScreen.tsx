@@ -8,13 +8,12 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useThemedStyles } from '../../../../theme';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useReceiptFlow } from '../context/ReceiptFlowContext';
+import Icon from '../../../../components/Icon';
 
 const ConfirmationScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -82,7 +81,7 @@ const ConfirmationScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Success Header */}
         <View style={styles.successHeader}>
-          <Ionicons name="checkmark-circle" size={64} color="#34C759" />
+          <Icon name="checkmark-circle" size={64} color="#34C759" />
           <Text style={styles.successTitle}>✅ Payment Recorded</Text>
           <Text style={styles.successSubtitle}>
             Invoice created successfully
@@ -190,8 +189,8 @@ const ConfirmationScreen: React.FC = () => {
                     remaining > 0
                       ? '#FF9500'
                       : remaining === 0
-                      ? '#34C759'
-                      : '#007AFF',
+                        ? '#34C759'
+                        : '#007AFF',
                 },
               ]}
             >
@@ -204,19 +203,19 @@ const ConfirmationScreen: React.FC = () => {
         <Text style={styles.actionsTitle}>What's next?</Text>
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="send" size={24} color="#007AFF" />
+          <Icon name="send" size={24} color="#007AFF" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>
               Send Receipt to {customer?.name || 'Customer'}
             </Text>
             <Text style={styles.actionDescription}>WhatsApp / SMS / Email</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         {remaining > 0 && (
           <TouchableOpacity style={styles.actionCard}>
-            <Ionicons name="notifications" size={24} color="#FF9500" />
+            <Icon name="notifications" size={24} color="#FF9500" />
             <View style={styles.actionContent}>
               <Text style={styles.actionLabel}>
                 Remind {customer?.name || 'Customer'} for remaining
@@ -225,17 +224,17 @@ const ConfirmationScreen: React.FC = () => {
                 Set reminder for PKR {Number(remaining || 0).toLocaleString()}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         )}
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="create" size={24} color="#5856D6" />
+          <Icon name="create" size={24} color="#5856D6" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>Add Note</Text>
             <Text style={styles.actionDescription}>Optional memo</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
       </ScrollView>
 

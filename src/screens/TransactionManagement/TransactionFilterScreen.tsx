@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../components/Icon';
 import { useThemedStyles } from '../../theme';
 import { DateField } from '../../components/DynamicForm';
 import { FieldType } from '../../types/forms';
@@ -104,7 +104,7 @@ const TransactionFilterScreen: React.FC = () => {
                   style={[
                     styles.chipText,
                     selectedTypes.includes(type.value) &&
-                      styles.chipTextSelected,
+                    styles.chipTextSelected,
                   ]}
                 >
                   {type.label}
@@ -161,7 +161,7 @@ const TransactionFilterScreen: React.FC = () => {
                 style={[
                   styles.chip,
                   selectedPaymentMethods.includes(method.value) &&
-                    styles.chipSelected,
+                  styles.chipSelected,
                 ]}
                 onPress={() =>
                   toggleSelection(
@@ -175,7 +175,7 @@ const TransactionFilterScreen: React.FC = () => {
                   style={[
                     styles.chipText,
                     selectedPaymentMethods.includes(method.value) &&
-                      styles.chipTextSelected,
+                    styles.chipTextSelected,
                   ]}
                 >
                   {method.label}
@@ -200,7 +200,7 @@ const TransactionFilterScreen: React.FC = () => {
                 }}
                 value={dateFrom?.toISOString() || new Date().toISOString()}
                 onChange={(value: string) => setDateFrom(new Date(value))}
-                onBlur={() => {}}
+                onBlur={() => { }}
               />
             </View>
             <View style={styles.dateField}>
@@ -213,7 +213,7 @@ const TransactionFilterScreen: React.FC = () => {
                 }}
                 value={dateTo?.toISOString() || new Date().toISOString()}
                 onChange={(value: string) => setDateTo(new Date(value))}
-                onBlur={() => {}}
+                onBlur={() => { }}
               />
             </View>
           </View>

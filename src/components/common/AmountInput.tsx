@@ -8,7 +8,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../Icon';
 import { Theme } from '../../constants/theme';
 import { useThemedStyles } from '../../theme';
 
@@ -92,7 +92,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
                 onPress={() => handleNumberPress(key)}
               >
                 {key === 'backspace' ? (
-                  <Ionicons name="backspace" size={24} color="#000" />
+                  <Icon name="backspace" size={24} color="#000" />
                 ) : key === 'clear' ? (
                   <Text style={styles.keypadButtonTextSmall}>Clear</Text>
                 ) : (

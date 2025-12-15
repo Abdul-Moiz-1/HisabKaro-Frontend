@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../../constants/theme';
+import { formatCurrency } from '../../../utils';
 
 interface MonthlyBudgetProps {
   spent: number;
@@ -25,7 +26,7 @@ export const MonthlyBudget: React.FC<MonthlyBudgetProps> = ({ spent, limit, onSe
         <View style={styles.textSection}>
           <Text style={styles.label}>Monthly</Text>
           <Text style={styles.label}>spending limit</Text>
-          <Text style={styles.spentAmount}>Spend: ${spent.toLocaleString()}/${limit.toLocaleString()}</Text>
+          <Text style={styles.spentAmount}>Spend: {formatCurrency(spent)}/{formatCurrency(limit)}</Text>
           
           <View style={styles.legendContainer}>
             <View style={styles.legendItem}>

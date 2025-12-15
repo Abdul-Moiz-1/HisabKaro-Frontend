@@ -78,7 +78,7 @@ const CustomerSelectionScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <SearchableList
         data={customers}
-        searchPlaceholder="🔍 Search customer name..."
+        searchPlaceholder="Search customer name..."
         searchKey="name"
         onItemPress={handleCustomerSelect}
         renderItem={renderCustomerItem}

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from '../../../components/Icon';
 import { useThemedStyles } from '../../../theme';
 import { useFlowNavigation } from '../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -179,7 +179,7 @@ const EditTransactionScreen: React.FC = () => {
           <View
             style={[styles.headerIcon, { backgroundColor: icon.color + '20' }]}
           >
-            <Ionicons name={icon.name as any} size={32} color={icon.color} />
+            <Icon name={icon.name as any} size={32} color={icon.color} />
           </View>
           <Text style={styles.headerType}>
             Edit{' '}
@@ -191,7 +191,7 @@ const EditTransactionScreen: React.FC = () => {
 
         {/* Warning Banner */}
         <View style={styles.warningBanner}>
-          <Ionicons name="warning" size={20} color="#FF9500" />
+          <Icon name="warning" size={20} color="#FF9500" />
           <Text style={styles.warningText}>
             Editing this transaction will update your accounts and reports. An
             audit trail will be maintained.
@@ -210,7 +210,7 @@ const EditTransactionScreen: React.FC = () => {
                   <Text style={styles.comparisonOld}>
                     PKR {transaction?.amount.toLocaleString()}
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={styles.comparisonNew}>
                     PKR {amount.toLocaleString()}
                   </Text>
@@ -226,7 +226,7 @@ const EditTransactionScreen: React.FC = () => {
                   <Text style={styles.comparisonOld}>
                     {new Date(transaction?.date).toLocaleDateString()}
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={styles.comparisonNew}>
                     {date.toLocaleDateString()}
                   </Text>
@@ -241,7 +241,7 @@ const EditTransactionScreen: React.FC = () => {
                   <Text style={styles.comparisonOld}>
                     {transaction?.paymentMethod}
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                  <Icon name="arrow-forward" size={16} color="#8E8E93" />
                   <Text style={styles.comparisonNew}>{paymentMethod}</Text>
                 </View>
               </View>
@@ -362,17 +362,17 @@ const EditTransactionScreen: React.FC = () => {
             style={styles.historyButton}
             onPress={handleViewHistory}
           >
-            <Ionicons name="time" size={20} color="#007AFF" />
+            <Icon name="time" size={20} color="#007AFF" />
             <Text style={styles.historyButtonText}>
               View Edit History ({transaction.editHistory.length})
             </Text>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         )}
 
         {/* Info Box */}
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color="#007AFF" />
+          <Icon name="information-circle" size={20} color="#007AFF" />
           <Text style={styles.infoText}>
             All changes are tracked and can be audited. The original transaction
             details will be preserved in the edit history.

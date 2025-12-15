@@ -9,12 +9,12 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useThemedStyles } from '../../../../theme';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSalesFlow } from '../context/SalesFlowContext';
+import Icon from '../../../../components/Icon';
 
 const ConfirmationScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -70,7 +70,7 @@ const ConfirmationScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Success Header */}
         <View style={styles.successHeader}>
-          <Ionicons name="checkmark-circle" size={64} color="#34C759" />
+          <Icon name="checkmark-circle" size={64} color="#34C759" />
           <Text style={styles.successTitle}>✅ Sale Recorded</Text>
           <Text style={styles.successSubtitle}>
             {paymentType === 'cash' ? 'Payment received' : 'Invoice created'}
@@ -171,47 +171,47 @@ const ConfirmationScreen: React.FC = () => {
           style={styles.actionCard}
           onPress={handleShareInvoice}
         >
-          <Ionicons name="share-social" size={24} color="#007AFF" />
+          <Icon name="share-social" size={24} color="#007AFF" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>
               Share Invoice to {customer?.name}
             </Text>
             <Text style={styles.actionDescription}>WhatsApp / SMS / Email</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionCard} onPress={handleViewInvoice}>
-          <Ionicons name="document-text" size={24} color="#5856D6" />
+          <Icon name="document-text" size={24} color="#5856D6" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>View Invoice</Text>
             <Text style={styles.actionDescription}>
               See full invoice details
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
         {paymentType === 'credit' && (
           <TouchableOpacity style={styles.actionCard}>
-            <Ionicons name="notifications" size={24} color="#FF9500" />
+            <Icon name="notifications" size={24} color="#FF9500" />
             <View style={styles.actionContent}>
               <Text style={styles.actionLabel}>Set Payment Reminder</Text>
               <Text style={styles.actionDescription}>
                 Remind customer before due date
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         )}
 
         <TouchableOpacity style={styles.actionCard}>
-          <Ionicons name="create" size={24} color="#34C759" />
+          <Icon name="create" size={24} color="#34C759" />
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>Add Note</Text>
             <Text style={styles.actionDescription}>Optional memo</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
       </ScrollView>
 

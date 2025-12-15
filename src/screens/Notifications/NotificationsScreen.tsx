@@ -10,7 +10,7 @@ const NotificationsScreen: React.FC<NavigationProps<'Notifications'>> = ({ navig
     {
       id: '1',
       title: 'New Transaction',
-      description: 'You received a payment of $50',
+      description: 'You received a payment of Rs.5,000',
       timestamp: 'Today | 8:25 AM',
       icon: '💰',
       iconColor: theme.colors.warning,

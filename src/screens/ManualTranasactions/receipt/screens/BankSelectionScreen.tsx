@@ -8,7 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { DateField } from '../../../../components/DynamicForm';
 import { useThemedStyles } from '../../../../theme';
 import ActionButton from '../../../../components/common/ActionButton';
@@ -16,6 +16,7 @@ import { Theme } from '../../../../constants/theme';
 import { FieldType } from '../../../../types/forms';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useOptionalReceiptFlow } from '../context/ReceiptFlowContext';
+import Icon from '../../../../components/Icon';
 
 const mockBankAccounts = [
   {
@@ -40,7 +41,7 @@ const BankSelectionScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
   const navigation = useNavigation();
   const route = useRoute();
-  
+
   // Use optional context - works with or without ReceiptFlowProvider
   const receiptFlow = useOptionalReceiptFlow();
 
@@ -124,7 +125,7 @@ const BankSelectionScreen: React.FC = () => {
             style={styles.addBankButton}
             onPress={handleAddBank}
           >
-            <Ionicons name="add-circle-outline" size={20} color="#007AFF" />
+            <Icon name="add-circle-outline" size={20} color="#007AFF" />
             <Text style={styles.addBankButtonText}>+ Add bank account</Text>
           </TouchableOpacity>
         </View>
@@ -146,7 +147,7 @@ const BankSelectionScreen: React.FC = () => {
             ))}
             <TouchableOpacity
               style={styles.quickDateButton}
-              onPress={() => {}}
+              onPress={() => { }}
             >
               <Text style={styles.quickDateButtonText}>Pick date</Text>
             </TouchableOpacity>
@@ -161,7 +162,7 @@ const BankSelectionScreen: React.FC = () => {
             }}
             value={transferDate.toDateString()}
             onChange={date => setTransferDate(new Date(date))}
-            onBlur={() => {}}
+            onBlur={() => { }}
           />
         </View>
       </ScrollView>

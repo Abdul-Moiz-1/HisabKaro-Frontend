@@ -1,13 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import { NavigationProps } from '../../types';
-import { Container, HeaderNavigation, SearchBar, TabSelector, LineChart, PieChart } from '../../components/common';
+import {
+  Container,
+  HeaderNavigation,
+  SearchBar,
+  TabSelector,
+  LineChart,
+  PieChart,
+} from '../../components/common';
 import { theme } from '../../constants/theme';
 import { ROUTES } from '../../constants/routes';
 import { useAppSelector } from '../../store/hooks';
+import { formatCurrency } from '../../utils';
 
-const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation }) => {
-  const { user } = useAppSelector((state) => state.user);
+const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({
+  navigation,
+}) => {
+  const { user } = useAppSelector(state => state.user);
   const [selectedPeriod, setSelectedPeriod] = useState('Daily');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -38,7 +54,10 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation 
     { id: '6', label: 'Taxi', value: 32, color: '#007AFF' },
   ];
 
-  const totalExpenses = expenseSegments.reduce((sum, seg) => sum + seg.value, 0);
+  const totalExpenses = expenseSegments.reduce(
+    (sum, seg) => sum + seg.value,
+    0,
+  );
 
   return (
     <Container safeArea edges={['top']}>
@@ -58,7 +77,7 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation 
       />
 
       <View style={styles.headerSection}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.userInfo}
           onPress={() => navigation.navigate(ROUTES.PROFILE)}
           activeOpacity={0.7}
@@ -74,10 +93,7 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation 
         </TouchableOpacity>
       </View>
 
-      <SearchBar
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
+      <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
 
       <TabSelector
         tabs={periodTabs}
@@ -109,36 +125,40 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation 
 
         <View style={styles.balanceSection}>
           <Text style={styles.balanceLabel}>Balance</Text>
-          <Text style={styles.balanceAmount}>$2408.45</Text>
+          <Text style={styles.balanceAmount}>{formatCurrency(240845)}</Text>
         </View>
 
         <View style={styles.accountsSection}>
           <Text style={styles.sectionTitle}>Accounts</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.accountsScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.accountsScroll}
+          >
             <View style={styles.accountItem}>
               <Text style={styles.accountIcon}>🏦</Text>
-              <Text style={styles.accountName}>PASHABANK USD</Text>
-              <Text style={styles.accountBalance}>$425.35</Text>
+              <Text style={styles.accountName}>HBL PKR</Text>
+              <Text style={styles.accountBalance}>{formatCurrency(42535)}</Text>
             </View>
             <View style={styles.accountItem}>
               <Text style={styles.accountIcon}>🏦</Text>
-              <Text style={styles.accountName}>LEOBANK</Text>
-              <Text style={styles.accountBalance}>$775.79</Text>
+              <Text style={styles.accountName}>Meezan Bank</Text>
+              <Text style={styles.accountBalance}>{formatCurrency(77579)}</Text>
             </View>
             <View style={styles.accountItem}>
               <Text style={styles.accountIcon}>💵</Text>
-              <Text style={styles.accountName}>Cash USD</Text>
-              <Text style={styles.accountBalance}>$600</Text>
+              <Text style={styles.accountName}>Cash PKR</Text>
+              <Text style={styles.accountBalance}>{formatCurrency(60000)}</Text>
             </View>
             <View style={styles.accountItem}>
               <Text style={styles.accountIcon}>🏦</Text>
-              <Text style={styles.accountName}>KAPITALBANK USD</Text>
-              <Text style={styles.accountBalance}>$591.33</Text>
+              <Text style={styles.accountName}>UBL PKR</Text>
+              <Text style={styles.accountBalance}>{formatCurrency(59133)}</Text>
             </View>
             <View style={styles.accountItem}>
-              <Text style={styles.accountIcon}>🏦</Text>
-              <Text style={styles.accountName}>CENTRALBANK USD</Text>
-              <Text style={styles.accountBalance}>$15.98</Text>
+              <Text style={styles.accountIcon}>📱</Text>
+              <Text style={styles.accountName}>JazzCash</Text>
+              <Text style={styles.accountBalance}>{formatCurrency(1598)}</Text>
             </View>
           </ScrollView>
         </View>
@@ -150,7 +170,12 @@ const StatisticsScreen: React.FC<NavigationProps<'Statistics'>> = ({ navigation 
               <Text style={styles.seeAll}>See All</Text>
             </TouchableOpacity>
           </View>
-          <PieChart segments={expenseSegments} total={totalExpenses} size={200} showLegend />
+          <PieChart
+            segments={expenseSegments}
+            total={totalExpenses}
+            size={200}
+            showLegend
+          />
         </View>
       </ScrollView>
     </Container>
@@ -307,4 +332,3 @@ const styles = StyleSheet.create({
 });
 
 export default StatisticsScreen;
-

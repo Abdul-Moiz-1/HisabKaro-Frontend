@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../constants/theme';
+import { formatCurrency } from '../../utils';
 
 export interface Budget {
   id: string;
@@ -62,7 +63,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({
         <View style={styles.textSection}>
           <Text style={styles.label}>{budget.period} spending limit</Text>
           <Text style={styles.spentAmount}>
-            Spend: ${budget.spent.toLocaleString()} / ${budget.limit.toLocaleString()}
+            Spend: {formatCurrency(budget.spent)} / {formatCurrency(budget.limit)}
           </Text>
 
           <View style={styles.legendContainer}>

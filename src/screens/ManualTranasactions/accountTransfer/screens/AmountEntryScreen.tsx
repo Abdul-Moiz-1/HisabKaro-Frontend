@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { AmountInputField } from '../../../../components/DynamicForm';
 import { FieldType } from '../../../../types/forms';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 const AmountEntryScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
@@ -32,11 +33,11 @@ const AmountEntryScreen: React.FC = () => {
     { label: '100k', value: 100000 },
     ...(sourceAccount?.balance
       ? [
-          {
-            label: `All ${sourceAccount.balance.toLocaleString()}`,
-            value: sourceAccount.balance,
-          },
-        ]
+        {
+          label: `All ${sourceAccount.balance.toLocaleString()}`,
+          value: sourceAccount.balance,
+        },
+      ]
       : []),
   ];
 
@@ -46,7 +47,7 @@ const AmountEntryScreen: React.FC = () => {
         {/* Source Account Display */}
         <View style={styles.sourceCard}>
           <View style={styles.sourceHeader}>
-            <Ionicons name="arrow-up-circle" size={20} color="#FF3B30" />
+            <Icon name="arrow-up-circle" size={20} color="#FF3B30" />
             <Text style={styles.sourceLabel}>Transferring from:</Text>
           </View>
           <View style={styles.sourceInfo}>
@@ -56,7 +57,7 @@ const AmountEntryScreen: React.FC = () => {
                 { backgroundColor: sourceAccount?.color + '20' },
               ]}
             >
-              <Ionicons
+              <Icon
                 name={sourceAccount?.icon as any}
                 size={20}
                 color={sourceAccount?.color}
@@ -90,13 +91,13 @@ const AmountEntryScreen: React.FC = () => {
           value={amount.toString()}
           onChange={(value: string) => setAmount(Number(value))}
           quickAmounts={quickAmounts}
-          onBlur={() => {}}
+          onBlur={() => { }}
         />
 
         {/* Warning if exceeds balance */}
         {amount > sourceAccount?.balance && (
           <View style={styles.warningCard}>
-            <Ionicons name="warning" size={20} color="#FF3B30" />
+            <Icon name="warning" size={20} color="#FF3B30" />
             <Text style={styles.warningText}>
               Amount exceeds available balance in {sourceAccount?.name}
             </Text>
@@ -113,7 +114,7 @@ const AmountEntryScreen: React.FC = () => {
                 <Text style={styles.previewBefore}>
                   {sourceAccount?.balance.toLocaleString()}
                 </Text>
-                <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                <Icon name="arrow-forward" size={16} color="#8E8E93" />
                 <Text style={styles.previewAfter}>
                   {(sourceAccount?.balance - amount).toLocaleString()}
                 </Text>

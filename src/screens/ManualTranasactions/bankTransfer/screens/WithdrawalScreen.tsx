@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useThemedStyles } from '../../../../theme';
 import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,6 +21,7 @@ import {
 import { FieldType } from '../../../../types/forms';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
+import Icon from '../../../../components/Icon';
 
 interface BankAccount {
   id: string;
@@ -115,7 +116,7 @@ const WithdrawalScreen: React.FC = () => {
           value={amount.toString()}
           onChange={(value: string) => setAmount(Number(value))}
           quickAmounts={quickAmounts}
-          onBlur={() => {}}
+          onBlur={() => { }}
         />
 
         {/* Bank Account Selection */}
@@ -159,7 +160,7 @@ const WithdrawalScreen: React.FC = () => {
         {/* Warning if exceeds bank balance */}
         {amount > 0 && selectedBank && amount > selectedBank.balance && (
           <View style={styles.warningCard}>
-            <Ionicons name="warning" size={20} color="#FF3B30" />
+            <Icon name="warning" size={20} color="#FF3B30" />
             <Text style={styles.warningText}>
               Amount exceeds available bank balance
             </Text>
@@ -193,7 +194,7 @@ const WithdrawalScreen: React.FC = () => {
           }}
           value={date.toISOString()}
           onChange={(value: string) => setDate(new Date(value))}
-          onBlur={() => {}}
+          onBlur={() => { }}
         />
 
         {/* Notes */}
@@ -209,7 +210,7 @@ const WithdrawalScreen: React.FC = () => {
             }}
             value={notes}
             onChange={setNotes}
-            onBlur={() => {}}
+            onBlur={() => { }}
           />
         </View>
 
@@ -229,7 +230,7 @@ const WithdrawalScreen: React.FC = () => {
                     <Text style={styles.previewBefore}>
                       {selectedBank?.balance.toLocaleString()}
                     </Text>
-                    <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                    <Icon name="arrow-forward" size={16} color="#8E8E93" />
                     <Text style={[styles.previewAfter, styles.previewDecrease]}>
                       {((selectedBank?.balance || 0) - amount).toLocaleString()}
                     </Text>
@@ -242,7 +243,7 @@ const WithdrawalScreen: React.FC = () => {
                     <Text style={styles.previewBefore}>
                       {cashInHand.toLocaleString()}
                     </Text>
-                    <Ionicons name="arrow-forward" size={16} color="#8E8E93" />
+                    <Icon name="arrow-forward" size={16} color="#8E8E93" />
                     <Text style={[styles.previewAfter, styles.previewIncrease]}>
                       {(cashInHand + amount).toLocaleString()}
                     </Text>
