@@ -68,6 +68,19 @@ export type RootStackParamList = {
   EditTransactionFlow: NavigatorScreenParams<EditTransactionFlowParamList>;
   // EditConfirmation: { transaction: any; changes: any };
   // EditHistory: { transaction: any };
+  // Customer Screens
+  CustomersList: undefined;
+  CustomerDetail: { customerId: string };
+  CustomerLedger: { customerId: string; customerName: string };
+  AddCustomer: undefined;
+  EditCustomer: { customerId: string };
+  // Supplier Screens
+  SuppliersList: undefined;
+  SupplierDetail: { supplierId: string };
+  SupplierLedger: { supplierId: string; supplierName: string };
+  AddSupplier: undefined;
+  EditSupplier: { supplierId: string };
+  DirectoryTab: undefined;
 };
 
 declare global {

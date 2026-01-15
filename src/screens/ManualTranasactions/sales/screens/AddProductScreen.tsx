@@ -183,21 +183,6 @@ const AddProductScreen: React.FC = () => {
               error={touched.name ? errors.name : undefined}
             />
 
-            <DropdownField
-              field={{
-                id: 'category',
-                name: 'category',
-                label: 'Category',
-                type: FieldType.DROPDOWN,
-                placeholder: 'Select category',
-                options: categoryOptions,
-              }}
-              value={formData.category}
-              onChange={value => handleFieldChange('category', value)}
-              onBlur={() => handleFieldBlur('category')}
-              error={touched.category ? errors.category : undefined}
-            />
-
             <TextInputField
               field={{
                 id: 'sku',
@@ -249,57 +234,6 @@ const AddProductScreen: React.FC = () => {
               value={formData.purchasePrice}
               onChange={value => handleFieldChange('purchasePrice', value)}
               onBlur={() => handleFieldBlur('purchasePrice')}
-            />
-          </View>
-
-          {/* Inventory */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionIcon}>📊</Text>
-              <Text style={styles.sectionTitle}>Inventory</Text>
-            </View>
-
-            <DropdownField
-              field={{
-                id: 'unit',
-                name: 'unit',
-                label: 'Unit',
-                type: FieldType.DROPDOWN,
-                required: true,
-                options: unitOptions,
-              }}
-              value={formData.unit}
-              onChange={value => handleFieldChange('unit', value)}
-              onBlur={() => handleFieldBlur('unit')}
-            />
-
-            <NumberInputField
-              field={{
-                id: 'stockQuantity',
-                name: 'stockQuantity',
-                label: 'Stock Quantity',
-                type: FieldType.NUMBER,
-                placeholder: '0',
-                required: true,
-              }}
-              value={formData.stockQuantity}
-              onChange={value => handleFieldChange('stockQuantity', value)}
-              onBlur={() => handleFieldBlur('stockQuantity')}
-              error={touched.stockQuantity ? errors.stockQuantity : undefined}
-            />
-
-            <NumberInputField
-              field={{
-                id: 'lowStockAlert',
-                name: 'lowStockAlert',
-                label: 'Low Stock Alert',
-                type: FieldType.NUMBER,
-                placeholder: '10',
-                hint: 'Get notified when stock falls below this level',
-              }}
-              value={formData.lowStockAlert}
-              onChange={value => handleFieldChange('lowStockAlert', value)}
-              onBlur={() => handleFieldBlur('lowStockAlert')}
             />
           </View>
         </ScrollView>

@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Android",
+      "cwd": "${workspaceFolder}",
+      "type": "reactnative",
+      "request": "launch",
+      "platform": "android",
+      "enableDebug": true, // Make sure debugger is active
+      "sourceMaps": true, // Maps breakpoints to TS/JSX
+      "internalDebuggerPort": 9090 // VS Code debugger port
+    },
+    {
+      "name": "Run Android (No Debug)",
+      "cwd": "${workspaceFolder}",
+      "type": "reactnative",
+      "request": "launch",
+      "platform": "android",
+      "enableDebug": false
+    },
+    {
+      "name": "Attach to Packager",
+      "cwd": "${workspaceFolder}",
+      "type": "reactnative",
+      "request": "attach",
+      "platform": "android"
+    }
+  ]
+}

@@ -23,12 +23,14 @@ import { useThemedStyles } from '../../../../theme';
 import { Theme } from '../../../../constants/theme';
 import { FieldType } from '../../../../types/forms';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
+import { CreateCustomerPayload, customersApi } from '../../../../services/api';
 
 interface FormErrors {
   name?: string;
   phone?: string;
   email?: string;
-  address?: string;
+  // address?: string;
   openingBalance?: string;
   creditPeriod?: string;
   creditLimit?: string;
@@ -42,10 +44,11 @@ const AddCustomerScreen: React.FC = () => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [address, setAddress] = useState('');
+  // const [address, setAddress] = useState('');
   const [openingBalance, setOpeningBalance] = useState('0');
   const [creditPeriod, setCreditPeriod] = useState('30');
   const [creditLimit, setCreditLimit] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -78,35 +81,58 @@ const AddCustomerScreen: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Mark all fields as touched
     setTouched({
       name: true,
       phone: true,
       email: true,
-      address: true,
+      // address: true,
       openingBalance: true,
       creditPeriod: true,
       creditLimit: true,
     });
 
-    if (validateForm()) {
-      const newCustomer = {
-        id: Date.now().toString(),
+    if (!validateForm()) {
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please fix the errors in the form',
+      });
+      console.log('HERE');
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const payload: CreateCustomerPayload = {
         name: name.trim(),
-        phone: `+92${phone}`,
-        email: email.trim(),
-        address: address.trim(),
-        outstanding: parseFloat(openingBalance),
-        creditPeriod: parseInt(creditPeriod),
-        creditLimit: creditLimit ? parseFloat(creditLimit) : undefined,
-        dueDate: new Date(
-          Date.now() + parseInt(creditPeriod) * 24 * 60 * 60 * 1000,
-        ).toISOString(),
+        phoneNumber: phone.trim() || undefined,
+        email: email.trim() || undefined,
+        openingBalance: parseFloat(openingBalance) || 0,
+        creditPeriodDays: parseFloat(creditPeriod) || 0,
       };
 
-      // TODO: Save to API
+      const newCustomer = await customersApi.create(payload);
+      console.log(newCustomer);
+      Toast.show({
+        type: 'success',
+        text1: 'Customer Added',
+        text2: `${newCustomer.name} has been added successfully`,
+      });
+
+      // Navigate to customer detail or go back
+      // navigation.replace('CustomerDetail', { customerId: newCustomer.id });
       navigateToScreen('CustomerSelection', { newCustomer });
+    } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error.message || 'Failed to create customer',
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -180,7 +206,7 @@ const AddCustomerScreen: React.FC = () => {
               onBlur={() => setTouched({ ...touched, email: true })}
             />
 
-            <TextAreaField
+            {/* <TextAreaField
               field={{
                 id: 'address',
                 name: 'address',
@@ -194,7 +220,7 @@ const AddCustomerScreen: React.FC = () => {
               onChange={setAddress}
               error={touched.address ? errors.address : undefined}
               onBlur={() => setTouched({ ...touched, address: true })}
-            />
+            /> */}
           </View>
 
           {/* Credit Terms Section */}
@@ -237,7 +263,7 @@ const AddCustomerScreen: React.FC = () => {
               onBlur={() => setTouched({ ...touched, creditPeriod: true })}
             />
 
-            <AmountInputField
+            {/* <AmountInputField
               field={{
                 id: 'creditLimit',
                 name: 'creditLimit',
@@ -253,7 +279,7 @@ const AddCustomerScreen: React.FC = () => {
               onChange={setCreditLimit}
               error={touched.creditLimit ? errors.creditLimit : undefined}
               onBlur={() => setTouched({ ...touched, creditLimit: true })}
-            />
+            /> */}
           </View>
         </ScrollView>
 

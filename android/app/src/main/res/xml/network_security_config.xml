@@ -3,6 +3,7 @@
     <!-- Allow cleartext traffic for specific domain -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">40.81.29.119</domain>
+        <domain includeSubdomains="true">192.168.100.4</domain>
     </domain-config>
     
     <!-- For localhost during development -->

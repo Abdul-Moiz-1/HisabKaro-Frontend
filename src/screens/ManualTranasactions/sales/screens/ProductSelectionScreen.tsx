@@ -1,238 +1,679 @@
-// flows/sales/screens/ProductSelectionScreen.tsx
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useThemedStyles } from '../../../../theme';
-import SearchableList from '../../../../components/common/SearchableList';
-import ActionButton from '../../../../components/common/ActionButton';
-import { Theme } from '../../../../constants/theme';
+import React, { useEffect, useCallback, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSalesFlow } from '../context/SalesFlowContext';
+import { useNavigation } from '@react-navigation/native';
+import {
+  PlusIcon,
+  PackageIcon,
+  CaretRightIcon,
+  WarningCircleIcon,
+  ArrowRightIcon,
+  ShoppingCartIcon,
+  XCircleIcon,
+} from 'phosphor-react-native';
+import Toast from 'react-native-toast-message';
 
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  stockQuantity: number;
-  unit: string;
-  salePrice: number;
-}
-
-// Mock data
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Samsung Galaxy A54',
-    category: 'Electronics',
-    stockQuantity: 45,
-    unit: 'piece',
-    salePrice: 85000,
-  },
-  {
-    id: '2',
-    name: 'Office Chair',
-    category: 'Furniture',
-    stockQuantity: 8,
-    unit: 'piece',
-    salePrice: 15000,
-  },
-  {
-    id: '3',
-    name: 'Rice (Basmati)',
-    category: 'Food',
-    stockQuantity: 150,
-    unit: 'kg',
-    salePrice: 250,
-  },
-  {
-    id: '4',
-    name: 'HP Laptop',
-    category: 'Electronics',
-    stockQuantity: 0,
-    unit: 'piece',
-    salePrice: 120000,
-  },
-];
+import { useTheme, useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import { SearchBar } from '../../../../components/common';
+import { Product } from '../../../../services/api/products';
+import {
+  fetchSalesProducts,
+  searchSalesProducts,
+  addItem,
+  setDirectTotalMode,
+  selectSalesProducts,
+  selectSelectedCustomer,
+  selectIsWalkInSale,
+  selectSaleItems,
+  selectSalesError,
+  clearError,
+} from '../../../../store/slices/salesSlice';
 
 const ProductSelectionScreen: React.FC = () => {
-  const styles = useThemedStyles(createStyles);
+  const theme = useTheme();
   const navigation = useNavigation();
-  const { setCurrentProduct } = useSalesFlow();
-  const [products] = useState<Product[]>(mockProducts);
+  const dispatch = useAppDispatch();
 
-  const handleProductSelect = (product: Product) => {
-    setCurrentProduct(product);
-    // @ts-ignore
-    navigation.navigate('ProductQuantityPrice');
-  };
+  const customer = useAppSelector(selectSelectedCustomer);
+  const isWalkIn = useAppSelector(selectIsWalkInSale);
+  const products = useAppSelector(selectSalesProducts);
+  const cartItems = useAppSelector(selectSaleItems);
+  const productsLoading = useAppSelector((state) => state.sales.productsLoading);
+  const error = useAppSelector(selectSalesError);
 
-  const handleAddProduct = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Fetch products on mount
+  useEffect(() => {
+    dispatch(fetchSalesProducts());
+  }, [dispatch]);
+
+  // Handle search
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.trim()) {
+        dispatch(searchSalesProducts(searchQuery));
+      } else {
+        dispatch(fetchSalesProducts());
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, dispatch]);
+
+  // Handle error
+  useEffect(() => {
+    if (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error,
+      });
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await dispatch(fetchSalesProducts());
+    setIsRefreshing(false);
+  }, [dispatch]);
+
+  const handleProductSelect = useCallback(
+    (product: Product) => {
+      // @ts-ignore
+      navigation.navigate('ProductQuantityPrice', { product });
+    },
+    [navigation]
+  );
+
+  const handleQuickAdd = useCallback(
+    (product: Product) => {
+      if (product.current_stock <= 0) {
+        Toast.show({
+          type: 'error',
+          text1: 'Out of Stock',
+          text2: `${product.name} is not available`,
+        });
+        return;
+      }
+      dispatch(addItem({ product, quantity: 1 }));
+      Toast.show({
+        type: 'success',
+        text1: 'Added to cart',
+        text2: `${product.name} x1`,
+        visibilityTime: 1500,
+      });
+    },
+    [dispatch]
+  );
+
+  const handleAddProduct = useCallback(() => {
     // @ts-ignore
     navigation.navigate('AddProduct');
-  };
+  }, [navigation]);
 
-  const handleSkipToTotal = () => {
+  const handleSkipToTotal = useCallback(() => {
+    dispatch(setDirectTotalMode(true));
     // @ts-ignore
     navigation.navigate('DirectTotal');
+  }, [dispatch, navigation]);
+
+  const handleViewCart = useCallback(() => {
+    // @ts-ignore
+    navigation.navigate('ShoppingCart');
+  }, [navigation]);
+
+  const formatCurrency = (amount: number): string => {
+    return amount.toLocaleString();
   };
 
-  const getStockColor = (quantity: number) => {
-    if (quantity === 0) return '#8E8E93';
-    if (quantity < 10) return '#FF3B30';
-    if (quantity < 50) return '#FF9500';
-    return '#34C759';
+  const getItemInCart = (productId: string) => {
+    return cartItems.find((item) => item.product_id === productId);
   };
 
-  const renderProductItem = (product: Product) => {
-    return (
-      <View style={styles.productCard}>
-        <View style={styles.productIcon}>
-          <Text style={styles.productIconText}>📦</Text>
-        </View>
-        <View style={styles.productInfo}>
-          <Text style={styles.productName}>{product.name}</Text>
-          <View style={styles.productMeta}>
-            <Text
-              style={[
-                styles.productStock,
-                { color: getStockColor(product.stockQuantity) },
-              ]}
-            >
-              Stock: {product.stockQuantity} {product.unit}
-            </Text>
-            <Text style={styles.productPrice}>
-              PKR {product.salePrice.toLocaleString()}
-            </Text>
+  const isOutOfStock = (product: Product): boolean => {
+    return product.current_stock <= 0;
+  };
+
+  const isLowStock = (product: Product): boolean => {
+    return product.min_stock_level !== undefined && 
+           product.current_stock > 0 && 
+           product.current_stock <= product.min_stock_level;
+  };
+
+  const getStockColor = (product: Product): string => {
+    if (isOutOfStock(product)) return theme.colors.text.disabled;
+    if (isLowStock(product)) return theme.colors.warning;
+    return theme.colors.success;
+  };
+
+  const renderProductItem = useCallback(
+    ({ item }: { item: Product }) => {
+      const cartItem = getItemInCart(item.id);
+      const outOfStock = isOutOfStock(item);
+      const lowStock = isLowStock(item);
+
+      return (
+        <TouchableOpacity
+          style={[styles.productCard, outOfStock && styles.productCardDisabled]}
+          onPress={() => !outOfStock && handleProductSelect(item)}
+          activeOpacity={outOfStock ? 1 : 0.7}
+        >
+          <View style={[
+            styles.productIcon, 
+            outOfStock && styles.productIconDisabled,
+            lowStock && styles.productIconLowStock
+          ]}>
+            {outOfStock ? (
+              <XCircleIcon size={24} color={theme.colors.text.disabled} />
+            ) : (
+              <PackageIcon
+                size={24}
+                color={lowStock ? theme.colors.warning : theme.colors.primary}
+                weight="fill"
+              />
+            )}
           </View>
-        </View>
-      </View>
-    );
-  };
+
+          <View style={styles.productInfo}>
+            <View style={styles.productHeader}>
+              <Text style={[
+                styles.productName, 
+                outOfStock && styles.textDisabled
+              ]} numberOfLines={1}>
+                {item.name}
+              </Text>
+              {item.sku && <Text style={styles.productSku}>{item.sku}</Text>}
+            </View>
+
+            <View style={styles.productMeta}>
+              <Text style={[
+                styles.productStock,
+                { color: getStockColor(item) }
+              ]}>
+                {outOfStock ? 'Out of Stock' : `Stock: ${item.current_stock} ${item.unit}`}
+              </Text>
+              {item.category_name && (
+                <Text style={styles.productCategory}>{item.category_name}</Text>
+              )}
+            </View>
+
+            <View style={styles.priceRow}>
+              <Text style={[
+                styles.productPrice,
+                outOfStock && styles.textDisabled
+              ]}>
+                PKR {formatCurrency(item.sale_price)}/{item.unit}
+              </Text>
+              {lowStock && !outOfStock && (
+                <View style={styles.lowStockBadge}>
+                  <WarningCircleIcon size={12} color={theme.colors.warning} weight="fill" />
+                  <Text style={styles.lowStockText}>Low Stock</Text>
+                </View>
+              )}
+            </View>
+
+            {cartItem && (
+              <View style={styles.inCartBadge}>
+                <Text style={styles.inCartText}>
+                  In cart: {cartItem.quantity} {item.unit}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {!outOfStock && (
+            <TouchableOpacity
+              style={styles.quickAddButton}
+              onPress={() => handleQuickAdd(item)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <PlusIcon size={20} color={theme.colors.primary} weight="bold" />
+            </TouchableOpacity>
+          )}
+        </TouchableOpacity>
+      );
+    },
+    [styles, theme, cartItems, handleProductSelect, handleQuickAdd]
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <PackageIcon size={48} color={theme.colors.text.disabled} />
+      <Text style={styles.emptyTitle}>
+        {searchQuery ? 'No products found' : 'No products yet'}
+      </Text>
+      <Text style={styles.emptySubtitle}>
+        {searchQuery
+          ? 'Try a different search term or add a new product'
+          : 'Add your first product to get started'}
+      </Text>
+      <TouchableOpacity style={styles.emptyButton} onPress={handleAddProduct}>
+        <PlusIcon size={18} color="#FFFFFF" weight="bold" />
+        <Text style={styles.emptyButtonText}>Add Product</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartTotal = cartItems.reduce((sum, item) => sum + item.total, 0);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <SearchableList
-          data={products}
-          searchPlaceholder="🔍 Search products..."
-          searchKey="name"
-          onItemPress={handleProductSelect}
-          renderItem={renderProductItem}
-          sectionHeader="Products:"
-          emptyMessage="No products found"
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      {/* Customer Banner */}
+      <View style={styles.customerBanner}>
+        <Text style={styles.customerBannerText}>
+          Selling to:{' '}
+          <Text style={styles.customerBannerName}>
+            {isWalkIn ? 'Walk-in Customer' : customer?.name || 'N/A'}
+          </Text>
+        </Text>
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search by name, SKU, or barcode..."
+          onClear={() => setSearchQuery('')}
         />
       </View>
 
-      {/* Skip Section */}
+      {/* Section Header */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>
+          {searchQuery ? 'Search Results' : 'Products'}
+        </Text>
+        <Text style={styles.sectionCount}>{products.length} products</Text>
+      </View>
+
+      {/* Products List */}
+      {productsLoading && products.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading products...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={products}
+          renderItem={renderProductItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyState}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor={theme.colors.primary}
+              colors={[theme.colors.primary]}
+            />
+          }
+        />
+      )}
+
+      {/* Skip to Direct Total */}
       <View style={styles.skipSection}>
         <Text style={styles.dividerText}>OR</Text>
         <TouchableOpacity style={styles.skipButton} onPress={handleSkipToTotal}>
           <Text style={styles.skipButtonText}>
-            Skip product selection - Enter total directly →
+            Skip products - Enter total directly
           </Text>
+          <ArrowRightIcon size={18} color={theme.colors.text.secondary} />
         </TouchableOpacity>
-        <Text style={styles.skipInfo}>
-          Use this if you want to record just the total amount
-        </Text>
       </View>
 
-      {/* Add Product Button */}
-      <View style={styles.footer}>
-        <ActionButton
-          title="+ Add new product"
+      {/* Cart Summary / Proceed Button */}
+      {cartItemsCount > 0 && (
+        <TouchableOpacity style={styles.cartSummary} onPress={handleViewCart}>
+          <View style={styles.cartInfo}>
+            <View style={styles.cartBadge}>
+              <ShoppingCartIcon size={18} color="#FFFFFF" weight="fill" />
+              <View style={styles.cartCountBadge}>
+                <Text style={styles.cartCountText}>{cartItemsCount}</Text>
+              </View>
+            </View>
+            <View>
+              <Text style={styles.cartLabel}>View Cart</Text>
+              <Text style={styles.cartTotal}>PKR {formatCurrency(cartTotal)}</Text>
+            </View>
+          </View>
+          <View style={styles.cartProceed}>
+            <Text style={styles.cartProceedText}>Proceed</Text>
+            <CaretRightIcon size={20} color="#FFFFFF" />
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* Add Product FAB */}
+      {cartItemsCount === 0 && (
+        <TouchableOpacity
+          style={styles.fab}
           onPress={handleAddProduct}
-          variant="outline"
-        />
-      </View>
+          activeOpacity={0.8}
+        >
+          <PlusIcon size={24} color="#FFFFFF" weight="bold" />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };
 
-const createStyles = (theme: Theme) => ({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-  },
-  productCard: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    flex: 1,
-  },
-  productIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.background,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    marginRight: theme.spacing.md,
-  },
-  productIconText: {
-    fontSize: 24,
-  },
-  productInfo: {
-    flex: 1,
-  },
-  productName: {
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-    fontWeight: '600' as const,
-    marginBottom: theme.spacing.xs,
-  },
-  productMeta: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'center' as const,
-  },
-  productStock: {
-    ...theme.typography.caption,
-    fontWeight: '600' as const,
-  },
-  productPrice: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-  },
-  skipSection: {
-    padding: theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center' as const,
-  },
-  dividerText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.disabled,
-    marginBottom: theme.spacing.sm,
-  },
-  skipButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    width: '100%' as const,
-    alignItems: 'center' as const,
-  },
-  skipButtonText: {
-    ...theme.typography.button,
-    color: theme.colors.text.primary,
-  },
-  skipInfo: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    textAlign: 'center' as const,
-    marginTop: theme.spacing.sm,
-  },
-  footer: {
-    padding: theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    customerBanner: {
+      backgroundColor: `${theme.colors.primary}15`,
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    customerBannerText: {
+      fontSize: 13,
+      color: theme.colors.text.secondary,
+    },
+    customerBannerName: {
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    searchContainer: {
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.colors.text.secondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    sectionCount: {
+      fontSize: 12,
+      color: theme.colors.text.disabled,
+    },
+    listContent: {
+      paddingHorizontal: theme.spacing.md,
+      paddingBottom: 200,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      marginTop: theme.spacing.md,
+      color: theme.colors.text.secondary,
+    },
+    productCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.lg,
+      padding: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
+      ...theme.shadows.sm,
+    },
+    productCardDisabled: {
+      opacity: 0.6,
+    },
+    productIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: `${theme.colors.primary}15`,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: theme.spacing.md,
+    },
+    productIconDisabled: {
+      backgroundColor: theme.colors.divider,
+    },
+    productIconLowStock: {
+      backgroundColor: `${theme.colors.warning}15`,
+    },
+    productInfo: {
+      flex: 1,
+    },
+    productHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      marginBottom: 4,
+    },
+    productName: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
+      flex: 1,
+    },
+    textDisabled: {
+      color: theme.colors.text.disabled,
+    },
+    productSku: {
+      fontSize: 11,
+      color: theme.colors.text.disabled,
+      backgroundColor: theme.colors.divider,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    productMeta: {
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+      marginBottom: 4,
+    },
+    productStock: {
+      fontSize: 12,
+      fontWeight: '500',
+    },
+    productCategory: {
+      fontSize: 12,
+      color: theme.colors.text.disabled,
+    },
+    priceRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
+    productPrice: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.colors.primary,
+    },
+    lowStockBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      backgroundColor: `${theme.colors.warning}15`,
+      borderRadius: 4,
+    },
+    lowStockText: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: theme.colors.warning,
+    },
+    inCartBadge: {
+      marginTop: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      backgroundColor: `${theme.colors.success}15`,
+      borderRadius: theme.borderRadius.sm,
+      alignSelf: 'flex-start',
+    },
+    inCartText: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.colors.success,
+    },
+    quickAddButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: `${theme.colors.primary}15`,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginLeft: theme.spacing.sm,
+    },
+    emptyState: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: theme.spacing.xxl,
+      paddingHorizontal: theme.spacing.xl,
+    },
+    emptyTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
+      marginTop: theme.spacing.md,
+    },
+    emptySubtitle: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      textAlign: 'center',
+      marginTop: theme.spacing.sm,
+    },
+    emptyButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.borderRadius.lg,
+      marginTop: theme.spacing.lg,
+    },
+    emptyButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#FFFFFF',
+    },
+    skipSection: {
+      padding: theme.spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+      alignItems: 'center',
+    },
+    dividerText: {
+      fontSize: 12,
+      color: theme.colors.text.disabled,
+      marginBottom: theme.spacing.sm,
+    },
+    skipButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing.sm,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.lg,
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.lg,
+      width: '100%',
+    },
+    skipButtonText: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+    },
+    cartSummary: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: theme.colors.primary,
+      margin: theme.spacing.md,
+      marginTop: 0,
+      padding: theme.spacing.md,
+      borderRadius: theme.borderRadius.lg,
+      ...theme.shadows.md,
+    },
+    cartInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.md,
+    },
+    cartBadge: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    cartCountBadge: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: theme.colors.error,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cartCountText: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: '#FFFFFF',
+    },
+    cartLabel: {
+      fontSize: 12,
+      color: 'rgba(255, 255, 255, 0.8)',
+    },
+    cartTotal: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#FFFFFF',
+    },
+    cartProceed: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    cartProceedText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#FFFFFF',
+    },
+    fab: {
+      position: 'absolute',
+      bottom: 120,
+      right: theme.spacing.md,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: theme.colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...theme.shadows.lg,
+    },
+  });
 
 export default ProductSelectionScreen;

@@ -2,7 +2,6 @@ import axios, { AxiosError } from 'axios';
 import { API_CONFIG, DEFAULT_HTTP_HEADERS } from '../constants/config';
 import { store } from '../store';
 import { clearUser } from '../store/slices/userSlice';
-import { V1_API } from '@env';
 
 export interface ApiError {
   message: string;
@@ -12,10 +11,13 @@ export interface ApiError {
 
 // Fallback to config if env variable is not loaded
 const getBaseURL = () => {
-  if (V1_API && V1_API.trim() !== '') {
-    return V1_API;
+  if (API_CONFIG.baseURL && API_CONFIG.baseURL.trim() !== '') {
+    console.log(API_CONFIG.baseURL);
+    return API_CONFIG.baseURL;
   }
-  console.warn('[HTTP] V1_API from .env is not available, using fallback from config');
+  console.warn(
+    '[HTTP] API_CONFIG.baseURL from config is not available, using fallback from config',
+  );
   return API_CONFIG.baseURL;
 };
 
@@ -25,45 +27,49 @@ const httpClient = axios.create({
   headers: DEFAULT_HTTP_HEADERS,
 });
 
-httpClient.interceptors.request.use((config) => {
-  const token = store.getState().user.token;
+// httpClient.interceptors.request.use((config) => {
+//   const token = store.getState().user.token;
 
-  // Log the full URL for debugging
-  const fullUrl = `${config.baseURL}${config.url}`;
-  console.log('[HTTP] Request:', config.method?.toUpperCase(), fullUrl);
+//   // Log the full URL for debugging
+//   const fullUrl = `${config.baseURL}${config.url}`;
+//   console.log('[HTTP] Request:', config.method?.toUpperCase(), fullUrl);
 
-  // Only add Authorization header if token exists and is not empty
-  if (token && token.trim() !== '' && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-    console.log('[HTTP] Request with auth token');
-  } else {
-    console.log('[HTTP] Request without auth token');
-  }
+//   // Only add Authorization header if token exists and is not empty
+//   if (token && token.trim() !== '' && config.headers) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//     console.log('[HTTP] Request with auth token');
+//   } else {
+//     console.log('[HTTP] Request without auth token');
+//   }
 
-  return config;
-});
+//   return config;
+// });
 
 const normalizeError = (error: AxiosError): ApiError => {
   const status = error.response?.status;
-  
+
   // Handle network errors (no internet, connection refused, etc.)
   if (!error.response) {
     if (error.code === 'ECONNABORTED') {
       return {
-        message: 'Request timeout. Please check your internet connection and try again.',
+        message:
+          'Request timeout. Please check your internet connection and try again.',
         status: 408,
         details: error.message,
       };
     }
     if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
       return {
-        message: 'Network error. Please check your internet connection and try again.',
+        message:
+          'Network error. Please check your internet connection and try again.',
         status: 0,
         details: error.message,
       };
     }
     return {
-      message: error.message || 'Network error. Please check your internet connection.',
+      message:
+        error.message ||
+        'Network error. Please check your internet connection.',
       status: 0,
       details: error.message,
     };
@@ -81,19 +87,17 @@ const normalizeError = (error: AxiosError): ApiError => {
   };
 };
 
-httpClient.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => {
-    const normalizedError = normalizeError(error);
+// httpClient.interceptors.response.use(
+//   (response) => response,
+//   (error: AxiosError) => {
+//     const normalizedError = normalizeError(error);
 
-    if (normalizedError.status === 401) {
-      store.dispatch(clearUser());
-    }
+//     if (normalizedError.status === 401) {
+//       store.dispatch(clearUser());
+//     }
 
-    return Promise.reject(normalizedError);
-  }
-);
+//     return Promise.reject(normalizedError);
+//   }
+// );
 
 export default httpClient;
-
-

@@ -20,3 +20,6 @@ export { NotificationCard } from './NotificationCard';
 export { LineChart } from './LineChart';
 export { PieChart } from './PieChart';
 export { ThemeStatusBar } from './ThemeStatusBar';
+export { PhosphorIcon } from './PhosphorIcon';
+export type { IconName } from './PhosphorIcon';
+export { FloatingActionButton } from './FloatingActionButton';

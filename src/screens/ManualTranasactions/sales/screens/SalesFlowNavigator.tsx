@@ -1,20 +1,23 @@
 // flows/sales/SalesFlowNavigator.tsx
+// Sales Flow using Redux for state management (NO Context Provider needed)
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import CustomerSelectionScreen from './CustomerSelectionScreen';
-import AddCustomerScreen from '../../receipt/screens/AddCustomerScreen';
-import ProductSelectionScreen from './ProductSelectionScreen';
-import AddProductScreen from './AddProductScreen';
+
 import ProductQuantityPriceScreen from './ProductQuantityPriceScreen';
 import ShoppingCartScreen from './ShoppingCartScreen';
 import DirectTotalScreen from './DirectTotalScreen';
 import CreditTermsScreen from './CreditTermsScreen';
 import ConfirmationScreen from './ConfirmationScreen';
-import { SalesFlowProvider } from '../context/SalesFlowContext';
+import {
+  AddCustomerScreen,
+  AddProductScreen,
+  CustomerSelectionScreen,
+  ProductSelectionScreen,
+} from '../../shared';
 
 const Stack = createStackNavigator();
 
-const SalesFlowStack: React.FC = () => {
+const SalesFlowNavigator: React.FC = () => {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -74,15 +77,6 @@ const SalesFlowStack: React.FC = () => {
         options={{ title: 'Sale Recorded' }}
       />
     </Stack.Navigator>
-  );
-};
-
-// Wrap the navigator with the SalesFlowProvider
-const SalesFlowNavigator: React.FC = () => {
-  return (
-    <SalesFlowProvider>
-      <SalesFlowStack />
-    </SalesFlowProvider>
   );
 };
 

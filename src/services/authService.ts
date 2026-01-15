@@ -1,4 +1,6 @@
 import httpClient, { ApiError } from './httpClient';
+import { encode as btoa } from 'base-64';
+import { Buffer } from 'buffer';
 
 export interface SignupPayload {
   username: string;
