@@ -32,13 +32,13 @@ import { Container } from '../../components/common';
 import { useTheme } from '../../store/hooks';
 import { suppliersApi, Supplier, SupplierStatement } from '../../services/api';
 
-const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({ 
-  navigation, 
-  route 
+const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
+  navigation,
+  route,
 }) => {
   const theme = useTheme();
   const { supplierId } = route.params || {};
-  
+
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [timeline, setTimeline] = useState<SupplierStatement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,30 +48,35 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Fetch supplier details
-  const fetchSupplierDetails = useCallback(async (isRefresh: boolean = false) => {
-    if (!supplierId) return;
-    
-    try {
-      if (!isRefresh) setLoading(true);
-      
-      const [supplierData, statementData] = await Promise.all([
-        suppliersApi.getById(supplierId),
-        suppliersApi.getStatement(supplierId),
-      ]);
-      
-      setSupplier(supplierData);
-      setTimeline(statementData);
-    } catch (error: any) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: error.message || 'Failed to load supplier details',
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [supplierId]);
+  const fetchSupplierDetails = useCallback(
+    async (isRefresh: boolean = false) => {
+      if (!supplierId) return;
+
+      try {
+        if (!isRefresh) setLoading(true);
+
+        const [supplierData] = await Promise.all([
+          suppliersApi.getById(supplierId),
+          // suppliersApi.getStatement(supplierId),
+        ]);
+
+        console.log(supplierData);
+        const supplier = supplierData.data;
+        setSupplier(supplier);
+        setTimeline(supplier.recentTransactions);
+      } catch (error: any) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: error.message || 'Failed to load supplier details',
+        });
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [supplierId],
+  );
 
   useEffect(() => {
     fetchSupplierDetails();
@@ -110,8 +115,8 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
 
   // Handle call
   const handleCall = () => {
-    if (supplier?.phone) {
-      Linking.openURL(`tel:${supplier.phone}`);
+    if (supplier?.phoneNumber) {
+      Linking.openURL(`tel:${supplier.phoneNumber}`);
     } else {
       Toast.show({
         type: 'info',
@@ -123,8 +128,8 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
 
   // Handle WhatsApp
   const handleWhatsApp = () => {
-    if (supplier?.phone) {
-      const cleanPhone = supplier.phone.replace(/\D/g, '');
+    if (supplier?.phoneNumber) {
+      const cleanPhone = supplier.phoneNumber.replace(/\D/g, '');
       Linking.openURL(`whatsapp://send?phone=${cleanPhone}`);
     } else {
       Toast.show({
@@ -189,7 +194,7 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -257,7 +262,10 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
           <Text style={styles.errorSubtitle}>
             The supplier you're looking for doesn't exist
           </Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -271,16 +279,16 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
     <Container safeArea edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.headerButton}
           onPress={() => navigation.goBack()}
         >
           <CaretLeftIcon size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
-        
+
         <Text style={styles.headerTitle}>Supplier Profile</Text>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.headerButton}
           onPress={() => setShowMenu(!showMenu)}
         >
@@ -290,13 +298,21 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
         {/* Dropdown Menu */}
         {showMenu && (
           <View style={styles.dropdownMenu}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleEditSupplier}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={handleEditSupplier}
+            >
               <PencilSimpleIcon size={18} color={theme.colors.text.primary} />
               <Text style={styles.menuItemText}>Edit Supplier</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={handleDeleteSupplier}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={handleDeleteSupplier}
+            >
               <TrashIcon size={18} color={theme.colors.error} />
-              <Text style={[styles.menuItemText, { color: theme.colors.error }]}>
+              <Text
+                style={[styles.menuItemText, { color: theme.colors.error }]}
+              >
                 Delete Supplier
               </Text>
             </TouchableOpacity>
@@ -324,20 +340,26 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
               <TruckIcon size={40} color={theme.colors.warning} weight="fill" />
             </View>
           </View>
-          
+
           <Text style={styles.supplierName}>{supplier.name}</Text>
           <Text style={styles.balanceLabel}>Dena Baqi (Payable)</Text>
-          <Text style={[
-            styles.balanceAmount,
-            supplier.payable_balance > 0 ? styles.balanceOrange : styles.balanceGreen
-          ]}>
-            {formatCurrency(supplier.payable_balance)}
+          <Text
+            style={[
+              styles.balanceAmount,
+              Number(supplier.outstandingBalance) > 0
+                ? styles.balanceOrange
+                : styles.balanceGreen,
+            ]}
+          >
+            {formatCurrency(supplier.outstandingBalance)}
           </Text>
-          
-          {overdueDays > 0 && supplier.payable_balance > 0 && (
+
+          {overdueDays > 0 && Number(supplier.outstandingBalance) > 0 && (
             <View style={styles.overdueBadge}>
               <WarningCircleIcon size={14} color={theme.colors.error} />
-              <Text style={styles.overdueText}>PAYMENT DUE {overdueDays} DAYS</Text>
+              <Text style={styles.overdueText}>
+                PAYMENT DUE {overdueDays} DAYS
+              </Text>
             </View>
           )}
         </View>
@@ -351,21 +373,26 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
             <Text style={styles.actionButtonText}>Call</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} onPress={handleWhatsApp}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleWhatsApp}
+          >
             <View style={styles.actionIconContainer}>
               <WhatsappLogoIcon size={22} color="#25D366" />
             </View>
             <Text style={styles.actionButtonText}>WhatsApp</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.paymentButton]} 
+          <TouchableOpacity
+            style={[styles.actionButton, styles.paymentButton]}
             onPress={handleMakePayment}
           >
             <View style={[styles.actionIconContainer, styles.paymentIcon]}>
               <CurrencyDollarIcon size={22} color="#fff" weight="fill" />
             </View>
-            <Text style={[styles.actionButtonText, styles.paymentText]}>Make Payment</Text>
+            <Text style={[styles.actionButtonText, styles.paymentText]}>
+              Make Payment
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -373,12 +400,14 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>Total Purchases</Text>
-            <Text style={styles.statValue}>{formatCurrency(supplier.total_purchases)}</Text>
+            <Text style={styles.statValue}>
+              {formatCurrency(supplier.totalPurchases)}
+            </Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>Total Payments</Text>
             <Text style={[styles.statValue, { color: theme.colors.success }]}>
-              {formatCurrency(supplier.total_payments)}
+              {formatCurrency(supplier.totalPayments)}
             </Text>
           </View>
         </View>
@@ -387,9 +416,6 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
         <View style={styles.timelineSection}>
           <View style={styles.timelineHeader}>
             <Text style={styles.timelineTitle}>Timeline</Text>
-            <TouchableOpacity>
-              <Text style={styles.filterLink}>Filter</Text>
-            </TouchableOpacity>
           </View>
 
           {timeline.length === 0 ? (
@@ -401,29 +427,48 @@ const SupplierDetailScreen: React.FC<NavigationProps<'SupplierDetail'>> = ({
             timeline.map((item, index) => {
               const txStyle = getTransactionStyle(item.type);
               const TxIcon = txStyle.icon;
-              
+
               return (
                 <View key={item.id || index} style={styles.timelineItem}>
-                  <View style={[styles.timelineIcon, { backgroundColor: txStyle.bgColor }]}>
+                  <View
+                    style={[
+                      styles.timelineIcon,
+                      { backgroundColor: txStyle.bgColor },
+                    ]}
+                  >
                     <TxIcon size={18} color={txStyle.iconColor} />
                   </View>
                   <View style={styles.timelineContent}>
                     <Text style={styles.timelineItemTitle}>
-                      {item.type === 'payment' ? 'Payment Made' : item.type === 'purchase' ? 'Purchase' : item.type}
-                      {item.type === 'payment' ? ' (Bank)' : `: Bill #${item.reference.split('-').pop()}`}
+                      {item.type === 'payment'
+                        ? 'Payment Made'
+                        : item.type === 'purchase'
+                        ? 'Purchase'
+                        : item.type}
+                      {item.type === 'payment'
+                        ? ' (Bank)'
+                        : `: Bill #${item.number.split('-').pop()}`}
                     </Text>
                     <Text style={styles.timelineItemDate}>
                       {formatDate(item.date)} • {formatTime(item.date)}
                     </Text>
                   </View>
                   <View style={styles.timelineAmount}>
-                    <Text style={[
-                      styles.timelineAmountText,
-                      item.type === 'payment' ? { color: theme.colors.success } : { color: theme.colors.warning }
-                    ]}>
-                      {formatCurrency(item.type === 'payment' ? item.credit : item.debit)}
+                    <Text
+                      style={[
+                        styles.timelineAmountText,
+                        item.type === 'payment'
+                          ? { color: theme.colors.success }
+                          : { color: theme.colors.warning },
+                      ]}
+                    >
+                      {formatCurrency(
+                        item.type === 'payment' ? item.amount : item.amount,
+                      )}
                     </Text>
-                    <Text style={styles.timelineAmountLabel}>{txStyle.label}</Text>
+                    <Text style={styles.timelineAmountLabel}>
+                      {txStyle.label}
+                    </Text>
                   </View>
                 </View>
               );

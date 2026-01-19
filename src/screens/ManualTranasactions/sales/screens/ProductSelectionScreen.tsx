@@ -21,7 +21,11 @@ import {
 } from 'phosphor-react-native';
 import Toast from 'react-native-toast-message';
 
-import { useTheme, useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import {
+  useTheme,
+  useAppDispatch,
+  useAppSelector,
+} from '../../../../store/hooks';
 import { SearchBar } from '../../../../components/common';
 import { Product } from '../../../../services/api/products';
 import {
@@ -46,13 +50,15 @@ const ProductSelectionScreen: React.FC = () => {
   const isWalkIn = useAppSelector(selectIsWalkInSale);
   const products = useAppSelector(selectSalesProducts);
   const cartItems = useAppSelector(selectSaleItems);
-  const productsLoading = useAppSelector((state) => state.sales.productsLoading);
+  const productsLoading = useAppSelector(state => state.sales.productsLoading);
   const error = useAppSelector(selectSalesError);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  console.log('HERER');
 
   // Fetch products on mount
   useEffect(() => {
@@ -95,19 +101,11 @@ const ProductSelectionScreen: React.FC = () => {
       // @ts-ignore
       navigation.navigate('ProductQuantityPrice', { product });
     },
-    [navigation]
+    [navigation],
   );
 
   const handleQuickAdd = useCallback(
     (product: Product) => {
-      if (product.current_stock <= 0) {
-        Toast.show({
-          type: 'error',
-          text1: 'Out of Stock',
-          text2: `${product.name} is not available`,
-        });
-        return;
-      }
       dispatch(addItem({ product, quantity: 1 }));
       Toast.show({
         type: 'success',
@@ -116,7 +114,7 @@ const ProductSelectionScreen: React.FC = () => {
         visibilityTime: 1500,
       });
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleAddProduct = useCallback(() => {
@@ -140,113 +138,59 @@ const ProductSelectionScreen: React.FC = () => {
   };
 
   const getItemInCart = (productId: string) => {
-    return cartItems.find((item) => item.product_id === productId);
-  };
-
-  const isOutOfStock = (product: Product): boolean => {
-    return product.current_stock <= 0;
-  };
-
-  const isLowStock = (product: Product): boolean => {
-    return product.min_stock_level !== undefined && 
-           product.current_stock > 0 && 
-           product.current_stock <= product.min_stock_level;
-  };
-
-  const getStockColor = (product: Product): string => {
-    if (isOutOfStock(product)) return theme.colors.text.disabled;
-    if (isLowStock(product)) return theme.colors.warning;
-    return theme.colors.success;
+    return cartItems.find(item => item.product_id === productId);
   };
 
   const renderProductItem = useCallback(
     ({ item }: { item: Product }) => {
       const cartItem = getItemInCart(item.id);
-      const outOfStock = isOutOfStock(item);
-      const lowStock = isLowStock(item);
 
       return (
         <TouchableOpacity
-          style={[styles.productCard, outOfStock && styles.productCardDisabled]}
-          onPress={() => !outOfStock && handleProductSelect(item)}
-          activeOpacity={outOfStock ? 1 : 0.7}
+          style={[styles.productCard]}
+          onPress={() => handleProductSelect(item)}
+          activeOpacity={0.7}
         >
-          <View style={[
-            styles.productIcon, 
-            outOfStock && styles.productIconDisabled,
-            lowStock && styles.productIconLowStock
-          ]}>
-            {outOfStock ? (
-              <XCircleIcon size={24} color={theme.colors.text.disabled} />
-            ) : (
-              <PackageIcon
-                size={24}
-                color={lowStock ? theme.colors.warning : theme.colors.primary}
-                weight="fill"
-              />
-            )}
+          <View style={[styles.productIcon]}>
+            <PackageIcon size={24} color={theme.colors.primary} weight="fill" />
           </View>
 
           <View style={styles.productInfo}>
             <View style={styles.productHeader}>
-              <Text style={[
-                styles.productName, 
-                outOfStock && styles.textDisabled
-              ]} numberOfLines={1}>
+              <Text style={[styles.productName]} numberOfLines={1}>
                 {item.name}
               </Text>
-              {item.sku && <Text style={styles.productSku}>{item.sku}</Text>}
-            </View>
-
-            <View style={styles.productMeta}>
-              <Text style={[
-                styles.productStock,
-                { color: getStockColor(item) }
-              ]}>
-                {outOfStock ? 'Out of Stock' : `Stock: ${item.current_stock} ${item.unit}`}
-              </Text>
-              {item.category_name && (
-                <Text style={styles.productCategory}>{item.category_name}</Text>
+              {item.productCode && (
+                <Text style={styles.productSku}>{item.productCode}</Text>
               )}
             </View>
 
             <View style={styles.priceRow}>
-              <Text style={[
-                styles.productPrice,
-                outOfStock && styles.textDisabled
-              ]}>
-                PKR {formatCurrency(item.sale_price)}/{item.unit}
+              <Text style={[styles.productPrice]}>
+                PKR {formatCurrency(Number(item.defaultSellingPrice))}
               </Text>
-              {lowStock && !outOfStock && (
-                <View style={styles.lowStockBadge}>
-                  <WarningCircleIcon size={12} color={theme.colors.warning} weight="fill" />
-                  <Text style={styles.lowStockText}>Low Stock</Text>
-                </View>
-              )}
             </View>
 
             {cartItem && (
               <View style={styles.inCartBadge}>
                 <Text style={styles.inCartText}>
-                  In cart: {cartItem.quantity} {item.unit}
+                  In cart: {cartItem.quantity}
                 </Text>
               </View>
             )}
           </View>
 
-          {!outOfStock && (
-            <TouchableOpacity
-              style={styles.quickAddButton}
-              onPress={() => handleQuickAdd(item)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <PlusIcon size={20} color={theme.colors.primary} weight="bold" />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={styles.quickAddButton}
+            onPress={() => handleQuickAdd(item)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <PlusIcon size={20} color={theme.colors.primary} weight="bold" />
+          </TouchableOpacity>
         </TouchableOpacity>
       );
     },
-    [styles, theme, cartItems, handleProductSelect, handleQuickAdd]
+    [styles, theme, cartItems, handleProductSelect, handleQuickAdd],
   );
 
   const renderEmptyState = () => (
@@ -267,7 +211,10 @@ const ProductSelectionScreen: React.FC = () => {
     </View>
   );
 
-  const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartItemsCount = cartItems.reduce(
+    (sum, item) => sum + item.quantity,
+    0,
+  );
   const cartTotal = cartItems.reduce((sum, item) => sum + item.total, 0);
 
   return (
@@ -310,7 +257,7 @@ const ProductSelectionScreen: React.FC = () => {
         <FlatList
           data={products}
           renderItem={renderProductItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
@@ -348,7 +295,9 @@ const ProductSelectionScreen: React.FC = () => {
             </View>
             <View>
               <Text style={styles.cartLabel}>View Cart</Text>
-              <Text style={styles.cartTotal}>PKR {formatCurrency(cartTotal)}</Text>
+              <Text style={styles.cartTotal}>
+                PKR {formatCurrency(cartTotal)}
+              </Text>
             </View>
           </View>
           <View style={styles.cartProceed}>

@@ -110,7 +110,7 @@ export interface BankAccount {
   bankName: string;
   accountTitle: string;
   accountNumber: string;
-  accountType: string;
+  accountType?: string;
   glAccountId?: number;
   currentBalance: number;
   isActive: boolean;
@@ -209,20 +209,33 @@ const MOCK_BANK_ACCOUNTS: BankAccount[] = [
 ];
 
 const MOCK_WALLETS: MobileWallet[] = [
-  { id: 1, providerName: 'JazzCash', accountNumber: '0300*****67', isActive: true },
-  { id: 2, providerName: 'Easypaisa', accountNumber: '0311*****43', isActive: true },
+  {
+    id: 1,
+    providerName: 'JazzCash',
+    accountNumber: '0300*****67',
+    isActive: true,
+  },
+  {
+    id: 2,
+    providerName: 'Easypaisa',
+    accountNumber: '0311*****43',
+    isActive: true,
+  },
 ];
 
-const mockDelay = (ms: number = 300) => new Promise(resolve => setTimeout(resolve, ms));
+const mockDelay = (ms: number = 300) =>
+  new Promise(resolve => setTimeout(resolve, ms));
 
 // Payments API
 export const paymentsApi = {
   // List all payments
-  getAll: async (filters?: PaymentFilters): Promise<PaginatedResponse<Payment>> => {
+  getAll: async (
+    filters?: PaymentFilters,
+  ): Promise<PaginatedResponse<Payment>> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
       let filtered = [...MOCK_PAYMENTS];
-      
+
       if (filters?.paymentType) {
         filtered = filtered.filter(p => p.paymentType === filters.paymentType);
       }
@@ -238,10 +251,10 @@ export const paymentsApi = {
       if (filters?.toDate) {
         filtered = filtered.filter(p => p.paymentDate <= filters.toDate!);
       }
-      
+
       const page = filters?.page || 1;
       const limit = filters?.limit || 20;
-      
+
       return {
         data: filtered.slice((page - 1) * limit, page * limit),
         total: filtered.length,
@@ -265,10 +278,12 @@ export const paymentsApi = {
   },
 
   // Receive payment from customer
-  receive: async (payload: ReceivePaymentPayload): Promise<{ data: PaymentResponse }> => {
+  receive: async (
+    payload: ReceivePaymentPayload,
+  ): Promise<{ data: PaymentResponse }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(500);
-      
+
       const newPayment: Payment = {
         id: ++mockPaymentId,
         paymentNumber: `REC-${String(mockPaymentId).padStart(6, '0')}`,
@@ -276,8 +291,17 @@ export const paymentsApi = {
         partyId: payload.customerId,
         partyName: 'Customer ' + payload.customerId,
         paidAmount: payload.paidAmount,
-        allocatedAmount: payload.invoiceAllocations?.reduce((sum, a) => sum + a.allocatedAmount, 0) || 0,
-        unallocatedAmount: payload.paidAmount - (payload.invoiceAllocations?.reduce((sum, a) => sum + a.allocatedAmount, 0) || 0),
+        allocatedAmount:
+          payload.invoiceAllocations?.reduce(
+            (sum, a) => sum + a.allocatedAmount,
+            0,
+          ) || 0,
+        unallocatedAmount:
+          payload.paidAmount -
+          (payload.invoiceAllocations?.reduce(
+            (sum, a) => sum + a.allocatedAmount,
+            0,
+          ) || 0),
         paymentMode: payload.paymentMode,
         status: payload.paymentMode === 'cheque' ? 'Pending' : 'Submitted',
         paymentDate: payload.paymentDate,
@@ -287,23 +311,35 @@ export const paymentsApi = {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      
+
       MOCK_PAYMENTS.unshift(newPayment);
-      
+
       return {
         data: {
           payment: newPayment,
           glEntries: [
-            { accountName: payload.paymentMode === 'cash' ? 'Cash' : 'Bank - HBL', debit: payload.paidAmount, credit: 0 },
-            { accountName: 'Accounts Receivable', debit: 0, credit: payload.paidAmount },
+            {
+              accountName:
+                payload.paymentMode === 'cash' ? 'Cash' : 'Bank - HBL',
+              debit: payload.paidAmount,
+              credit: 0,
+            },
+            {
+              accountName: 'Accounts Receivable',
+              debit: 0,
+              credit: payload.paidAmount,
+            },
           ],
-          updatedInvoices: payload.invoiceAllocations?.map(a => ({
-            invoiceId: a.invoiceId,
-            invoiceNumber: a.invoiceNumber || `INV-${a.invoiceId}`,
-            previousOutstanding: a.previousOutstanding || a.allocatedAmount,
-            paidAmount: a.allocatedAmount,
-            newOutstanding: (a.previousOutstanding || a.allocatedAmount) - a.allocatedAmount,
-          })) || [],
+          updatedInvoices:
+            payload.invoiceAllocations?.map(a => ({
+              invoiceId: a.invoiceId,
+              invoiceNumber: a.invoiceNumber || `INV-${a.invoiceId}`,
+              previousOutstanding: a.previousOutstanding || a.allocatedAmount,
+              paidAmount: a.allocatedAmount,
+              newOutstanding:
+                (a.previousOutstanding || a.allocatedAmount) -
+                a.allocatedAmount,
+            })) || [],
           partyBalance: {
             totalOutstanding: 75000, // Mock value
             advanceBalance: newPayment.unallocatedAmount,
@@ -312,14 +348,19 @@ export const paymentsApi = {
         },
       };
     }
-    return apiClient.post<{ data: PaymentResponse }>('/payments/receive', payload);
+    return apiClient.post<{ data: PaymentResponse }>(
+      '/payments/receive',
+      payload,
+    );
   },
 
   // Make payment to supplier
-  pay: async (payload: PayPaymentPayload): Promise<{ data: PaymentResponse }> => {
+  pay: async (
+    payload: PayPaymentPayload,
+  ): Promise<{ data: PaymentResponse }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(500);
-      
+
       const newPayment: Payment = {
         id: ++mockPaymentId,
         paymentNumber: `PAY-${String(mockPaymentId).padStart(6, '0')}`,
@@ -327,8 +368,17 @@ export const paymentsApi = {
         partyId: payload.supplierId,
         partyName: 'Supplier ' + payload.supplierId,
         paidAmount: payload.paidAmount,
-        allocatedAmount: payload.invoiceAllocations?.reduce((sum, a) => sum + a.allocatedAmount, 0) || 0,
-        unallocatedAmount: payload.paidAmount - (payload.invoiceAllocations?.reduce((sum, a) => sum + a.allocatedAmount, 0) || 0),
+        allocatedAmount:
+          payload.invoiceAllocations?.reduce(
+            (sum, a) => sum + a.allocatedAmount,
+            0,
+          ) || 0,
+        unallocatedAmount:
+          payload.paidAmount -
+          (payload.invoiceAllocations?.reduce(
+            (sum, a) => sum + a.allocatedAmount,
+            0,
+          ) || 0),
         paymentMode: payload.paymentMode,
         status: payload.paymentMode === 'cheque' ? 'Pending' : 'Submitted',
         paymentDate: payload.paymentDate,
@@ -338,23 +388,35 @@ export const paymentsApi = {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      
+
       MOCK_PAYMENTS.unshift(newPayment);
-      
+
       return {
         data: {
           payment: newPayment,
           glEntries: [
-            { accountName: 'Accounts Payable', debit: payload.paidAmount, credit: 0 },
-            { accountName: payload.paymentMode === 'cash' ? 'Cash' : 'Bank - HBL', debit: 0, credit: payload.paidAmount },
+            {
+              accountName: 'Accounts Payable',
+              debit: payload.paidAmount,
+              credit: 0,
+            },
+            {
+              accountName:
+                payload.paymentMode === 'cash' ? 'Cash' : 'Bank - HBL',
+              debit: 0,
+              credit: payload.paidAmount,
+            },
           ],
-          updatedInvoices: payload.invoiceAllocations?.map(a => ({
-            invoiceId: a.invoiceId,
-            invoiceNumber: a.invoiceNumber || `PI-${a.invoiceId}`,
-            previousOutstanding: a.previousOutstanding || a.allocatedAmount,
-            paidAmount: a.allocatedAmount,
-            newOutstanding: (a.previousOutstanding || a.allocatedAmount) - a.allocatedAmount,
-          })) || [],
+          updatedInvoices:
+            payload.invoiceAllocations?.map(a => ({
+              invoiceId: a.invoiceId,
+              invoiceNumber: a.invoiceNumber || `PI-${a.invoiceId}`,
+              previousOutstanding: a.previousOutstanding || a.allocatedAmount,
+              paidAmount: a.allocatedAmount,
+              newOutstanding:
+                (a.previousOutstanding || a.allocatedAmount) -
+                a.allocatedAmount,
+            })) || [],
           partyBalance: {
             totalOutstanding: 90400, // Mock value
             advanceBalance: 0,
@@ -383,7 +445,10 @@ export const paymentsApi = {
   },
 
   // Allocate unallocated payment
-  allocate: async (id: number, allocations: InvoiceAllocation[]): Promise<Payment> => {
+  allocate: async (
+    id: number,
+    allocations: InvoiceAllocation[],
+  ): Promise<Payment> => {
     return apiClient.post<Payment>(`/payments/${id}/allocate`, { allocations });
   },
 
@@ -393,7 +458,9 @@ export const paymentsApi = {
       await mockDelay();
       return MOCK_PAYMENTS.filter(p => p.unallocatedAmount > 0);
     }
-    const response = await apiClient.get<{ data: Payment[] }>('/payments/unallocated/list');
+    const response = await apiClient.get<{ data: Payment[] }>(
+      '/payments/unallocated/list',
+    );
     return response.data;
   },
 
@@ -401,14 +468,23 @@ export const paymentsApi = {
   getPendingCheques: async (): Promise<Payment[]> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
-      return MOCK_PAYMENTS.filter(p => p.paymentMode === 'cheque' && p.chequeStatus === 'pending');
+      return MOCK_PAYMENTS.filter(
+        p => p.paymentMode === 'cheque' && p.chequeStatus === 'pending',
+      );
     }
-    const response = await apiClient.get<{ data: Payment[] }>('/payments/cheques/pending');
+    const response = await apiClient.get<{ data: Payment[] }>(
+      '/payments/cheques/pending',
+    );
     return response.data;
   },
 
   // Process cheque (clear or bounce)
-  processCheque: async (paymentId: number, action: 'clear' | 'bounce', bankAccountId?: number, bounceReason?: string): Promise<Payment> => {
+  processCheque: async (
+    paymentId: number,
+    action: 'clear' | 'bounce',
+    bankAccountId?: number,
+    bounceReason?: string,
+  ): Promise<Payment> => {
     return apiClient.post<Payment>(`/payments/cheques/${paymentId}/process`, {
       action,
       bankAccountId,
@@ -426,7 +502,9 @@ export const paymentsApi = {
   },
 
   // Add bank account
-  addBankAccount: async (payload: Partial<BankAccount>): Promise<BankAccount> => {
+  addBankAccount: async (
+    payload: Partial<BankAccount>,
+  ): Promise<BankAccount> => {
     return apiClient.post<BankAccount>('/payments/bank-accounts', payload);
   },
 
@@ -440,21 +518,29 @@ export const paymentsApi = {
   },
 
   // Get payment summary report
-  getSummary: async (fromDate: string, toDate: string): Promise<PaymentsSummary> => {
+  getSummary: async (
+    fromDate: string,
+    toDate: string,
+  ): Promise<PaymentsSummary> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
-      const filtered = MOCK_PAYMENTS.filter(p =>
-        p.paymentDate >= fromDate && p.paymentDate <= toDate
+      const filtered = MOCK_PAYMENTS.filter(
+        p => p.paymentDate >= fromDate && p.paymentDate <= toDate,
       );
       const receipts = filtered.filter(p => p.paymentType === 'Receive');
       const disbursements = filtered.filter(p => p.paymentType === 'Pay');
-      
+
       return {
         period: { from: fromDate, to: toDate },
         totalPayments: filtered.length,
         totalReceipts: receipts.reduce((sum, p) => sum + p.paidAmount, 0),
-        totalDisbursements: disbursements.reduce((sum, p) => sum + p.paidAmount, 0),
-        netCashFlow: receipts.reduce((sum, p) => sum + p.paidAmount, 0) - disbursements.reduce((sum, p) => sum + p.paidAmount, 0),
+        totalDisbursements: disbursements.reduce(
+          (sum, p) => sum + p.paidAmount,
+          0,
+        ),
+        netCashFlow:
+          receipts.reduce((sum, p) => sum + p.paidAmount, 0) -
+          disbursements.reduce((sum, p) => sum + p.paidAmount, 0),
         receiptCount: receipts.length,
         disbursementCount: disbursements.length,
         byPaymentMode: [
@@ -464,23 +550,35 @@ export const paymentsApi = {
         dailyBreakdown: [],
       };
     }
-    return apiClient.get<PaymentsSummary>('/payments/reports/summary', { fromDate, toDate });
+    return apiClient.get<PaymentsSummary>('/payments/reports/summary', {
+      fromDate,
+      toDate,
+    });
   },
 
   // Get collections report
   getCollections: async (fromDate: string, toDate: string): Promise<any> => {
-    return apiClient.get<any>('/payments/reports/collections', { fromDate, toDate });
+    return apiClient.get<any>('/payments/reports/collections', {
+      fromDate,
+      toDate,
+    });
   },
 
   // Get disbursements report
   getDisbursements: async (fromDate: string, toDate: string): Promise<any> => {
-    return apiClient.get<any>('/payments/reports/disbursements', { fromDate, toDate });
+    return apiClient.get<any>('/payments/reports/disbursements', {
+      fromDate,
+      toDate,
+    });
   },
 
   // Get today's payments
   getToday: async (): Promise<Payment[]> => {
     const today = new Date().toISOString().split('T')[0];
-    const response = await paymentsApi.getAll({ fromDate: today, toDate: today });
+    const response = await paymentsApi.getAll({
+      fromDate: today,
+      toDate: today,
+    });
     return response.data;
   },
 
@@ -488,19 +586,25 @@ export const paymentsApi = {
   getReceived: async (filters?: Omit<PaymentFilters, 'paymentType'>) => {
     return paymentsApi.getAll({ ...filters, paymentType: 'Receive' });
   },
-  
+
   getPaid: async (filters?: Omit<PaymentFilters, 'paymentType'>) => {
     return paymentsApi.getAll({ ...filters, paymentType: 'Pay' });
   },
 
-  receivePayment: async (payload: Omit<ReceivePaymentPayload, 'customerId'> & { customer_id: number }) => {
+  receivePayment: async (
+    payload: Omit<ReceivePaymentPayload, 'customerId'> & {
+      customer_id: number;
+    },
+  ) => {
     return paymentsApi.receive({
       ...payload,
       customerId: payload.customer_id,
     });
   },
 
-  makePayment: async (payload: Omit<PayPaymentPayload, 'supplierId'> & { supplier_id: number }) => {
+  makePayment: async (
+    payload: Omit<PayPaymentPayload, 'supplierId'> & { supplier_id: number },
+  ) => {
     return paymentsApi.pay({
       ...payload,
       supplierId: payload.supplier_id,

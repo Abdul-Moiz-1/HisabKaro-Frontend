@@ -19,7 +19,7 @@ import {
   UserCirclePlusIcon,
   ArrowRightIcon,
 } from 'phosphor-react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 
 import { useTheme, useAppDispatch, useAppSelector } from '../../../store/hooks';
@@ -67,10 +67,12 @@ const CustomerSelectionScreen: React.FC = () => {
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Fetch customers on mount
-  useEffect(() => {
-    dispatch(fetchRecentCustomers());
-  }, [dispatch]);
+  // Fetch customers on mount and when screen regains focus (e.g., after adding new customer)
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchRecentCustomers());
+    }, [dispatch])
+  );
 
   // Handle search
   useEffect(() => {
@@ -124,12 +126,11 @@ const CustomerSelectionScreen: React.FC = () => {
   }, [dispatch, navigation, nextScreen, flowType]);
 
   const handleAddCustomer = useCallback(() => {
-    // @ts-ignore
-    navigation.navigate('AddCustomer', {
-      flowType,
-      nextScreen: 'CustomerSelection',
-    });
-  }, [navigation, flowType]);
+    // Navigate to Root Navigator's AddCustomer screen
+    // When user saves, they'll goBack() and useFocusEffect will refresh the list
+    // @ts-ignore - navigating to parent navigator
+    navigation.navigate('AddCustomer', { fromFlow: true });
+  }, [navigation]);
 
   const formatCurrency = (amount: number): string => {
     if (amount >= 100000) {

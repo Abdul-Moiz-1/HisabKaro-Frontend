@@ -26,6 +26,7 @@ import {
 import ActionButton from '../../../../components/common/ActionButton';
 import { FieldType } from '../../../../types/forms';
 import Icon from '../../../../components/Icon';
+import { formatCurrency } from '../../../../utils';
 
 type RouteParams = {
   ProductQuantityPrice: {
@@ -55,7 +56,7 @@ const ProductQuantityPriceScreen: React.FC = () => {
     mode: 'onChange',
     defaultValues: {
       quantity: 1,
-      unit_price: product?.sale_price || 0,
+      unit_price: Number(product?.defaultSellingPrice) || 0,
       discount: 0,
       discount_type: 'amount',
     },
@@ -132,7 +133,10 @@ const ProductQuantityPriceScreen: React.FC = () => {
           <View style={styles.productInfo}>
             <Text style={styles.productName}>{product.name}</Text>
             <Text style={styles.productOriginalPrice}>
-              Default Price: PKR {product.sale_price?.toLocaleString()}
+              Default Price: PKR{' '}
+              {formatCurrency(
+                Number(product.defaultSellingPrice),
+              )?.toLocaleString()}
             </Text>
           </View>
         </View>

@@ -63,7 +63,24 @@ import {
   SupplierDetailScreen,
   SupplierLedgerScreen,
   AddSupplierScreen,
+  EditSupplierScreen,
 } from '../screens/Suppliers';
+
+// Bank Account Screens
+import {
+  BankAccountsListScreen,
+  BankAccountDetailScreen,
+  AddBankAccountScreen,
+  EditBankAccountScreen,
+} from '../screens/BankAccounts';
+
+// Inventory/Product Screens
+import {
+  ProductsListScreen,
+  ProductDetailScreen,
+  AddProductScreen,
+  EditProductScreen,
+} from '../screens/Inventory';
 
 // Directory Screen
 import DirectoryScreen from '../screens/Directory/DirectoryScreen';
@@ -249,6 +266,46 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen
           name={ROUTES.ADD_SUPPLIER}
           component={AddSupplierScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.EDIT_SUPPLIER}
+          component={EditSupplierScreen}
+        />
+
+        {/* Bank Account Screens */}
+        <Stack.Screen
+          name={ROUTES.BANK_ACCOUNTS_LIST}
+          component={BankAccountsListScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.BANK_ACCOUNT_DETAIL}
+          component={BankAccountDetailScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_BANK_ACCOUNT}
+          component={AddBankAccountScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.EDIT_BANK_ACCOUNT}
+          component={EditBankAccountScreen}
+        />
+
+        {/* Inventory/Product Screens */}
+        <Stack.Screen
+          name={ROUTES.INVENTORY_LIST}
+          component={ProductsListScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.PRODUCT_DETAIL}
+          component={ProductDetailScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_PRODUCT}
+          component={AddProductScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.EDIT_PRODUCT}
+          component={EditProductScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -31,8 +31,10 @@ import { FieldType } from '../../types/forms';
 
 const AddCustomerScreen: React.FC<NavigationProps<'AddCustomer'>> = ({
   navigation,
+  route,
 }) => {
   const theme = useTheme();
+  const { fromFlow } = route.params || {};
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -80,8 +82,14 @@ const AddCustomerScreen: React.FC<NavigationProps<'AddCustomer'>> = ({
 
       console.log(newCustomer);
 
-      // Navigate to customer detail
-      navigation.replace('CustomerDetail', { customerId: newCustomer.id });
+      // If coming from a flow (sales, purchase, etc.), just go back
+      // The previous screen will refresh via useFocusEffect
+      if (fromFlow) {
+        navigation.goBack();
+      } else {
+        // Navigate to customer detail for standalone usage
+        navigation.replace('CustomerDetail', { customerId: newCustomer.id });
+      }
     } catch (error: any) {
       Toast.show({
         type: 'error',
@@ -92,7 +100,6 @@ const AddCustomerScreen: React.FC<NavigationProps<'AddCustomer'>> = ({
       setIsSubmitting(false);
     }
   };
-
   const handleCancel = () => {
     navigation.goBack();
   };

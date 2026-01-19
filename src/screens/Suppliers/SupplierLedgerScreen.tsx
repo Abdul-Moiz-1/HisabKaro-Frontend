@@ -25,72 +25,79 @@ import { suppliersApi, Supplier, SupplierStatement } from '../../services/api';
 
 type FilterPeriod = 'today' | 'this_week' | 'last_30_days' | 'all';
 
-const SupplierLedgerScreen: React.FC<NavigationProps<'SupplierLedger'>> = ({ 
-  navigation, 
-  route 
+const SupplierLedgerScreen: React.FC<NavigationProps<'SupplierLedger'>> = ({
+  navigation,
+  route,
 }) => {
   const theme = useTheme();
   const { supplierId, supplierName } = route.params || {};
-  
+
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [statements, setStatements] = useState<SupplierStatement[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>('last_30_days');
+  const [filterPeriod, setFilterPeriod] =
+    useState<FilterPeriod>('last_30_days');
   const [isUrdu, setIsUrdu] = useState(false);
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Calculate date range based on filter
-  const getDateRange = useCallback((period: FilterPeriod): { startDate?: string; endDate?: string } => {
-    const today = new Date();
-    const endDate = today.toISOString().split('T')[0];
-    
-    switch (period) {
-      case 'today':
-        return { startDate: endDate, endDate };
-      case 'this_week': {
-        const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() - today.getDay());
-        return { startDate: weekStart.toISOString().split('T')[0], endDate };
+  const getDateRange = useCallback(
+    (period: FilterPeriod): { startDate?: string; endDate?: string } => {
+      const today = new Date();
+      const endDate = today.toISOString().split('T')[0];
+
+      switch (period) {
+        case 'today':
+          return { startDate: endDate, endDate };
+        case 'this_week': {
+          const weekStart = new Date(today);
+          weekStart.setDate(today.getDate() - today.getDay());
+          return { startDate: weekStart.toISOString().split('T')[0], endDate };
+        }
+        case 'last_30_days': {
+          const monthStart = new Date(today);
+          monthStart.setDate(today.getDate() - 30);
+          return { startDate: monthStart.toISOString().split('T')[0], endDate };
+        }
+        default:
+          return {};
       }
-      case 'last_30_days': {
-        const monthStart = new Date(today);
-        monthStart.setDate(today.getDate() - 30);
-        return { startDate: monthStart.toISOString().split('T')[0], endDate };
-      }
-      default:
-        return {};
-    }
-  }, []);
+    },
+    [],
+  );
 
   // Fetch data
-  const fetchData = useCallback(async (isRefresh: boolean = false) => {
-    if (!supplierId) return;
-    
-    try {
-      if (!isRefresh) setLoading(true);
-      
-      const { startDate, endDate } = getDateRange(filterPeriod);
-      
-      const [supplierData, statementData] = await Promise.all([
-        suppliersApi.getById(supplierId),
-        suppliersApi.getStatement(supplierId, startDate, endDate),
-      ]);
-      
-      setSupplier(supplierData);
-      setStatements(statementData);
-    } catch (error: any) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: error.message || 'Failed to load ledger',
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [supplierId, filterPeriod, getDateRange]);
+  const fetchData = useCallback(
+    async (isRefresh: boolean = false) => {
+      if (!supplierId) return;
+
+      try {
+        if (!isRefresh) setLoading(true);
+
+        const { startDate, endDate } = getDateRange(filterPeriod);
+
+        const [supplierData, statementData] = await Promise.all([
+          suppliersApi.getById(supplierId),
+          suppliersApi.getStatement(supplierId, startDate, endDate),
+        ]);
+        console.log(statementData);
+        setSupplier(supplierData.data);
+        setStatements(statementData.data);
+      } catch (error: any) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: error.message || 'Failed to load ledger',
+        });
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [supplierId, filterPeriod, getDateRange],
+  );
 
   useEffect(() => {
     fetchData();
@@ -135,12 +142,19 @@ const SupplierLedgerScreen: React.FC<NavigationProps<'SupplierLedger'>> = ({
   // Handle WhatsApp share
   const handleWhatsAppShare = async () => {
     try {
-      const message = `📒 Khata - ${supplierName}\n\n` +
-        `Payable Balance: Rs. ${supplier?.payable_balance?.toLocaleString() || 0}\n` +
-        `Total Purchases: Rs. ${supplier?.total_purchases?.toLocaleString() || 0}\n` +
-        `Total Payments: Rs. ${supplier?.total_payments?.toLocaleString() || 0}\n\n` +
+      const message =
+        `📒 Khata - ${supplierName}\n\n` +
+        `Payable Balance: Rs. ${
+          supplier?.payable_balance?.toLocaleString() || 0
+        }\n` +
+        `Total Purchases: Rs. ${
+          supplier?.total_purchases?.toLocaleString() || 0
+        }\n` +
+        `Total Payments: Rs. ${
+          supplier?.total_payments?.toLocaleString() || 0
+        }\n\n` +
         `Generated by HisabKaro`;
-      
+
       await Share.share({
         message,
       });
@@ -175,16 +189,16 @@ const SupplierLedgerScreen: React.FC<NavigationProps<'SupplierLedger'>> = ({
     <Container safeArea edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.headerButton}
           onPress={() => navigation.goBack()}
         >
           <CaretLeftIcon size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
-        
+
         <Text style={styles.headerTitle}>Supplier Ledger</Text>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={[styles.headerButton, styles.translateButton]}
           onPress={toggleLanguage}
         >
@@ -213,12 +227,16 @@ const SupplierLedgerScreen: React.FC<NavigationProps<'SupplierLedger'>> = ({
             </View>
             <View style={styles.statusDot} />
           </View>
-          
+
           <Text style={styles.supplierName}>{supplierName}</Text>
-          <Text style={[
-            styles.balanceAmount,
-            (supplier?.payable_balance || 0) > 0 ? styles.balanceOrange : styles.balanceGreen
-          ]}>
+          <Text
+            style={[
+              styles.balanceAmount,
+              (supplier?.payable_balance || 0) > 0
+                ? styles.balanceOrange
+                : styles.balanceGreen,
+            ]}
+          >
             Rs. {supplier?.payable_balance?.toLocaleString() || 0}
           </Text>
           <Text style={styles.balanceLabel}>
@@ -228,23 +246,27 @@ const SupplierLedgerScreen: React.FC<NavigationProps<'SupplierLedger'>> = ({
 
         {/* Period Filter */}
         <View style={styles.filterContainer}>
-          {(['today', 'this_week', 'last_30_days'] as FilterPeriod[]).map((period) => (
-            <TouchableOpacity
-              key={period}
-              style={[
-                styles.filterTab,
-                filterPeriod === period && styles.filterTabActive
-              ]}
-              onPress={() => setFilterPeriod(period)}
-            >
-              <Text style={[
-                styles.filterTabText,
-                filterPeriod === period && styles.filterTabTextActive
-              ]}>
-                {getPeriodLabel(period)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {(['today', 'this_week', 'last_30_days'] as FilterPeriod[]).map(
+            period => (
+              <TouchableOpacity
+                key={period}
+                style={[
+                  styles.filterTab,
+                  filterPeriod === period && styles.filterTabActive,
+                ]}
+                onPress={() => setFilterPeriod(period)}
+              >
+                <Text
+                  style={[
+                    styles.filterTabText,
+                    filterPeriod === period && styles.filterTabTextActive,
+                  ]}
+                >
+                  {getPeriodLabel(period)}
+                </Text>
+              </TouchableOpacity>
+            ),
+          )}
         </View>
 
         {/* Ledger Table */}
@@ -266,14 +288,14 @@ const SupplierLedgerScreen: React.FC<NavigationProps<'SupplierLedger'>> = ({
           </View>
 
           {/* Table Rows */}
-          {statements.length === 0 ? (
+          {statements.transactions.length === 0 ? (
             <View style={styles.emptyTable}>
               <Text style={styles.emptyTableText}>
                 {isUrdu ? 'کوئی لین دین نہیں' : 'No transactions found'}
               </Text>
             </View>
           ) : (
-            statements.map((item, index) => (
+            statements.transactions.map((item, index) => (
               <View key={item.id || index} style={styles.tableRow}>
                 <View style={styles.colDate}>
                   <Text style={styles.rowDate}>{formatDate(item.date)}</Text>
@@ -281,18 +303,22 @@ const SupplierLedgerScreen: React.FC<NavigationProps<'SupplierLedger'>> = ({
                     {item.description}
                   </Text>
                 </View>
-                <Text style={[
-                  styles.rowAmount, 
-                  styles.colDebit,
-                  item.debit > 0 && styles.amountOrange
-                ]}>
+                <Text
+                  style={[
+                    styles.rowAmount,
+                    styles.colDebit,
+                    item.debit > 0 && styles.amountOrange,
+                  ]}
+                >
                   {formatCurrency(item.debit)}
                 </Text>
-                <Text style={[
-                  styles.rowAmount, 
-                  styles.colCredit,
-                  item.credit > 0 && styles.amountGreen
-                ]}>
+                <Text
+                  style={[
+                    styles.rowAmount,
+                    styles.colCredit,
+                    item.credit > 0 && styles.amountGreen,
+                  ]}
+                >
                   {formatCurrency(item.credit)}
                 </Text>
                 <Text style={[styles.rowAmount, styles.colBalance]}>
@@ -307,7 +333,9 @@ const SupplierLedgerScreen: React.FC<NavigationProps<'SupplierLedger'>> = ({
             <View style={[styles.tableRow, styles.openingBalanceRow]}>
               <View style={styles.colDate}>
                 <Text style={styles.rowDate}>—</Text>
-                <Text style={styles.rowDetail}>{isUrdu ? 'پچھلا بقایا' : 'Previous Bal'}</Text>
+                <Text style={styles.rowDetail}>
+                  {isUrdu ? 'پچھلا بقایا' : 'Previous Bal'}
+                </Text>
               </View>
               <Text style={[styles.rowAmount, styles.colDebit]}>—</Text>
               <Text style={[styles.rowAmount, styles.colCredit]}>—</Text>
@@ -328,8 +356,11 @@ const SupplierLedgerScreen: React.FC<NavigationProps<'SupplierLedger'>> = ({
           <FilePdfIcon size={20} color={theme.colors.text.primary} />
           <Text style={styles.pdfButtonText}>PDF Ledger</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsAppShare}>
+
+        <TouchableOpacity
+          style={styles.whatsappButton}
+          onPress={handleWhatsAppShare}
+        >
           <WhatsappLogoIcon size={20} color="#fff" weight="fill" />
           <Text style={styles.whatsappButtonText}>WhatsApp</Text>
         </TouchableOpacity>

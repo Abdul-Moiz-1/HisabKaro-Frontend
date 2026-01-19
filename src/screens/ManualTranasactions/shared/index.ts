@@ -1,7 +1,5 @@
 // shared/index.ts
 
-export { default as AddCustomerScreen } from './AddCustomerScreen';
-export { default as AddProductScreen } from './AddProductScreen';
 export { default as AmountEntryScreen } from './AmountEntryScreen';
 export { default as CustomerSelectionScreen } from './CustomerSelectionScreen';
 export { default as ProductSelectionScreen } from './ProductSelectionScreen';

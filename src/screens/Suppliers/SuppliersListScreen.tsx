@@ -15,22 +15,31 @@ import {
   PhoneIcon,
   TruckIcon,
   CurrencyCircleDollarIcon,
+  PlusIcon,
 } from 'phosphor-react-native';
 import Toast from 'react-native-toast-message';
 import { NavigationProps } from '../../types';
-import { Container, HeaderNavigation, SearchBar, Button } from '../../components/common';
+import {
+  Container,
+  HeaderNavigation,
+  SearchBar,
+  Button,
+} from '../../components/common';
 import { useTheme } from '../../store/hooks';
 import { suppliersApi, Supplier } from '../../services/api';
+import { ROUTES } from '../../constants/routes';
 
-type FilterType = 'all' | 'with_payables' | 'no_payables';
+type FilterType = 'good' | 'warning' | 'overdue';
 
-const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({ navigation }) => {
+const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({
+  navigation,
+}) => {
   const theme = useTheme();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [listLoading, setListLoading] = useState(true); // Loading only for list area
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -40,55 +49,56 @@ const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({ navig
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Fetch suppliers
-  const fetchSuppliers = useCallback(async (pageNum: number = 1, isRefresh: boolean = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else if (pageNum === 1) {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
+  const fetchSuppliers = useCallback(
+    async (pageNum: number = 1, isRefresh: boolean = false) => {
+      try {
+        if (isRefresh) {
+          setRefreshing(true);
+        } else if (pageNum === 1) {
+          setListLoading(true);
+        } else {
+          setLoadingMore(true);
+        }
+
+        const filters = {
+          search: searchQuery || undefined,
+          payableStatus: filter,
+          page: pageNum,
+          limit: 20,
+        };
+
+        const response = await suppliersApi.getAll(filters);
+
+        if (pageNum === 1) {
+          setSuppliers(response.data);
+        } else {
+          setSuppliers(prev => [...prev, ...response.data]);
+        }
+
+        setHasMore(pageNum < response.totalPages);
+        setPage(pageNum);
+        setSupplierCount(response.total);
+
+        // Calculate total payables from response
+        const totalPayablesAmount = response.data.reduce(
+          (sum, supplier) => sum + Number(supplier.payable_balance || 0),
+          0,
+        );
+        setTotalPayables(totalPayablesAmount);
+      } catch (error: any) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: error.message || 'Failed to fetch suppliers',
+        });
+      } finally {
+        setListLoading(false);
+        setRefreshing(false);
+        setLoadingMore(false);
       }
-
-      const filters = {
-        search: searchQuery || undefined,
-        min_balance: filter === 'with_payables' ? 1 : undefined,
-        max_balance: filter === 'no_payables' ? 0 : undefined,
-        page: pageNum,
-        limit: 20,
-        sort_by: 'name' as const,
-        sort_order: 'asc' as const,
-      };
-
-      const response = await suppliersApi.getAll(filters);
-
-      if (pageNum === 1) {
-        setSuppliers(response.data);
-      } else {
-        setSuppliers(prev => [...prev, ...response.data]);
-      }
-
-      setHasMore(pageNum < response.totalPages);
-      setPage(pageNum);
-      setSupplierCount(response.total);
-
-      // Fetch total payables
-      if (pageNum === 1) {
-        const payables = await suppliersApi.getTotalPayables();
-        setTotalPayables(payables.total);
-      }
-    } catch (error: any) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: error.message || 'Failed to fetch suppliers',
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-      setLoadingMore(false);
-    }
-  }, [searchQuery, filter]);
+    },
+    [searchQuery, filter],
+  );
 
   useEffect(() => {
     fetchSuppliers(1);
@@ -115,6 +125,11 @@ const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({ navig
   const handleAddSupplier = () => {
     navigation.navigate('AddSupplier');
   };
+
+  const handleQuickAdd = useCallback(() => {
+    // @ts-ignore
+    navigation.navigate(ROUTES.ADD_SUPPLIER, { flowType: 'standalone' });
+  }, [navigation]);
 
   // Delete supplier
   const handleDeleteSupplier = (supplier: Supplier) => {
@@ -144,13 +159,13 @@ const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({ navig
             }
           },
         },
-      ]
+      ],
     );
   };
 
   // Format currency
   const formatCurrency = (amount: number): string => {
-    return `PKR ${amount.toLocaleString()}`;
+    return `PKR ${amount?.toLocaleString()}`;
   };
 
   // Render supplier item
@@ -164,7 +179,7 @@ const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({ navig
       <View style={styles.supplierAvatar}>
         <TruckIcon size={22} color={theme.colors.warning} weight="fill" />
       </View>
-      
+
       <View style={styles.supplierInfo}>
         <Text style={styles.supplierName}>{item.name}</Text>
         <View style={styles.supplierMeta}>
@@ -174,17 +189,19 @@ const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({ navig
               <Text style={styles.metaText}>{item.phone}</Text>
             </View>
           )}
-          {item.city && (
-            <Text style={styles.cityText}>{item.city}</Text>
-          )}
+          {item.city && <Text style={styles.cityText}>{item.city}</Text>}
         </View>
       </View>
 
       <View style={styles.supplierBalance}>
-        <Text style={[
-          styles.balanceAmount,
-          item.payable_balance > 0 ? styles.balancePayable : styles.balanceZero
-        ]}>
+        <Text
+          style={[
+            styles.balanceAmount,
+            item.payable_balance > 0
+              ? styles.balancePayable
+              : styles.balanceZero,
+          ]}
+        >
           {formatCurrency(item.payable_balance)}
         </Text>
         <Text style={styles.balanceLabel}>
@@ -200,9 +217,15 @@ const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({ navig
   const renderHeader = () => (
     <View style={styles.summaryContainer}>
       <View style={styles.summaryCard}>
-        <CurrencyCircleDollarIcon size={24} color={theme.colors.warning} weight="fill" />
+        <CurrencyCircleDollarIcon
+          size={24}
+          color={theme.colors.warning}
+          weight="fill"
+        />
         <View style={styles.summaryText}>
-          <Text style={styles.summaryValue}>{formatCurrency(totalPayables)}</Text>
+          <Text style={styles.summaryValue}>
+            {formatCurrency(totalPayables)}
+          </Text>
           <Text style={styles.summaryLabel}>Total Payables</Text>
         </View>
       </View>
@@ -220,52 +243,105 @@ const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({ navig
   const renderFilters = () => (
     <View style={styles.filterContainer}>
       <TouchableOpacity
-        style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
-        onPress={() => setFilter('all')}
+        style={[styles.filterTab, filter === null && styles.filterTabActive]}
+        onPress={() => setFilter(null)}
       >
-        <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
+        <Text
+          style={[
+            styles.filterText,
+            filter === null && styles.filterTextActive,
+          ]}
+        >
           All
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.filterTab, filter === 'with_payables' && styles.filterTabActive]}
-        onPress={() => setFilter('with_payables')}
+        style={[styles.filterTab, filter === 'good' && styles.filterTabActive]}
+        onPress={() => setFilter('good')}
       >
-        <Text style={[styles.filterText, filter === 'with_payables' && styles.filterTextActive]}>
-          With Payables
+        <Text
+          style={[
+            styles.filterText,
+            filter === 'good' && styles.filterTextActive,
+          ]}
+        >
+          Good
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.filterTab, filter === 'no_payables' && styles.filterTabActive]}
-        onPress={() => setFilter('no_payables')}
+        style={[
+          styles.filterTab,
+          filter === 'warning' && styles.filterTabActive,
+        ]}
+        onPress={() => setFilter('warning')}
       >
-        <Text style={[styles.filterText, filter === 'no_payables' && styles.filterTextActive]}>
-          Clear
+        <Text
+          style={[
+            styles.filterText,
+            filter === 'warning' && styles.filterTextActive,
+          ]}
+        >
+          Warning
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          styles.filterTab,
+          filter === 'overdue' && styles.filterTabActive,
+        ]}
+        onPress={() => setFilter('overdue')}
+      >
+        <Text
+          style={[
+            styles.filterText,
+            filter === 'overdue' && styles.filterTextActive,
+          ]}
+        >
+          Overdue
         </Text>
       </TouchableOpacity>
     </View>
   );
 
-  // Render empty state
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <TruckIcon size={64} color={theme.colors.text.disabled} weight="light" />
-      <Text style={styles.emptyTitle}>No Suppliers Found</Text>
-      <Text style={styles.emptySubtitle}>
-        {searchQuery
-          ? `No suppliers match "${searchQuery}"`
-          : 'Add your first supplier to get started'}
-      </Text>
-      {!searchQuery && (
-        <Button
-          title="Add Supplier"
-          onPress={handleAddSupplier}
-          variant="primary"
-          style={styles.emptyButton}
-        />
-      )}
+  // Render list loading state (shown inside list area)
+  const renderListLoading = () => (
+    <View style={styles.listLoadingContainer}>
+      <ActivityIndicator size="large" color={theme.colors.primary} />
+      <Text style={styles.listLoadingText}>Loading suppliers...</Text>
     </View>
   );
+
+  // Render empty state
+  const renderEmptyState = () => {
+    // Show loading in list area
+    if (listLoading) {
+      return renderListLoading();
+    }
+
+    return (
+      <View style={styles.emptyContainer}>
+        <TruckIcon
+          size={64}
+          color={theme.colors.text.disabled}
+          weight="light"
+        />
+        <Text style={styles.emptyTitle}>No Suppliers Found</Text>
+        <Text style={styles.emptySubtitle}>
+          {searchQuery
+            ? `No suppliers match "${searchQuery}"`
+            : 'Add your first supplier to get started'}
+        </Text>
+        {!searchQuery && (
+          <Button
+            title="Add Supplier"
+            onPress={handleAddSupplier}
+            variant="primary"
+            style={styles.emptyButton}
+          />
+        )}
+      </View>
+    );
+  };
 
   // Render loading footer
   const renderFooter = () => {
@@ -276,21 +352,6 @@ const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({ navig
       </View>
     );
   };
-
-  if (loading) {
-    return (
-      <Container safeArea edges={['top']}>
-        <HeaderNavigation
-          title="Suppliers"
-          onBackPress={() => navigation.goBack()}
-        />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading suppliers...</Text>
-        </View>
-      </Container>
-    );
-  }
 
   return (
     <Container safeArea edges={['top']}>
@@ -319,15 +380,17 @@ const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({ navig
       {renderFilters()}
 
       <FlatList
-        data={suppliers}
-        keyExtractor={(item) => item.id}
+        data={listLoading ? [] : suppliers}
+        keyExtractor={item => item.id}
         renderItem={renderSupplier}
-        ListHeaderComponent={suppliers.length > 0 ? renderHeader : null}
+        ListHeaderComponent={
+          !listLoading && suppliers.length > 0 ? renderHeader : null
+        }
         ListEmptyComponent={renderEmptyState}
         ListFooterComponent={renderFooter}
         contentContainerStyle={[
           styles.listContent,
-          suppliers.length === 0 && styles.emptyListContent,
+          (suppliers.length === 0 || listLoading) && styles.emptyListContent,
         ]}
         showsVerticalScrollIndicator={false}
         onEndReached={handleLoadMore}
@@ -341,6 +404,15 @@ const SuppliersListScreen: React.FC<NavigationProps<'SuppliersList'>> = ({ navig
           />
         }
       />
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={handleQuickAdd}
+        activeOpacity={0.8}
+      >
+        <PlusIcon size={28} color="#FFFFFF" weight="bold" />
+      </TouchableOpacity>
     </Container>
   );
 };
@@ -470,12 +542,13 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontSize: 10,
       color: theme.colors.text.secondary,
     },
-    loadingContainer: {
+    listLoadingContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+      paddingVertical: theme.spacing.xxl,
     },
-    loadingText: {
+    listLoadingText: {
       ...theme.typography.body,
       color: theme.colors.text.secondary,
       marginTop: theme.spacing.md,
@@ -512,6 +585,18 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       backgroundColor: `${theme.colors.primary}15`,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    fab: {
+      position: 'absolute',
+      bottom: 80,
+      right: theme.spacing.md,
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: theme.colors.warning,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...theme.shadows.lg,
     },
   });
 

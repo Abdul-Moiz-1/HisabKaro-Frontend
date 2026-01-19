@@ -175,10 +175,11 @@ export const fetchSalesProducts = createAsyncThunk<
   { rejectValue: string }
 >('sales/fetchProducts', async (_, { rejectWithValue }) => {
   try {
-    const response = await productsApi.getAll({
+    const { data: response } = await productsApi.getAll({
       includeInactive: false,
       limit: 20,
     });
+    console.log(response);
     return response.data;
   } catch (error: any) {
     return rejectWithValue(error.message || 'Failed to fetch products');
@@ -331,7 +332,7 @@ const salesSlice = createSlice({
       }>,
     ) => {
       const { product, quantity, unit_price } = action.payload;
-      const price = unit_price ?? product.sale_price;
+      const price = unit_price ?? Number(product.defaultSellingPrice);
 
       const existingIndex = state.items.findIndex(
         item => item.product_id === product.id,

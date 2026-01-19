@@ -36,7 +36,7 @@ import {
 } from '../../../../store/slices/salesSlice';
 import { Button } from '../../../../components/common';
 
-type PaymentType = 'cash' | 'credit' | 'partial';
+type PaymentType = 'full' | 'credit' | 'partial';
 
 const CreditTermsScreen: React.FC = () => {
   const theme = useTheme();
@@ -66,7 +66,7 @@ const CreditTermsScreen: React.FC = () => {
     (type: PaymentType) => {
       setLocalPaymentType(type);
 
-      if (type === 'cash') {
+      if (type === 'full') {
         dispatch(setPaymentStatus('paid'));
         dispatch(setPaymentMethod('Cash'));
         dispatch(setPaidAmount(totals.grandTotal));
@@ -165,36 +165,36 @@ const CreditTermsScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.selectionCard,
-            paymentType === 'cash' && styles.selectionCardActive,
+            paymentType === 'full' && styles.selectionCardActive,
           ]}
-          onPress={() => handlePaymentTypeSelect('cash')}
+          onPress={() => handlePaymentTypeSelect('full')}
           activeOpacity={0.7}
         >
           <View style={styles.selectionIcon}>
             <MoneyIcon
               size={24}
               color={
-                paymentType === 'cash'
+                paymentType === 'full'
                   ? theme.colors.primary
                   : theme.colors.text.secondary
               }
-              weight={paymentType === 'cash' ? 'fill' : 'regular'}
+              weight={paymentType === 'full' ? 'fill' : 'regular'}
             />
           </View>
           <View style={styles.selectionContent}>
             <Text
               style={[
                 styles.selectionLabel,
-                paymentType === 'cash' && styles.selectionLabelActive,
+                paymentType === 'full' && styles.selectionLabelActive,
               ]}
             >
-              Cash Sale
+              Full Sale
             </Text>
             <Text style={styles.selectionDescription}>
               Customer paid immediately
             </Text>
           </View>
-          {paymentType === 'cash' && (
+          {paymentType === 'full' && (
             <CheckCircleIcon
               size={24}
               color={theme.colors.primary}

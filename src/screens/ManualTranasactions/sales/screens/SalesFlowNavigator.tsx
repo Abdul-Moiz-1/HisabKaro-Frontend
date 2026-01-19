@@ -8,12 +8,7 @@ import ShoppingCartScreen from './ShoppingCartScreen';
 import DirectTotalScreen from './DirectTotalScreen';
 import CreditTermsScreen from './CreditTermsScreen';
 import ConfirmationScreen from './ConfirmationScreen';
-import {
-  AddCustomerScreen,
-  AddProductScreen,
-  CustomerSelectionScreen,
-  ProductSelectionScreen,
-} from '../../shared';
+import { CustomerSelectionScreen, ProductSelectionScreen } from '../../shared';
 
 const Stack = createStackNavigator();
 
@@ -36,20 +31,15 @@ const SalesFlowNavigator: React.FC = () => {
         component={CustomerSelectionScreen}
         options={{ title: 'Sold something' }}
       />
-      <Stack.Screen
+      {/* <Stack.Screen
         name="AddCustomer"
         component={AddCustomerScreen}
         options={{ title: 'Add Customer' }}
-      />
+      /> */}
       <Stack.Screen
         name="ProductSelection"
         component={ProductSelectionScreen}
         options={{ title: 'What did you sell?' }}
-      />
-      <Stack.Screen
-        name="AddProduct"
-        component={AddProductScreen}
-        options={{ title: 'Add Product' }}
       />
       <Stack.Screen
         name="ProductQuantityPrice"

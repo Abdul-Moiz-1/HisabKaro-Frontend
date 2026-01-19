@@ -6,9 +6,7 @@ export interface Supplier {
   id: string;
   name: string;
   email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
+  phoneNumber?: string;
   payable_balance: number;
   total_purchases: number;
   total_payments: number;
@@ -32,18 +30,16 @@ export interface SupplierStatement {
 export interface CreateSupplierPayload {
   name: string;
   email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  opening_balance?: number;
+  phoneNumber?: string;
+  openingBalance?: number;
+  creditPeriodDays?: number;
 }
 
 export interface UpdateSupplierPayload {
   name?: string;
   email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
+  phoneNumber?: string;
+  creditPeriodDays?: string;
 }
 
 export interface SupplierFilters {
@@ -62,10 +58,8 @@ const MOCK_SUPPLIERS: Supplier[] = [
   {
     id: 'sup_001',
     name: 'Al-Rehman Traders',
-    phone: '+923001234567',
+    phoneNumber: '+923001234567',
     email: 'alrehman@traders.pk',
-    address: 'Shop 12, Market Area',
-    city: 'Karachi',
     payable_balance: 250000,
     total_purchases: 1850000,
     total_payments: 1600000,
@@ -77,10 +71,9 @@ const MOCK_SUPPLIERS: Supplier[] = [
   {
     id: 'sup_002',
     name: 'Bismillah Wholesale',
-    phone: '+923009876543',
+    phoneNumber: '+923009876543',
     email: 'bismillah.wholesale@gmail.com',
-    address: 'Industrial Area, Block B',
-    city: 'Lahore',
+
     payable_balance: 180000,
     total_purchases: 980000,
     total_payments: 800000,
@@ -92,9 +85,7 @@ const MOCK_SUPPLIERS: Supplier[] = [
   {
     id: 'sup_003',
     name: 'Metro Cash & Carry',
-    phone: '+923007654321',
-    address: 'Gulshan-e-Iqbal',
-    city: 'Karachi',
+    phoneNumber: '+923007654321',
     payable_balance: 0,
     total_purchases: 450000,
     total_payments: 450000,
@@ -106,10 +97,8 @@ const MOCK_SUPPLIERS: Supplier[] = [
   {
     id: 'sup_004',
     name: 'Pakistan Electronics',
-    phone: '+923331234567',
+    phoneNumber: '+923331234567',
     email: 'info@pakelectronics.com',
-    address: 'Electronics Market, Shop 45',
-    city: 'Islamabad',
     payable_balance: 75000,
     total_purchases: 520000,
     total_payments: 445000,
@@ -121,9 +110,7 @@ const MOCK_SUPPLIERS: Supplier[] = [
   {
     id: 'sup_005',
     name: 'Habib Cables & Wires',
-    phone: '+923211234567',
-    address: 'Cable Market',
-    city: 'Faisalabad',
+    phoneNumber: '+923211234567',
     payable_balance: 320000,
     total_purchases: 1200000,
     total_payments: 880000,
@@ -138,12 +125,15 @@ const MOCK_SUPPLIERS: Supplier[] = [
 // Mock data flag is now in ENV_CONFIG.USE_MOCK_DATA
 
 // Helper function to simulate API delay
-const mockDelay = (ms: number = 300) => new Promise(resolve => setTimeout(resolve, ms));
+const mockDelay = (ms: number = 300) =>
+  new Promise(resolve => setTimeout(resolve, ms));
 
 // API Service
 export const suppliersApi = {
   // Get all suppliers with filters
-  getAll: async (filters?: SupplierFilters): Promise<PaginatedResponse<Supplier>> => {
+  getAll: async (
+    filters?: SupplierFilters,
+  ): Promise<PaginatedResponse<Supplier>> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
       let filtered = [...MOCK_SUPPLIERS];
@@ -152,23 +142,24 @@ export const suppliersApi = {
       if (filters?.search) {
         const searchLower = filters.search.toLowerCase();
         filtered = filtered.filter(
-          s => s.name.toLowerCase().includes(searchLower) ||
-               s.phone?.includes(searchLower) ||
-               s.city?.toLowerCase().includes(searchLower)
+          s =>
+            s.name.toLowerCase().includes(searchLower) ||
+            s.phoneNumber?.includes(searchLower),
         );
       }
 
       // Apply city filter
-      if (filters?.city) {
-        filtered = filtered.filter(s => s.city?.toLowerCase() === filters.city?.toLowerCase());
-      }
 
       // Apply balance filters
       if (filters?.min_balance !== undefined) {
-        filtered = filtered.filter(s => s.payable_balance >= (filters.min_balance || 0));
+        filtered = filtered.filter(
+          s => s.payable_balance >= (filters.min_balance || 0),
+        );
       }
       if (filters?.max_balance !== undefined) {
-        filtered = filtered.filter(s => s.payable_balance <= (filters.max_balance || Infinity));
+        filtered = filtered.filter(
+          s => s.payable_balance <= (filters.max_balance || Infinity),
+        );
       }
 
       // Sort
@@ -200,43 +191,46 @@ export const suppliersApi = {
   },
 
   // Get supplier by ID
-  getById: async (id: string): Promise<Supplier> => {
+  getById: async (id: string): Promise<{ data: Supplier }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(200);
       const supplier = MOCK_SUPPLIERS.find(s => s.id === id);
       if (!supplier) {
         throw new Error('Supplier not found');
       }
-      return supplier;
+      return { data: supplier };
     }
-    return apiClient.get<Supplier>(`/suppliers/${id}`);
+    return apiClient.get<{ data: Supplier }>(`/suppliers/${id}`);
   },
 
   // Create new supplier
-  create: async (payload: CreateSupplierPayload): Promise<Supplier> => {
+  create: async (
+    payload: CreateSupplierPayload,
+  ): Promise<{ data: Supplier }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(400);
       const newSupplier: Supplier = {
         id: `sup_${Date.now()}`,
         name: payload.name,
         email: payload.email,
-        phone: payload.phone,
-        address: payload.address,
-        city: payload.city,
-        payable_balance: payload.opening_balance || 0,
+        phoneNumber: payload.phoneNumber,
+        payable_balance: payload.openingBalance || 0,
         total_purchases: 0,
         total_payments: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
       MOCK_SUPPLIERS.unshift(newSupplier);
-      return newSupplier;
+      return { data: newSupplier };
     }
-    return apiClient.post<Supplier>('/suppliers', payload);
+    return apiClient.post<{ data: Supplier }>('/suppliers', payload);
   },
 
   // Update supplier
-  update: async (id: string, payload: UpdateSupplierPayload): Promise<Supplier> => {
+  update: async (
+    id: string,
+    payload: UpdateSupplierPayload,
+  ): Promise<Supplier> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(300);
       const index = MOCK_SUPPLIERS.findIndex(s => s.id === id);
@@ -280,8 +274,8 @@ export const suppliersApi = {
   getStatement: async (
     id: string,
     startDate?: string,
-    endDate?: string
-  ): Promise<SupplierStatement[]> => {
+    endDate?: string,
+  ): Promise<{ data: SupplierStatement[] }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(300);
       // Generate mock statement
@@ -317,12 +311,15 @@ export const suppliersApi = {
           balance: 180000,
         },
       ];
-      return statements;
+      return { data: statements };
     }
-    return apiClient.get<SupplierStatement[]>(`/suppliers/${id}/statement`, {
-      start_date: startDate,
-      end_date: endDate,
-    });
+    return apiClient.get<{ data: SupplierStatement[] }>(
+      `/suppliers/${id}/statement`,
+      {
+        fromDate: startDate,
+        toDate: endDate,
+      },
+    );
   },
 
   // Search suppliers
@@ -330,18 +327,19 @@ export const suppliersApi = {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(200);
       const searchLower = query.toLowerCase();
-      return MOCK_SUPPLIERS
-        .filter(s => 
+      return MOCK_SUPPLIERS.filter(
+        s =>
           s.name.toLowerCase().includes(searchLower) ||
-          s.phone?.includes(query) ||
-          s.city?.toLowerCase().includes(searchLower)
-        )
-        .slice(0, limit || 10);
+          s.phoneNumber?.includes(query),
+      ).slice(0, limit || 10);
     }
-    const response = await apiClient.get<PaginatedResponse<Supplier>>('/suppliers', {
-      search: query,
-      limit: limit || 10,
-    });
+    const response = await apiClient.get<PaginatedResponse<Supplier>>(
+      '/suppliers',
+      {
+        search: query,
+        limit: limit || 10,
+      },
+    );
     return response.data;
   },
 
@@ -351,16 +349,21 @@ export const suppliersApi = {
       await mockDelay(200);
       return [...MOCK_SUPPLIERS]
         .filter(s => s.last_purchase_date)
-        .sort((a, b) => 
-          new Date(b.last_purchase_date!).getTime() - new Date(a.last_purchase_date!).getTime()
+        .sort(
+          (a, b) =>
+            new Date(b.last_purchase_date!).getTime() -
+            new Date(a.last_purchase_date!).getTime(),
         )
         .slice(0, limit || 5);
     }
-    const response = await apiClient.get<PaginatedResponse<Supplier>>('/suppliers', {
-      sort_by: 'created_at',
-      sort_order: 'desc',
-      limit: limit || 5,
-    });
+    const response = await apiClient.get<PaginatedResponse<Supplier>>(
+      '/suppliers',
+      {
+        sort_by: 'created_at',
+        sort_order: 'desc',
+        limit: limit || 5,
+      },
+    );
     return response.data;
   },
 
@@ -368,15 +371,18 @@ export const suppliersApi = {
   getWithPayables: async (): Promise<Supplier[]> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(200);
-      return MOCK_SUPPLIERS
-        .filter(s => s.payable_balance > 0)
-        .sort((a, b) => b.payable_balance - a.payable_balance);
+      return MOCK_SUPPLIERS.filter(s => s.payable_balance > 0).sort(
+        (a, b) => b.payable_balance - a.payable_balance,
+      );
     }
-    const response = await apiClient.get<PaginatedResponse<Supplier>>('/suppliers', {
-      min_balance: 1,
-      sort_by: 'payable_balance',
-      sort_order: 'desc',
-    });
+    const response = await apiClient.get<PaginatedResponse<Supplier>>(
+      '/suppliers',
+      {
+        min_balance: 1,
+        sort_by: 'payable_balance',
+        sort_order: 'desc',
+      },
+    );
     return response.data;
   },
 
@@ -384,11 +390,18 @@ export const suppliersApi = {
   getTotalPayables: async (): Promise<{ total: number; count: number }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(200);
-      const suppliersWithPayables = MOCK_SUPPLIERS.filter(s => s.payable_balance > 0);
-      const total = suppliersWithPayables.reduce((sum, s) => sum + s.payable_balance, 0);
+      const suppliersWithPayables = MOCK_SUPPLIERS.filter(
+        s => s.payable_balance > 0,
+      );
+      const total = suppliersWithPayables.reduce(
+        (sum, s) => sum + s.payable_balance,
+        0,
+      );
       return { total, count: suppliersWithPayables.length };
     }
-    return apiClient.get<{ total: number; count: number }>('/suppliers/payables-summary');
+    return apiClient.get<{ total: number; count: number }>(
+      '/suppliers/payables-summary',
+    );
   },
 };
 

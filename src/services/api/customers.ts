@@ -164,6 +164,7 @@ export const WALK_IN_CUSTOMER: Customer = {
 
 // Helper function to simulate API delay
 const mockDelay = (ms: number = 300) =>
+  // @ts-ignore
   new Promise(resolve => setTimeout(resolve, ms));
 
 // API Service

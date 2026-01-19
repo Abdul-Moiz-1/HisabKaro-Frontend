@@ -9,7 +9,12 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  RouteProp,
+  useFocusEffect,
+} from '@react-navigation/native';
 import {
   PlusIcon,
   PackageIcon,
@@ -74,9 +79,11 @@ const ProductSelectionScreen: React.FC = () => {
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Fetch products on mount
-  useEffect(() => {
-    dispatch(fetchSalesProducts());
-  }, [dispatch]);
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchSalesProducts());
+    }, [dispatch]),
+  );
 
   // Handle search
   useEffect(() => {
@@ -137,8 +144,7 @@ const ProductSelectionScreen: React.FC = () => {
   const handleAddProduct = useCallback(() => {
     // @ts-ignore
     navigation.navigate('AddProduct', {
-      flowType,
-      nextScreen: 'ProductSelection',
+      fromFlow: true,
     });
   }, [navigation, flowType]);
 
@@ -177,15 +183,17 @@ const ProductSelectionScreen: React.FC = () => {
 
           <View style={styles.productInfo}>
             <View style={styles.productHeader}>
-              <Text style={[styles.productName]} numberOfLines={1}>
+              <Text style={styles.productName} numberOfLines={1}>
                 {item.name}
               </Text>
-              {item.sku && <Text style={styles.productSku}>{item.sku}</Text>}
+              {item.productCode && (
+                <Text style={styles.productSku}>{item.productCode}</Text>
+              )}
             </View>
 
             <View style={styles.priceRow}>
               <Text style={[styles.productPrice]}>
-                PKR {formatCurrency(item.sale_price)}
+                PKR {formatCurrency(Number(item.defaultSellingPrice))}
               </Text>
             </View>
 
@@ -444,17 +452,17 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontSize: 15,
       fontWeight: '600',
       color: theme.colors.text.primary,
-      flex: 1,
+      // flex: 1,
     },
     textDisabled: {
       color: theme.colors.text.disabled,
     },
     productSku: {
       fontSize: 11,
-      color: theme.colors.text.disabled,
+      color: theme.colors.text.secondary,
       backgroundColor: theme.colors.divider,
       paddingHorizontal: 6,
-      paddingVertical: 2,
+      paddingVertical: 3,
       borderRadius: 4,
     },
     productMeta: {

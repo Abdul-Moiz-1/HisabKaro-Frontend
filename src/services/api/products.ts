@@ -4,16 +4,16 @@ import { ENV_CONFIG } from '../../constants/env';
 // Types
 export interface Product {
   id: string;
-  sku?: string;
+  productCode?: string;
   name: string;
   purchase_price: number;
   sale_price: number;
   defaultPurchasePrice?: number;
   defaultSellingPrice?: number;
-  is_active: boolean;
+  isActive: boolean;
   image_url?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProductCategory {
@@ -32,17 +32,11 @@ export interface CreateProductPayload {
 }
 
 export interface UpdateProductPayload {
-  sku?: string;
-  barcode?: string;
+  productCode?: string;
   name?: string;
-  description?: string;
-  category_id?: string;
-  unit?: string;
-  purchase_price?: number;
-  sale_price?: number;
-  min_stock_level?: number;
-  is_active?: boolean;
-  image_url?: string;
+  defaultPurchasePrice?: number;
+  defaultSellingPrice?: number;
+  isActive?: boolean;
 }
 
 export interface StockAdjustment {
@@ -201,7 +195,7 @@ export const productsApi = {
   // Get all products with filters
   getAll: async (
     filters?: ProductFilters,
-  ): Promise<PaginatedResponse<Product>> => {
+  ): Promise<{ data: PaginatedResponse<Product> }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
       let filtered = [...MOCK_PRODUCTS];
@@ -231,20 +225,23 @@ export const productsApi = {
         totalPages: Math.ceil(filtered.length / limit),
       };
     }
-    return apiClient.get<PaginatedResponse<Product>>('/products', filters);
+    return apiClient.get<{ data: PaginatedResponse<Product> }>(
+      '/products',
+      filters,
+    );
   },
 
   // Get product by ID
-  getById: async (id: string): Promise<Product> => {
+  getById: async (id: string): Promise<{ data: Product }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(200);
       const product = MOCK_PRODUCTS.find(p => p.id === id);
       if (!product) {
         throw new Error('Product not found');
       }
-      return product;
+      return { data: product };
     }
-    return apiClient.get<Product>(`/products/${id}`);
+    return apiClient.get<{ data: Product }>(`/products/${id}`);
   },
 
   // Get product by barcode
@@ -261,7 +258,7 @@ export const productsApi = {
   },
 
   // Create new product
-  create: async (payload: CreateProductPayload): Promise<Product> => {
+  create: async (payload: CreateProductPayload): Promise<{ data: Product }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(400);
       const newProduct: Product = {
@@ -275,16 +272,16 @@ export const productsApi = {
         updated_at: new Date().toISOString(),
       };
       MOCK_PRODUCTS.unshift(newProduct);
-      return newProduct;
+      return { data: newProduct };
     }
-    return apiClient.post<Product>('/products', payload);
+    return apiClient.post<{ data: Product }>('/products', payload);
   },
 
   // Update product
   update: async (
     id: string,
     payload: UpdateProductPayload,
-  ): Promise<Product> => {
+  ): Promise<{ data: Product }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(300);
       const index = MOCK_PRODUCTS.findIndex(p => p.id === id);
@@ -299,9 +296,9 @@ export const productsApi = {
         ...payload,
         updated_at: new Date().toISOString(),
       };
-      return MOCK_PRODUCTS[index];
+      return { data: MOCK_PRODUCTS[index] };
     }
-    return apiClient.patch<Product>(`/products/${id}`, payload);
+    return apiClient.patch<{ data: Product }>(`/products/${id}`, payload);
   },
 
   // Delete product

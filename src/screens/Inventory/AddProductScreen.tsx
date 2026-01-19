@@ -1,6 +1,4 @@
-// shared/AddProductScreen.tsx
-// Reusable Add Product screen for both Sales and Receipt flows
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,71 +7,37 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
-import { useTheme } from '../../../store/hooks';
+import { NavigationProps } from '../../types';
+import { useTheme } from '../../store/hooks';
+import { productsApi, CreateProductPayload } from '../../services/api/products';
 import {
-  productsApi,
-  CreateProductPayload,
-} from '../../../services/api/products';
+  addProductSchema,
+  AddProductFormData,
+  CATEGORY_OPTIONS,
+  UNIT_OPTIONS,
+} from './schemas/productSchemas';
 import {
-  AmountInputField,
-  DropdownField,
-  NumberInputField,
   TextInputField,
-} from '../../../components/DynamicForm';
-import ActionButton from '../../../components/common/ActionButton';
-import { FieldType } from '../../../types/forms';
+  AmountInputField,
+  NumberInputField,
+  DropdownField,
+  TextAreaField,
+} from '../../components/DynamicForm';
+import ActionButton from '../../components/common/ActionButton';
+import { FieldType } from '../../types/forms';
 
-// Product creation schema
-const productSchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Product name must be at least 2 characters')
-    .max(100, 'Product name is too long'),
-  sku: z.string().max(50, 'SKU is too long').optional(),
-  category_id: z.string().optional(),
-  sale_price: z
-    .number()
-    .min(0, 'Sale price cannot be negative')
-    .refine(val => val > 0, 'Sale price must be greater than 0'),
-  purchase_price: z
-    .number()
-    .min(0, 'Purchase price cannot be negative')
-    .optional(),
-  unit: z.string().min(1, 'Unit is required'),
-  opening_stock: z.number().min(0, 'Stock cannot be negative').optional(),
-  min_stock_level: z
-    .number()
-    .min(0, 'Min stock level cannot be negative')
-    .optional(),
-  description: z.string().max(500, 'Description is too long').optional(),
-});
-
-type ProductFormValues = z.infer<typeof productSchema>;
-
-type RouteParams = {
-  AddProduct: {
-    flowType?: 'sales' | 'receipt' | 'standalone';
-    nextScreen?: string;
-  };
-};
-
-const AddProductScreen: React.FC = () => {
+const AddProductScreen: React.FC<NavigationProps<'AddProduct'>> = ({
+  navigation,
+  route,
+}) => {
   const theme = useTheme();
-  const navigation = useNavigation();
-  const route = useRoute<RouteProp<RouteParams, 'AddProduct'>>();
-
-  const { flowType = 'standalone', nextScreen = 'ProductSelection' } =
-    route.params || {};
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const { fromFlow } = route.params || {};
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // React Hook Form setup
@@ -81,86 +45,57 @@ const AddProductScreen: React.FC = () => {
     control,
     handleSubmit,
     formState: { errors, isValid },
-  } = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
+  } = useForm<AddProductFormData>({
+    resolver: zodResolver(addProductSchema),
     mode: 'onChange',
     defaultValues: {
       name: '',
       sku: '',
-      sale_price: 0,
-      purchase_price: 0,
-      unit: 'piece',
-      opening_stock: 0,
-      min_stock_level: 10,
-      description: '',
+      salePrice: '',
+      purchasePrice: '',
     },
   });
 
-  const handleCancel = useCallback(() => {
-    navigation.goBack();
-  }, [navigation]);
+  const handleSaveProduct = async (data: AddProductFormData) => {
+    try {
+      setIsSubmitting(true);
 
-  const handleSaveProduct = useCallback(
-    async (data: ProductFormValues) => {
-      try {
-        setIsSubmitting(true);
+      const payload: CreateProductPayload = {
+        name: data.name.trim(),
+        sku: data.sku?.trim() || undefined,
+        defaultSellingPrice: parseFloat(data.salePrice),
+        defaultPurchasePrice: data.purchasePrice
+          ? parseFloat(data.purchasePrice)
+          : 0,
+      };
 
-        // Prepare API payload
-        const payload: CreateProductPayload = {
-          name: data.name.trim(),
-          sku: data.sku?.trim() || undefined,
-          defaultSellingPrice: data.sale_price,
-          defaultPurchasePrice: data.purchase_price || 0,
-        };
-
-        // Call API to create product
-        const newProduct = await productsApi.create(payload);
-
-        Toast.show({
-          type: 'success',
-          text1: 'Product Added',
-          text2: `${newProduct.name} has been added successfully`,
-        });
-
-        // Navigate back with the new product
-        if (flowType === 'standalone') {
-          navigation.goBack();
-        } else {
-          // @ts-ignore
-          navigation.navigate(nextScreen, { newProduct });
-        }
-      } catch (error: any) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: error.message || 'Failed to create product',
-        });
-      } finally {
-        setIsSubmitting(false);
+      const { data: newProduct } = await productsApi.create(payload);
+      console.log(newProduct);
+      Toast.show({
+        type: 'success',
+        text1: 'Product Added',
+        text2: `${newProduct.name} has been added successfully`,
+      });
+      if (fromFlow) {
+        navigation.goBack();
+      } else {
+        // Navigate to product detail
+        navigation.replace('ProductDetail', { productId: newProduct.id });
       }
-    },
-    [flowType, navigation, nextScreen],
-  );
+    } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error.message || 'Failed to create product',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-  const categoryOptions = [
-    { label: 'Electronics', value: '1' },
-    { label: 'Furniture', value: '2' },
-    { label: 'Food & Beverages', value: '3' },
-    { label: 'Clothing', value: '4' },
-    { label: 'Stationery', value: '5' },
-    { label: 'Other', value: '6' },
-  ];
-
-  const unitOptions = [
-    { label: 'Piece', value: 'piece' },
-    { label: 'Kilogram (kg)', value: 'kg' },
-    { label: 'Liter (L)', value: 'liter' },
-    { label: 'Meter (m)', value: 'meter' },
-    { label: 'Box', value: 'box' },
-    { label: 'Carton', value: 'carton' },
-    { label: 'Dozen', value: 'dozen' },
-    { label: 'Pack', value: 'pack' },
-  ];
+  const handleCancel = () => {
+    navigation.goBack();
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -185,8 +120,8 @@ const AddProductScreen: React.FC = () => {
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInputField
                   field={{
-                    id: 'name',
-                    name: 'name',
+                    id: 'productName',
+                    name: 'productName',
                     label: 'Product Name',
                     type: FieldType.TEXT,
                     placeholder: 'Enter product name',
@@ -211,6 +146,7 @@ const AddProductScreen: React.FC = () => {
                     label: 'SKU / Product Code',
                     type: FieldType.TEXT,
                     placeholder: 'Enter SKU (optional)',
+                    hint: 'Unique identifier for the product',
                   }}
                   value={value || ''}
                   onChange={onChange}
@@ -230,44 +166,44 @@ const AddProductScreen: React.FC = () => {
 
             <Controller
               control={control}
-              name="sale_price"
+              name="salePrice"
               render={({ field: { onChange, onBlur, value } }) => (
                 <AmountInputField
                   field={{
-                    id: 'sale_price',
-                    name: 'sale_price',
+                    id: 'salePrice',
+                    name: 'salePrice',
                     label: 'Sale Price',
                     type: FieldType.AMOUNT,
                     placeholder: '0',
                     suffix: 'PKR',
                     required: true,
                   }}
-                  value={value.toString()}
-                  onChange={text => onChange(parseFloat(text) || 0)}
+                  value={value}
+                  onChange={onChange}
                   onBlur={onBlur}
-                  error={errors.sale_price?.message}
+                  error={errors.salePrice?.message}
                 />
               )}
             />
 
             <Controller
               control={control}
-              name="purchase_price"
+              name="purchasePrice"
               render={({ field: { onChange, onBlur, value } }) => (
                 <AmountInputField
                   field={{
-                    id: 'purchase_price',
-                    name: 'purchase_price',
-                    label: 'Purchase Price',
+                    id: 'purchasePrice',
+                    name: 'purchasePrice',
+                    label: 'Purchase Price (Cost)',
                     type: FieldType.AMOUNT,
                     placeholder: '0',
                     suffix: 'PKR',
                     hint: 'Cost price for profit calculation',
                   }}
-                  value={value?.toString() || '0'}
-                  onChange={text => onChange(parseFloat(text) || 0)}
+                  value={value || ''}
+                  onChange={onChange}
                   onBlur={onBlur}
-                  error={errors.purchase_price?.message}
+                  error={errors.purchasePrice?.message}
                 />
               )}
             />
@@ -287,7 +223,7 @@ const AddProductScreen: React.FC = () => {
             </View>
             <View style={styles.buttonHalf}>
               <ActionButton
-                title={isSubmitting ? 'Saving...' : '✓ Save Product'}
+                title={isSubmitting ? 'Saving...' : '+ Add Product'}
                 onPress={handleSubmit(handleSaveProduct)}
                 variant="primary"
                 disabled={!isValid || isSubmitting}

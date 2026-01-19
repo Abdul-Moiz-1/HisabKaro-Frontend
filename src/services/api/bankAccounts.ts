@@ -1,8 +1,8 @@
+import { ENV_CONFIG } from '../../constants/env';
 import apiClient, { PaginatedResponse } from './client';
 
 // Types
 export type BankAccountType = 'savings' | 'current' | 'business' | 'other';
-export type AccountStatus = 'active' | 'inactive' | 'closed';
 
 export interface BankAccount {
   id: string;
@@ -10,7 +10,6 @@ export interface BankAccount {
   account_title: string;
   account_number: string;
   account_type: BankAccountType;
-  status: AccountStatus;
   current_balance: number;
   opening_balance: number;
   branch_name?: string;
@@ -23,10 +22,23 @@ export interface BankAccount {
   updated_at: string;
 }
 
+export interface Banks {
+  id: number;
+  name: string;
+  swiftCode: string;
+  logoUrl: string;
+}
+
 export interface BankAccountTransaction {
   id: string;
   bank_account_id: string;
-  type: 'deposit' | 'withdrawal' | 'transfer_in' | 'transfer_out' | 'fee' | 'interest';
+  type:
+    | 'deposit'
+    | 'withdrawal'
+    | 'transfer_in'
+    | 'transfer_out'
+    | 'fee'
+    | 'interest';
   amount: number;
   balance_after: number;
   reference?: string;
@@ -36,39 +48,19 @@ export interface BankAccountTransaction {
 }
 
 export interface CreateBankAccountPayload {
-  bank_name: string;
-  account_title: string;
-  account_number: string;
-  account_type: BankAccountType;
-  opening_balance?: number;
-  branch_name?: string;
-  branch_code?: string;
-  iban?: string;
-  swift_code?: string;
-  notes?: string;
-  is_default?: boolean;
+  bankId: number;
+  accountTitle: string;
+  accountNumber: string;
+  openingBalance?: number;
 }
 
 export interface UpdateBankAccountPayload {
-  bank_name?: string;
-  account_title?: string;
-  branch_name?: string;
-  branch_code?: string;
-  iban?: string;
-  swift_code?: string;
-  notes?: string;
-  status?: AccountStatus;
-  is_default?: boolean;
+  accountTitle?: string;
 }
 
 export interface BankAccountFilters {
-  status?: AccountStatus;
-  account_type?: BankAccountType;
+  includeInactive?: boolean;
   search?: string;
-  page?: number;
-  limit?: number;
-  sort_by?: 'bank_name' | 'current_balance' | 'created_at';
-  sort_order?: 'asc' | 'desc';
 }
 
 export interface DepositPayload {
@@ -95,7 +87,6 @@ const mockBankAccounts: BankAccount[] = [
     account_title: 'Business Account',
     account_number: '1234567890123456',
     account_type: 'business',
-    status: 'active',
     current_balance: 250000,
     opening_balance: 100000,
     branch_name: 'Model Town Branch',
@@ -111,7 +102,6 @@ const mockBankAccounts: BankAccount[] = [
     account_title: 'Savings Account',
     account_number: '9876543210987654',
     account_type: 'savings',
-    status: 'active',
     current_balance: 150000,
     opening_balance: 50000,
     branch_name: 'Gulberg Branch',
@@ -127,7 +117,6 @@ const mockBankAccounts: BankAccount[] = [
     account_title: 'Mobile Wallet',
     account_number: '03001234567',
     account_type: 'other',
-    status: 'active',
     current_balance: 45000,
     opening_balance: 0,
     is_default: false,
@@ -140,7 +129,6 @@ const mockBankAccounts: BankAccount[] = [
     account_title: 'Mobile Wallet',
     account_number: '03119876543',
     account_type: 'other',
-    status: 'active',
     current_balance: 25000,
     opening_balance: 0,
     is_default: false,
@@ -153,7 +141,6 @@ const mockBankAccounts: BankAccount[] = [
     account_title: 'Current Account',
     account_number: '5678901234567890',
     account_type: 'current',
-    status: 'inactive',
     current_balance: 0,
     opening_balance: 25000,
     branch_name: 'DHA Branch',
@@ -200,112 +187,131 @@ const mockTransactions: BankAccountTransaction[] = [
   },
 ];
 
+const mockBanks: Banks[] = [
+  { id: 1, name: 'HBL', swiftCode: '#00A859', logoUrl: 'bank' },
+  { id: 2, name: 'Meezan', swiftCode: '#008C45', logoUrl: 'bank' },
+  { id: 3, name: 'UBL', swiftCode: '#E31937', logoUrl: 'bank' },
+  { id: 4, name: 'Alfalah', swiftCode: '#C8102E', logoUrl: 'bank' },
+  { id: 4, name: 'MCB', swiftCode: '#FFD700', logoUrl: 'bank' },
+  { id: 5, name: 'Allied', swiftCode: '#0055A5', logoUrl: 'bank' },
+
+  { id: 6, name: 'JazzCash', swiftCode: '#E60000', logoUrl: 'wallet' },
+  { id: 7, name: 'Easypaisa', swiftCode: '#4CAF50', logoUrl: 'wallet' },
+  { id: 8, name: 'SadaPay', swiftCode: '#FF6B35', logoUrl: 'wallet' },
+  { id: 9, name: 'NayaPay', swiftCode: '#6C63FF', logoUrl: 'wallet' },
+];
+
 // Helper to calculate cash in hand (mock)
 let mockCashInHand = 125000;
 
 // API Service
 export const bankAccountsApi = {
+  // Get all banks
+  getAllBanks: async (): Promise<{ data: Banks[] }> => {
+    if (ENV_CONFIG.USE_MOCK_DATA) {
+      // Mock implementation
+      let filteredAccounts = [...mockBanks];
+
+      return {
+        data: filteredAccounts,
+      };
+    }
+
+    return apiClient.get<{ data: Banks[] }>('/banks');
+  },
+
   // Get all bank accounts
-  getAll: async (filters?: BankAccountFilters): Promise<PaginatedResponse<BankAccount>> => {
-    // Mock implementation
-    let filteredAccounts = [...mockBankAccounts];
+  getAll: async (
+    filters?: BankAccountFilters,
+  ): Promise<{ data: BankAccount[] }> => {
+    if (ENV_CONFIG.USE_MOCK_DATA) {
+      // Mock implementation
+      let filteredAccounts = [...mockBankAccounts];
 
-    if (filters?.search) {
-      const searchTerm = filters.search.toLowerCase();
-      filteredAccounts = filteredAccounts.filter(
-        (a) =>
-          a.bank_name.toLowerCase().includes(searchTerm) ||
-          a.account_title.toLowerCase().includes(searchTerm) ||
-          a.account_number.includes(searchTerm)
-      );
-    }
-    if (filters?.status) {
-      filteredAccounts = filteredAccounts.filter((a) => a.status === filters.status);
-    }
-    if (filters?.account_type) {
-      filteredAccounts = filteredAccounts.filter((a) => a.account_type === filters.account_type);
-    }
+      if (filters?.search) {
+        const searchTerm = filters.search.toLowerCase();
+        filteredAccounts = filteredAccounts.filter(
+          a =>
+            a.bank_name.toLowerCase().includes(searchTerm) ||
+            a.account_title.toLowerCase().includes(searchTerm) ||
+            a.account_number.includes(searchTerm),
+        );
+      }
 
-    // Sorting
-    if (filters?.sort_by === 'bank_name') {
-      filteredAccounts.sort((a, b) => a.bank_name.localeCompare(b.bank_name));
-    } else if (filters?.sort_by === 'current_balance') {
-      filteredAccounts.sort((a, b) => a.current_balance - b.current_balance);
-    } else if (filters?.sort_by === 'created_at') {
-      filteredAccounts.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      return {
+        data: filteredAccounts,
+      };
     }
 
-    if (filters?.sort_order === 'desc') {
-      filteredAccounts.reverse();
-    }
-
-    const page = filters?.page || 1;
-    const limit = filters?.limit || 10;
-    const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
-
-    return {
-      data: filteredAccounts.slice(startIndex, endIndex),
-      total: filteredAccounts.length,
-      page,
-      limit,
-      totalPages: Math.ceil(filteredAccounts.length / limit),
-    };
-    // return apiClient.get<PaginatedResponse<BankAccount>>('/bank-accounts', filters);
+    return apiClient.get<{ data: BankAccount[] }>('/bank-accounts', filters);
   },
 
   // Get active bank accounts
   getActive: async (): Promise<BankAccount[]> => {
-    return mockBankAccounts.filter((a) => a.status === 'active');
-    // const response = await apiClient.get<PaginatedResponse<BankAccount>>('/bank-accounts', { status: 'active' });
-    // return response.data;
+    // return mockBankAccounts.filter(a => a. === 'active');
+    const response = await apiClient.get<PaginatedResponse<BankAccount>>(
+      '/bank-accounts',
+      { status: 'active' },
+    );
+    return response.data;
   },
 
   // Get bank account by ID
-  getById: async (id: string): Promise<BankAccount> => {
-    const account = mockBankAccounts.find((a) => a.id === id);
-    if (!account) {
-      throw new Error('Bank account not found');
+  getById: async (id: string): Promise<{ data: BankAccount }> => {
+    if (ENV_CONFIG.USE_MOCK_DATA) {
+      const account = mockBankAccounts.find(a => a.id === id);
+      if (!account) {
+        throw new Error('Bank account not found');
+      }
+      return { data: account };
     }
-    return account;
-    // return apiClient.get<BankAccount>(`/bank-accounts/${id}`);
+    return apiClient.get<{ data: BankAccount }>(`/bank-accounts/${id}`);
   },
 
   // Create bank account
   create: async (payload: CreateBankAccountPayload): Promise<BankAccount> => {
-    const newAccount: BankAccount = {
-      id: `bank-${mockBankAccounts.length + 1}`,
-      ...payload,
-      status: 'active',
-      current_balance: payload.opening_balance || 0,
-      opening_balance: payload.opening_balance || 0,
-      is_default: payload.is_default || false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    mockBankAccounts.push(newAccount);
-    return newAccount;
-    // return apiClient.post<BankAccount>('/bank-accounts', payload);
+    if (ENV_CONFIG.USE_MOCK_DATA) {
+      const newAccount: BankAccount = {
+        id: `bank-${mockBankAccounts.length + 1}`,
+        ...payload,
+        current_balance: payload.openingBalance || 0,
+        opening_balance: payload.openingBalance || 0,
+        is_default: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      mockBankAccounts.push(newAccount);
+      return newAccount;
+    }
+    return apiClient.post<BankAccount>('/bank-accounts', payload);
   },
 
   // Update bank account
-  update: async (id: string, payload: UpdateBankAccountPayload): Promise<BankAccount> => {
-    const index = mockBankAccounts.findIndex((a) => a.id === id);
-    if (index === -1) {
-      throw new Error('Bank account not found');
+  update: async (
+    id: string,
+    payload: UpdateBankAccountPayload,
+  ): Promise<{ data: BankAccount }> => {
+    if (ENV_CONFIG.USE_MOCK_DATA) {
+      const index = mockBankAccounts.findIndex(a => a.id === id);
+      if (index === -1) {
+        throw new Error('Bank account not found');
+      }
+      mockBankAccounts[index] = {
+        ...mockBankAccounts[index],
+        ...payload,
+        updated_at: new Date().toISOString(),
+      };
+      return { data: mockBankAccounts[index] };
     }
-    mockBankAccounts[index] = {
-      ...mockBankAccounts[index],
-      ...payload,
-      updated_at: new Date().toISOString(),
-    };
-    return mockBankAccounts[index];
-    // return apiClient.patch<BankAccount>(`/bank-accounts/${id}`, payload);
+    return apiClient.patch<{ data: BankAccount }>(
+      `/bank-accounts/${id}`,
+      payload,
+    );
   },
 
   // Delete bank account (soft delete by setting status to closed)
   delete: async (id: string): Promise<void> => {
-    const index = mockBankAccounts.findIndex((a) => a.id === id);
+    const index = mockBankAccounts.findIndex(a => a.id === id);
     if (index === -1) {
       throw new Error('Bank account not found');
     }
@@ -316,7 +322,9 @@ export const bankAccountsApi = {
 
   // Deposit cash to bank
   deposit: async (payload: DepositPayload): Promise<BankAccountTransaction> => {
-    const account = mockBankAccounts.find((a) => a.id === payload.bank_account_id);
+    const account = mockBankAccounts.find(
+      a => a.id === payload.bank_account_id,
+    );
     if (!account) {
       throw new Error('Bank account not found');
     }
@@ -347,8 +355,12 @@ export const bankAccountsApi = {
   },
 
   // Withdraw cash from bank
-  withdraw: async (payload: WithdrawalPayload): Promise<BankAccountTransaction> => {
-    const account = mockBankAccounts.find((a) => a.id === payload.bank_account_id);
+  withdraw: async (
+    payload: WithdrawalPayload,
+  ): Promise<BankAccountTransaction> => {
+    const account = mockBankAccounts.find(
+      a => a.id === payload.bank_account_id,
+    );
     if (!account) {
       throw new Error('Bank account not found');
     }
@@ -382,18 +394,22 @@ export const bankAccountsApi = {
   getTransactions: async (
     accountId: string,
     startDate?: string,
-    endDate?: string
+    endDate?: string,
   ): Promise<BankAccountTransaction[]> => {
-    let transactions = mockTransactions.filter((t) => t.bank_account_id === accountId);
+    let transactions = mockTransactions.filter(
+      t => t.bank_account_id === accountId,
+    );
 
     if (startDate) {
-      transactions = transactions.filter((t) => t.date >= startDate);
+      transactions = transactions.filter(t => t.date >= startDate);
     }
     if (endDate) {
-      transactions = transactions.filter((t) => t.date <= endDate);
+      transactions = transactions.filter(t => t.date <= endDate);
     }
 
-    return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return transactions.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
     // return apiClient.get<BankAccountTransaction[]>(`/bank-accounts/${accountId}/transactions`, {
     //   start_date: startDate,
     //   end_date: endDate,
@@ -409,7 +425,7 @@ export const bankAccountsApi = {
   // Get total bank balance (sum of all active accounts)
   getTotalBankBalance: async (): Promise<{ total_balance: number }> => {
     const total = mockBankAccounts
-      .filter((a) => a.status === 'active')
+      .filter(a => a.status === 'active')
       .reduce((sum, a) => sum + a.current_balance, 0);
     return { total_balance: total };
     // return apiClient.get<{ total_balance: number }>('/bank-accounts/total-balance');
@@ -418,11 +434,11 @@ export const bankAccountsApi = {
   // Set default account
   setDefault: async (id: string): Promise<BankAccount> => {
     // Remove default from all accounts
-    mockBankAccounts.forEach((a) => {
+    mockBankAccounts.forEach(a => {
       a.is_default = false;
     });
 
-    const account = mockBankAccounts.find((a) => a.id === id);
+    const account = mockBankAccounts.find(a => a.id === id);
     if (!account) {
       throw new Error('Bank account not found');
     }
