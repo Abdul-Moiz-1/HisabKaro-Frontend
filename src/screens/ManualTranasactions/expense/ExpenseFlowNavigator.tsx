@@ -5,9 +5,10 @@ import { createStackNavigator } from '@react-navigation/stack';
 // Import screens
 import ExpenseCategorySelectionScreen from './screens/ExpenseCategorySelectionScreen';
 import ExpenseDetailsScreen from './screens/ExpenseDetailsScreen';
-import BankSelectionScreen from '../receipt/screens/BankSelectionScreen'; // Reuse
-import WalletSelectionScreen from '../receipt/screens/WalletSelectionScreen'; // Reuse
+// import BankSelectionScreen from '../receipt/screens/BankSelectionScreen'; // Reuse
+// import WalletSelectionScreen from '../receipt/screens/WalletSelectionScreen'; // Reuse
 import ConfirmationScreen from './screens/ConfirmationScreen';
+import { BankSelectionScreen } from '../shared';
 
 const Stack = createStackNavigator();
 
@@ -43,11 +44,11 @@ const ExpenseFlowNavigator: React.FC = () => {
         component={BankSelectionScreen}
         options={{ title: 'Select Bank Account' }}
       />
-      <Stack.Screen
+      {/* <Stack.Screen
         name="WalletSelection"
         component={WalletSelectionScreen}
         options={{ title: 'Select Wallet' }}
-      />
+      /> */}
       <Stack.Screen
         name="Confirmation"
         component={ConfirmationScreen}

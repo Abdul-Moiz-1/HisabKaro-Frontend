@@ -57,7 +57,7 @@ const AmountInputField: React.FC<AmountInputFieldProps> = ({
     setShowKeypad(false);
     onBlur();
   };
-
+  console.log('KeyPad', showKeypad);
   const formatAmount = (amount: string) => {
     if (!amount || amount === '0') return '0';
     const num = parseFloat(amount);
@@ -92,15 +92,19 @@ const AmountInputField: React.FC<AmountInputFieldProps> = ({
 
       <Modal
         visible={showKeypad}
-        transparent
+        transparent={true}
         animationType="slide"
         onRequestClose={() => setShowKeypad(false)}
+        statusBarTranslucent
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowKeypad(false)}
-        >
+        <View style={styles.modalOverlay}>
+          {/* Backdrop to close modal when tapping outside */}
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowKeypad(false)}
+          />
+          {/* Keypad container */}
           <View style={styles.keypadContainer}>
             <View style={styles.displayContainer}>
               <Text style={styles.displayAmount}>
@@ -194,7 +198,7 @@ const AmountInputField: React.FC<AmountInputFieldProps> = ({
               </View>
             </View>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </View>
   );
@@ -254,6 +258,9 @@ const createStyles = (theme: Theme) => ({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end' as const,
+  },
+  modalBackdrop: {
+    flex: 1,
   },
   keypadContainer: {
     backgroundColor: theme.colors.surface,

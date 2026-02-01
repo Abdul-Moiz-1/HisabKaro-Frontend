@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useCallback, useState } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -25,11 +25,7 @@ import {
 } from 'phosphor-react-native';
 import Toast from 'react-native-toast-message';
 
-import {
-  useTheme,
-  useAppDispatch,
-  useAppSelector,
-} from '../../../../store/hooks';
+import { useTheme, useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { Button } from '../../../../components/common';
 import {
   selectSelectedSupplier,
@@ -38,8 +34,6 @@ import {
   selectPaymentDetails,
   selectCreatedInvoice,
   resetPurchaseFlow,
-  selectPurchasesLoading,
-  createPurchaseInvoice,
 } from '../../../../store/slices/purchasesSlice';
 import { ROUTES } from '../../../../constants/routes';
 
@@ -53,39 +47,24 @@ const ConfirmationScreen: React.FC = () => {
   // @ts-ignore
   const routeParams = route.params?.flowData || route.params || {};
 
-  const supplier =
-    useAppSelector(selectSelectedSupplier) || routeParams.supplier;
+  const supplier = useAppSelector(selectSelectedSupplier) || routeParams.supplier;
   const items = useAppSelector(selectPurchaseItems);
   const totals = useAppSelector(selectPurchaseTotals);
   const paymentDetails = useAppSelector(selectPaymentDetails);
   const createdInvoice = useAppSelector(selectCreatedInvoice);
-  const isLoading = useAppSelector(selectPurchasesLoading);
-  const [isRedirect, setRedirect] = useState<boolean>(false);
 
   // Use route params if available, otherwise use Redux
-  const totalAmount =
-    routeParams.totalAmount ||
-    routeParams.grandTotal ||
-    routeParams.directTotal ||
-    totals.grandTotal;
+  const totalAmount = routeParams.totalAmount || routeParams.grandTotal || routeParams.directTotal || totals.grandTotal;
   const paymentStatus = routeParams.paymentStatus || paymentDetails.status;
   const paymentMethod = routeParams.paymentMethod || paymentDetails.method;
   const paidAmount = routeParams.paidAmount || paymentDetails.paidAmount;
-  const remainingAmount =
-    routeParams.remainingAmount || paymentDetails.remainingAmount;
+  const remainingAmount = routeParams.remainingAmount || paymentDetails.remainingAmount;
   const dueDate = routeParams.dueDate || paymentDetails.dueDate;
   const bill = routeParams.bill || items;
 
-  const invoiceNumber =
-    createdInvoice?.invoiceNumber || `PUR-${Date.now().toString().slice(-6)}`;
+  const invoiceNumber = createdInvoice?.invoice_number || `PUR-${Date.now().toString().slice(-6)}`;
 
   const styles = useMemo(() => createStyles(theme), [theme]);
-
-  useEffect(() => {
-    if (!createdInvoice && !isLoading && !isRedirect) {
-      dispatch(createPurchaseInvoice());
-    }
-  }, [dispatch, createdInvoice, isLoading, isRedirect]);
 
   const handleDone = useCallback(() => {
     dispatch(resetPurchaseFlow());
@@ -113,11 +92,11 @@ const ConfirmationScreen: React.FC = () => {
   const handleShareBill = useCallback(async () => {
     try {
       const message = `
-          Purchase Invoice: ${invoiceNumber}
-          Supplier: ${supplier?.name || 'N/A'}
-          Total Amount: PKR ${totalAmount?.toLocaleString() || 0}
-          Status: ${getStatusText()}
-          Date: ${new Date().toLocaleDateString('en-PK')}
+Purchase Invoice: ${invoiceNumber}
+Supplier: ${supplier?.name || 'N/A'}
+Total Amount: PKR ${totalAmount?.toLocaleString() || 0}
+Status: ${getStatusText()}
+Date: ${new Date().toLocaleDateString('en-PK')}
       `.trim();
 
       await Share.share({
@@ -216,32 +195,13 @@ const ConfirmationScreen: React.FC = () => {
     });
   };
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Recording payment...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Success Header */}
         <View style={styles.successHeader}>
           <View style={styles.successIconContainer}>
-            <CheckCircleIcon
-              size={64}
-              color={theme.colors.success}
-              weight="fill"
-            />
+            <CheckCircleIcon size={64} color={theme.colors.success} weight="fill" />
           </View>
           <Text style={styles.successTitle}>Purchase Recorded!</Text>
           <Text style={styles.successSubtitle}>Bill created successfully</Text>
@@ -278,17 +238,13 @@ const ConfirmationScreen: React.FC = () => {
             <>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Paid Now</Text>
-                <Text
-                  style={[styles.summaryValue, { color: theme.colors.success }]}
-                >
+                <Text style={[styles.summaryValue, { color: theme.colors.success }]}>
                   PKR {paidAmount?.toLocaleString() || 0}
                 </Text>
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Remaining</Text>
-                <Text
-                  style={[styles.summaryValue, { color: theme.colors.error }]}
-                >
+                <Text style={[styles.summaryValue, { color: theme.colors.error }]}>
                   PKR {remainingAmount?.toLocaleString() || 0}
                 </Text>
               </View>
@@ -307,9 +263,7 @@ const ConfirmationScreen: React.FC = () => {
           {dueDate && paymentStatus !== 'paid' && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Due Date</Text>
-              <Text
-                style={[styles.summaryValue, { color: theme.colors.warning }]}
-              >
+              <Text style={[styles.summaryValue, { color: theme.colors.warning }]}>
                 {formatDate(dueDate)}
               </Text>
             </View>
@@ -317,9 +271,7 @@ const ConfirmationScreen: React.FC = () => {
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Date</Text>
-            <Text style={styles.summaryValue}>
-              {formatDate(new Date().toISOString())}
-            </Text>
+            <Text style={styles.summaryValue}>{formatDate(new Date().toISOString())}</Text>
           </View>
 
           <View style={styles.divider} />
@@ -327,10 +279,7 @@ const ConfirmationScreen: React.FC = () => {
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Payment Status</Text>
             <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: getStatusColor() + '20' },
-              ]}
+              style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}
             >
               <Text style={[styles.statusText, { color: getStatusColor() }]}>
                 {getStatusText()}
@@ -341,24 +290,15 @@ const ConfirmationScreen: React.FC = () => {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={styles.quickActionButton}
-            onPress={handlePrint}
-          >
+          <TouchableOpacity style={styles.quickActionButton} onPress={handlePrint}>
             <PrinterIcon size={22} color={theme.colors.text.primary} />
             <Text style={styles.quickActionText}>Print</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickActionButton}
-            onPress={handleDownload}
-          >
+          <TouchableOpacity style={styles.quickActionButton} onPress={handleDownload}>
             <DownloadIcon size={22} color={theme.colors.text.primary} />
             <Text style={styles.quickActionText}>Download</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickActionButton}
-            onPress={handleShareBill}
-          >
+          <TouchableOpacity style={styles.quickActionButton} onPress={handleShareBill}>
             <ShareNetworkIcon size={22} color={theme.colors.text.primary} />
             <Text style={styles.quickActionText}>Share</Text>
           </TouchableOpacity>
@@ -368,48 +308,29 @@ const ConfirmationScreen: React.FC = () => {
         <Text style={styles.actionsTitle}>What's next?</Text>
 
         <TouchableOpacity style={styles.actionCard} onPress={handleShareBill}>
-          <View
-            style={[
-              styles.actionIcon,
-              { backgroundColor: `${theme.colors.info}15` },
-            ]}
-          >
+          <View style={[styles.actionIcon, { backgroundColor: `${theme.colors.info}15` }]}>
             <ShareNetworkIcon size={22} color={theme.colors.info} />
           </View>
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>Share Bill</Text>
-            <Text style={styles.actionDescription}>
-              Send to supplier or save
-            </Text>
+            <Text style={styles.actionDescription}>Send to supplier or save</Text>
           </View>
           <CaretRightIcon size={20} color={theme.colors.text.disabled} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionCard} onPress={handleAttachPhoto}>
-          <View
-            style={[
-              styles.actionIcon,
-              { backgroundColor: `${theme.colors.secondary}15` },
-            ]}
-          >
+          <View style={[styles.actionIcon, { backgroundColor: `${theme.colors.secondary}15` }]}>
             <CameraIcon size={22} color={theme.colors.secondary} />
           </View>
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>Attach Bill Photo</Text>
-            <Text style={styles.actionDescription}>
-              Upload supplier's physical bill
-            </Text>
+            <Text style={styles.actionDescription}>Upload supplier's physical bill</Text>
           </View>
           <CaretRightIcon size={20} color={theme.colors.text.disabled} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionCard} onPress={handleViewDetails}>
-          <View
-            style={[
-              styles.actionIcon,
-              { backgroundColor: `${theme.colors.success}15` },
-            ]}
-          >
+          <View style={[styles.actionIcon, { backgroundColor: `${theme.colors.success}15` }]}>
             <FileTextIcon size={22} color={theme.colors.success} />
           </View>
           <View style={styles.actionContent}>
@@ -420,35 +341,20 @@ const ConfirmationScreen: React.FC = () => {
         </TouchableOpacity>
 
         {paymentStatus !== 'paid' && (
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={handleSetReminder}
-          >
-            <View
-              style={[
-                styles.actionIcon,
-                { backgroundColor: `${theme.colors.warning}15` },
-              ]}
-            >
+          <TouchableOpacity style={styles.actionCard} onPress={handleSetReminder}>
+            <View style={[styles.actionIcon, { backgroundColor: `${theme.colors.warning}15` }]}>
               <BellIcon size={22} color={theme.colors.warning} />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionLabel}>Set Payment Reminder</Text>
-              <Text style={styles.actionDescription}>
-                Remind before due date
-              </Text>
+              <Text style={styles.actionDescription}>Remind before due date</Text>
             </View>
             <CaretRightIcon size={20} color={theme.colors.text.disabled} />
           </TouchableOpacity>
         )}
 
         <TouchableOpacity style={styles.actionCard} onPress={handleAddNote}>
-          <View
-            style={[
-              styles.actionIcon,
-              { backgroundColor: theme.colors.divider },
-            ]}
-          >
+          <View style={[styles.actionIcon, { backgroundColor: theme.colors.divider }]}>
             <NoteIcon size={22} color={theme.colors.text.secondary} />
           </View>
           <View style={styles.actionContent}>
@@ -461,12 +367,7 @@ const ConfirmationScreen: React.FC = () => {
 
       {/* Bottom Actions */}
       <View style={styles.bottomActions}>
-        <Button
-          title="Done"
-          onPress={handleDone}
-          variant="primary"
-          size="large"
-        />
+        <Button title="Done" onPress={handleDone} variant="primary" size="large" />
 
         <View style={styles.secondaryActions}>
           <TouchableOpacity style={styles.secondaryButton} onPress={handleUndo}>
@@ -474,10 +375,7 @@ const ConfirmationScreen: React.FC = () => {
             <Text style={styles.secondaryButtonText}>Undo</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={handleRepeatPurchase}
-          >
+          <TouchableOpacity style={styles.secondaryButton} onPress={handleRepeatPurchase}>
             <ArrowClockwiseIcon size={18} color={theme.colors.text.secondary} />
             <Text style={styles.secondaryButtonText}>Repeat Purchase</Text>
           </TouchableOpacity>

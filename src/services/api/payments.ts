@@ -3,7 +3,7 @@ import { ENV_CONFIG } from '../../constants/env';
 
 // Types matching API documentation
 export type PaymentType = 'Receive' | 'Pay';
-export type PaymentMode = 'cash' | 'bank_transfer' | 'cheque' | 'mobile_wallet';
+export type PaymentMode = 'Cash' | 'Bank';
 export type PaymentStatus = 'Pending' | 'Submitted' | 'Cancelled';
 export type ChequeStatus = 'pending' | 'cleared' | 'bounced';
 
@@ -49,6 +49,11 @@ export interface GLEntry {
   credit: number;
 }
 
+export interface ReceivePaymentInvoiceAllocationPayload {
+  invoiceId: number;
+  allocatedAmount: number;
+}
+
 export interface ReceivePaymentPayload {
   customerId: number;
   paidAmount: number;
@@ -57,7 +62,7 @@ export interface ReceivePaymentPayload {
   chequeDetails?: ChequeDetails;
   mobileWalletProviderId?: number;
   paymentDate: string;
-  invoiceAllocations?: InvoiceAllocation[];
+  invoiceAllocations?: ReceivePaymentInvoiceAllocationPayload[];
   notes?: string;
 }
 

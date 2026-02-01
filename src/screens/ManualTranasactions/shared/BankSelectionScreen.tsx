@@ -1,6 +1,6 @@
 // shared/BankSelectionScreen.tsx
-// Reusable bank account selection screen for both Sales and Receipt flows
-import React, { useEffect, useMemo, useCallback } from 'react';
+// Reusable bank account selection screen for Sales, Purchase, Receipt, Payment flows
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -10,34 +10,26 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BankIcon, CheckCircleIcon, PlusIcon } from 'phosphor-react-native';
 
-import { useTheme, useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { useTheme } from '../../../store/hooks';
 import {
-  fetchActiveBankAccounts,
-  setSelectedAccount,
-} from '../../../store/slices/bankAccountsSlice';
-import { setPaymentMethod, setNotes } from '../../../store/slices/salesSlice';
-import { DateField } from '../../../components/DynamicForm';
+  bankAccountsApi,
+  BankAccount,
+} from '../../../services/api/bankAccounts';
 import ActionButton from '../../../components/common/ActionButton';
-import { FieldType } from '../../../types/forms';
-import Icon from '../../../components/Icon';
-
-// Bank selection schema
-const bankSelectionSchema = z.object({
-  bankAccountId: z.string().min(1, 'Please select a bank account'),
-  transferDate: z.string().optional(),
-});
-
-type BankSelectionFormValues = z.infer<typeof bankSelectionSchema>;
+import {
+  useBankSelectionFlow,
+  FlowType,
+} from './hooks/useFlowAdapter';
 
 type RouteParams = {
   BankSelection: {
-    flowType: 'sales' | 'receipt';
+    flowType?: FlowType;
     nextScreen?: string;
+    amount?: number;
+    partyName?: string;
   };
 };
 
@@ -45,80 +37,83 @@ const BankSelectionScreen: React.FC = () => {
   const theme = useTheme();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RouteParams, 'BankSelection'>>();
-  const dispatch = useAppDispatch();
 
-  const { flowType = 'sales', nextScreen = 'Confirmation' } = route.params || {};
+  // Get route params with defaults
+  const {
+    flowType = 'sales',
+    nextScreen: customNextScreen,
+  } = route.params || {};
 
-  const { activeAccounts, isLoading } = useAppSelector((state) => state.bankAccounts);
+  // Use flow adapter hook
+  const {
+    config,
+    customer,
+    amount,
+    setBankAccount,
+  } = useBankSelectionFlow(flowType);
+
+  // Local state
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedBankId, setSelectedBankId] = useState<number | null>(null);
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Fetch active bank accounts on mount
+  // Determine next screen - custom override or config default
+  const nextScreen = customNextScreen || config.nextScreen;
+
+  // Fetch bank accounts on mount
   useEffect(() => {
-    dispatch(fetchActiveBankAccounts());
-  }, [dispatch]);
+    fetchBankAccounts();
+  }, []);
 
-  // React Hook Form setup
-  const {
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isValid },
-  } = useForm<BankSelectionFormValues>({
-    resolver: zodResolver(bankSelectionSchema),
-    mode: 'onChange',
-    defaultValues: {
-      transferDate: new Date().toISOString().split('T')[0],
-    },
-  });
-
-  const selectedBankId = watch('bankAccountId');
-  const transferDate = watch('transferDate');
+  const fetchBankAccounts = async () => {
+    try {
+      setIsLoading(true);
+      const response = await bankAccountsApi.getAll();
+      setBankAccounts(response.data);
+    } catch (error) {
+      console.error('Failed to fetch bank accounts:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const selectedBank = useMemo(
-    () => activeAccounts.find((b) => b.id === selectedBankId),
-    [activeAccounts, selectedBankId]
+    () => bankAccounts.find(b => b.id === selectedBankId),
+    [bankAccounts, selectedBankId]
   );
 
-  const handleContinue = useCallback(
-    (data: BankSelectionFormValues) => {
-      const bank = activeAccounts.find((b) => b.id === data.bankAccountId);
-      if (!bank) return;
+  const handleSelectBank = useCallback((bankId: number) => {
+    setSelectedBankId(bankId);
+  }, []);
 
-      // Update Redux state
-      dispatch(setSelectedAccount(bank));
-      dispatch(setPaymentMethod('bank'));
+  const handleContinue = useCallback(() => {
+    if (!selectedBankId || !selectedBank) return;
 
-      // Navigate to next screen
-      // @ts-ignore
-      navigation.navigate(nextScreen, {
-        flowType,
-        bankAccount: bank,
-        transferDate: data.transferDate,
-      });
-    },
-    [activeAccounts, dispatch, navigation, nextScreen, flowType]
-  );
+    // Update Redux state based on flow type using adapter
+    setBankAccount(selectedBankId);
+
+    // Navigate to next screen
+    // @ts-ignore
+    navigation.navigate(nextScreen, {
+      flowType,
+      selectedBankAccountId: selectedBankId,
+      selectedBankAccount: selectedBank,
+    });
+  }, [
+    selectedBankId,
+    selectedBank,
+    setBankAccount,
+    navigation,
+    nextScreen,
+    flowType,
+  ]);
 
   const handleAddBank = useCallback(() => {
     // @ts-ignore
-    navigation.navigate('AddBankAccount');
-  }, [navigation]);
-
-  const quickDateOptions = [
-    { label: 'Today', date: new Date() },
-    { label: 'Yesterday', date: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-  ];
-
-  const handleQuickDate = useCallback(
-    (date: Date) => {
-      setValue('transferDate', date.toISOString().split('T')[0], {
-        shouldValidate: true,
-      });
-    },
-    [setValue]
-  );
+    navigation.navigate('AddBankAccount', { fromFlow: true, flowType });
+  }, [navigation, flowType]);
 
   if (isLoading) {
     return (
@@ -132,167 +127,132 @@ const BankSelectionScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Bank Account Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Which bank account?</Text>
-
-          {activeAccounts.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>🏦</Text>
-              <Text style={styles.emptyText}>No bank accounts found</Text>
-              <TouchableOpacity style={styles.addButton} onPress={handleAddBank}>
-                <Text style={styles.addButtonText}>+ Add Bank Account</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <Controller
-              control={control}
-              name="bankAccountId"
-              render={({ field: { onChange, value } }) => (
-                <>
-                  {activeAccounts.map((bank) => (
-                    <TouchableOpacity
-                      key={bank.id}
-                      style={[
-                        styles.bankCard,
-                        value === bank.id && styles.bankCardSelected,
-                      ]}
-                      onPress={() => onChange(bank.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.bankIcon}>
-                        <Text style={styles.bankIconText}>🏦</Text>
-                      </View>
-
-                      <View style={styles.bankInfo}>
-                        <View style={styles.bankHeader}>
-                          <Text style={styles.bankName}>{bank.bank_name}</Text>
-                          {bank.is_default && (
-                            <View style={styles.defaultBadge}>
-                              <Text style={styles.defaultBadgeText}>Default</Text>
-                            </View>
-                          )}
-                        </View>
-                        <Text style={styles.accountNumber}>
-                          {bank.account_number.slice(-4).padStart(bank.account_number.length, '*')}
-                        </Text>
-                        <Text style={styles.accountType}>{bank.account_type}</Text>
-                        <Text style={styles.balance}>
-                          Balance: PKR {bank.current_balance.toLocaleString()}
-                        </Text>
-                      </View>
-
-                      <View
-                        style={[
-                          styles.radioButton,
-                          value === bank.id && styles.radioButtonSelected,
-                        ]}
-                      >
-                        {value === bank.id && <View style={styles.radioButtonInner} />}
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-
-                  {errors.bankAccountId && (
-                    <Text style={styles.errorText}>{errors.bankAccountId.message}</Text>
-                  )}
-                </>
-              )}
-            />
-          )}
-
-          {activeAccounts.length > 0 && (
-            <TouchableOpacity
-              style={styles.addBankButton}
-              onPress={handleAddBank}
-              activeOpacity={0.7}
-            >
-              <Icon name="add-circle-outline" size={20} color={theme.colors.primary} />
-              <Text style={styles.addBankButtonText}>+ Add bank account</Text>
-            </TouchableOpacity>
+        {/* Amount Summary Card */}
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>{config.amountLabel}</Text>
+          <Text style={styles.summaryAmount}>
+            PKR {amount.toLocaleString()}
+          </Text>
+          {customer?.name && (
+            <Text style={styles.partyName}>
+              {config.partyPrefix}: {customer.name}
+            </Text>
           )}
         </View>
 
-        {/* Transfer Date (for receipt flow) */}
-        {flowType === 'receipt' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>When did money arrive?</Text>
+        {/* Title */}
+        <Text style={styles.question}>{config.title}</Text>
+        <Text style={styles.subtitle}>{config.subtitle}</Text>
 
-            {/* Quick Date Options */}
-            <View style={styles.quickDateButtons}>
-              {quickDateOptions.map((option, index) => (
+        {/* Bank Accounts List */}
+        {bankAccounts.length === 0 ? (
+          <View style={styles.emptyState}>
+            <BankIcon size={48} color={theme.colors.text.disabled} />
+            <Text style={styles.emptyTitle}>No Bank Accounts</Text>
+            <Text style={styles.emptySubtitle}>
+              Add a bank account to continue
+            </Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddBank}
+              activeOpacity={0.7}
+            >
+              <PlusIcon size={20} color="#FFFFFF" />
+              <Text style={styles.addButtonText}>Add Bank Account</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.accountsList}>
+            {bankAccounts.map(bank => {
+              const isSelected = selectedBankId === bank.id;
+
+              return (
                 <TouchableOpacity
-                  key={index}
-                  style={styles.quickDateButton}
-                  onPress={() => handleQuickDate(option.date)}
+                  key={bank.id}
+                  style={[
+                    styles.bankCard,
+                    isSelected && styles.bankCardSelected,
+                  ]}
+                  onPress={() => handleSelectBank(bank.id)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.quickDateButtonText}>{option.label}</Text>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity
-                style={styles.quickDateButton}
-                onPress={() => {}}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.quickDateButtonText}>Pick date</Text>
-              </TouchableOpacity>
-            </View>
+                  <View
+                    style={[
+                      styles.bankIcon,
+                      isSelected && styles.bankIconSelected,
+                    ]}
+                  >
+                    <BankIcon
+                      size={28}
+                      color={
+                        isSelected
+                          ? theme.colors.primary
+                          : theme.colors.text.secondary
+                      }
+                      weight={isSelected ? 'fill' : 'regular'}
+                    />
+                  </View>
 
-            <Controller
-              control={control}
-              name="transferDate"
-              render={({ field: { onChange, value } }) => (
-                <DateField
-                  field={{
-                    id: 'date',
-                    name: 'date',
-                    label: 'Transfer Date',
-                    type: FieldType.DATE,
-                  }}
-                  value={value || ''}
-                  onChange={onChange}
-                  onBlur={() => {}}
-                />
-              )}
-            />
+                  <View style={styles.bankInfo}>
+                    <Text
+                      style={[
+                        styles.bankName,
+                        isSelected && styles.bankNameSelected,
+                      ]}
+                    >
+                      {bank.bankName}
+                    </Text>
+                    <Text style={styles.accountTitle}>{bank.accountTitle}</Text>
+                    <Text style={styles.accountNumber}>
+                      ****{bank?.accountNumber.slice(-4)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.rightSection}>
+                    <Text style={styles.balance}>
+                      PKR {bank.currentBalance.toLocaleString()}
+                    </Text>
+                    {isSelected ? (
+                      <CheckCircleIcon
+                        size={24}
+                        color={theme.colors.primary}
+                        weight="fill"
+                      />
+                    ) : bank.isDefault ? (
+                      <View style={styles.defaultBadge}>
+                        <Text style={styles.defaultBadgeText}>Default</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
 
-        {/* Selected Bank Summary */}
-        {selectedBank && (
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Selected Account</Text>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Bank</Text>
-              <Text style={styles.summaryValue}>{selectedBank.bank_name}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Account</Text>
-              <Text style={styles.summaryValue}>
-                {selectedBank.account_number.slice(-4).padStart(selectedBank.account_number.length, '*')}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Balance</Text>
-              <Text style={[styles.summaryValue, { color: theme.colors.success }]}>
-                PKR {selectedBank.current_balance.toLocaleString()}
-              </Text>
-            </View>
-          </View>
+        {/* Add Account Link */}
+        {bankAccounts.length > 0 && (
+          <TouchableOpacity
+            style={styles.addAccountLink}
+            onPress={handleAddBank}
+            activeOpacity={0.7}
+          >
+            <PlusIcon size={18} color={theme.colors.primary} />
+            <Text style={styles.addAccountLinkText}>Add New Account</Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
 
       <View style={styles.footer}>
         <ActionButton
-          title="Continue →"
-          onPress={handleSubmit(handleContinue)}
-          disabled={!isValid}
+          title="Continue"
+          onPress={handleContinue}
+          disabled={!selectedBankId}
         />
       </View>
     </SafeAreaView>
@@ -318,33 +278,70 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     loadingText: {
       fontSize: 14,
       color: theme.colors.text.secondary,
+      marginTop: theme.spacing.md,
     },
-    section: {
+    summaryCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.lg,
+      padding: theme.spacing.lg,
+      marginBottom: theme.spacing.xl,
+      alignItems: 'center',
+      ...theme.shadows.sm,
+    },
+    summaryLabel: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing.xs,
+    },
+    summaryAmount: {
+      fontSize: 32,
+      fontWeight: '700',
+      color: theme.colors.primary,
+      marginBottom: theme.spacing.xs,
+    },
+    partyName: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+    },
+    question: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.xs,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
       marginBottom: theme.spacing.lg,
     },
-    sectionTitle: {
-      fontSize: 16,
-      color: theme.colors.text.primary,
-      fontWeight: '600',
-      marginBottom: theme.spacing.md,
+    accountsList: {
+      gap: theme.spacing.sm,
     },
     emptyState: {
       alignItems: 'center',
       paddingVertical: theme.spacing.xxl,
-      gap: theme.spacing.md,
     },
-    emptyIcon: {
-      fontSize: 48,
+    emptyTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
+      marginTop: theme.spacing.md,
+      marginBottom: theme.spacing.xs,
     },
-    emptyText: {
+    emptySubtitle: {
       fontSize: 14,
       color: theme.colors.text.secondary,
+      textAlign: 'center',
+      marginBottom: theme.spacing.lg,
     },
     addButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
       paddingVertical: theme.spacing.md,
       paddingHorizontal: theme.spacing.lg,
       backgroundColor: theme.colors.primary,
       borderRadius: theme.borderRadius.lg,
+      gap: theme.spacing.xs,
     },
     addButtonText: {
       fontSize: 14,
@@ -356,155 +353,80 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       alignItems: 'center',
       backgroundColor: theme.colors.surface,
       borderWidth: 2,
-      borderColor: theme.colors.border,
+      borderColor: 'transparent',
       borderRadius: theme.borderRadius.lg,
       padding: theme.spacing.md,
-      marginBottom: theme.spacing.sm,
       ...theme.shadows.sm,
     },
     bankCardSelected: {
       borderColor: theme.colors.primary,
-      backgroundColor: `${theme.colors.primary}10`,
+      backgroundColor: `${theme.colors.primary}08`,
     },
     bankIcon: {
-      width: 48,
-      height: 48,
-      borderRadius: theme.borderRadius.md,
-      backgroundColor: theme.colors.background,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: `${theme.colors.primary}15`,
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: theme.spacing.md,
     },
-    bankIconText: {
-      fontSize: 24,
+    bankIconSelected: {
+      backgroundColor: `${theme.colors.primary}25`,
     },
     bankInfo: {
       flex: 1,
     },
-    bankHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing.sm,
-      marginBottom: theme.spacing.xs,
-    },
     bankName: {
       fontSize: 16,
+      fontWeight: '600',
       color: theme.colors.text.primary,
-      fontWeight: '700',
+      marginBottom: 2,
+    },
+    bankNameSelected: {
+      color: theme.colors.primary,
+    },
+    accountTitle: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      marginBottom: 2,
+    },
+    accountNumber: {
+      fontSize: 12,
+      color: theme.colors.text.disabled,
+    },
+    rightSection: {
+      alignItems: 'flex-end',
+      gap: theme.spacing.xs,
+    },
+    balance: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
     },
     defaultBadge: {
+      backgroundColor: `${theme.colors.primary}15`,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 2,
-      backgroundColor: theme.colors.primary,
       borderRadius: theme.borderRadius.sm,
     },
     defaultBadgeText: {
       fontSize: 10,
-      color: '#FFFFFF',
       fontWeight: '600',
-    },
-    accountNumber: {
-      fontSize: 12,
-      color: theme.colors.text.secondary,
-      marginBottom: 2,
-    },
-    accountType: {
-      fontSize: 12,
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing.xs,
-      textTransform: 'capitalize',
-    },
-    balance: {
-      fontSize: 13,
       color: theme.colors.primary,
-      fontWeight: '600',
     },
-    radioButton: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      borderWidth: 2,
-      borderColor: theme.colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    radioButtonSelected: {
-      borderColor: theme.colors.primary,
-    },
-    radioButtonInner: {
-      width: 12,
-      height: 12,
-      borderRadius: 6,
-      backgroundColor: theme.colors.primary,
-    },
-    addBankButton: {
+    addAccountLink: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: 'transparent',
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.lg,
-      paddingVertical: theme.spacing.md,
-      marginTop: theme.spacing.sm,
+      marginTop: theme.spacing.lg,
+      paddingVertical: theme.spacing.sm,
       gap: theme.spacing.xs,
     },
-    addBankButtonText: {
+    addAccountLinkText: {
       fontSize: 14,
+      fontWeight: '600',
       color: theme.colors.primary,
-      fontWeight: '600',
-    },
-    quickDateButtons: {
-      flexDirection: 'row',
-      gap: theme.spacing.sm,
-      marginBottom: theme.spacing.md,
-    },
-    quickDateButton: {
-      flex: 1,
-      paddingVertical: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
-      backgroundColor: theme.colors.surface,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.lg,
-      alignItems: 'center',
-    },
-    quickDateButtonText: {
-      fontSize: 12,
-      color: theme.colors.text.primary,
-      fontWeight: '600',
-    },
-    summaryCard: {
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.lg,
-      padding: theme.spacing.md,
-      ...theme.shadows.sm,
-    },
-    summaryTitle: {
-      fontSize: 14,
-      color: theme.colors.text.primary,
-      fontWeight: '600',
-      marginBottom: theme.spacing.sm,
-    },
-    summaryRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: theme.spacing.xs,
-    },
-    summaryLabel: {
-      fontSize: 13,
-      color: theme.colors.text.secondary,
-    },
-    summaryValue: {
-      fontSize: 13,
-      color: theme.colors.text.primary,
-      fontWeight: '500',
-    },
-    errorText: {
-      fontSize: 12,
-      color: theme.colors.error,
-      marginTop: theme.spacing.xs,
     },
     footer: {
       padding: theme.spacing.md,

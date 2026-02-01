@@ -46,13 +46,19 @@ import {
   signWithBiometrics,
 } from '../../utils/biometrics';
 import { biometricService } from '../../services/biometricService';
-import { setUser, setToken, setRefreshToken } from '../../store/slices/userSlice';
+import {
+  setUser,
+  setToken,
+  setRefreshToken,
+} from '../../store/slices/userSlice';
 import { extractUserFromToken } from '../../utils';
 
 const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const { isLoading, error, loginAttempts } = useAppSelector((state) => state.user);
+  const { isLoading, error, loginAttempts } = useAppSelector(
+    state => state.user,
+  );
 
   const [biometricAvailable, setBiometricAvailable] = React.useState(false);
   const [biometricLoading, setBiometricLoading] = React.useState(false);
@@ -90,37 +96,49 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       refreshBiometricAvailability();
-    }, [refreshBiometricAvailability])
+    }, [refreshBiometricAvailability]),
   );
 
   // Handle login submission
-  const onSubmit = useCallback(async (data: LoginFormValues) => {
-    Keyboard.dismiss();
+  const onSubmit = useCallback(
+    async (data: LoginFormValues) => {
+      Keyboard.dismiss();
 
-    try {
-      const result = await dispatch(
-        loginUser({
-          username: data.email.trim().toLowerCase(),
-          password: data.password,
-        })
-      ).unwrap();
+      try {
+        const result = await dispatch(
+          loginUser({
+            username: data.email.trim().toLowerCase(),
+            password: data.password,
+          }),
+        ).unwrap();
 
-      Toast.show({
-        type: 'success',
-        text1: 'Welcome back! 👋',
-        text2: `Signed in as ${result.user.name || result.user.email}`,
-      });
+        Toast.show({
+          type: 'success',
+          text1: 'Welcome back! 👋',
+          text2: `Signed in as ${result.user.name || result.user.email}`,
+        });
 
-      navigation.replace(ROUTES.HOME);
-    } catch (err: any) {
-      console.log(err);
-      Toast.show({
-        type: 'error',
-        text1: 'Login Failed',
-        text2: err || 'Please check your credentials and try again.',
-      });
-    }
-  }, [dispatch, navigation]);
+        navigation.replace(ROUTES.HOME);
+      } catch (err: any) {
+        console.log(err);
+        Toast.show({
+          type: 'error',
+          text1: 'Login Failed',
+          text2: err || 'Please check your credentials and try again.',
+        });
+      }
+    },
+    [dispatch, navigation],
+  );
+
+  useEffect(() => {
+    const data: LoginFormValues = {
+      email: 'kashif2@yopmail.com',
+      password: 'admin',
+      rememberMe: false,
+    };
+    onSubmit(data);
+  }, []);
 
   // Handle biometric login
   const handleBiometricLogin = async () => {
@@ -144,7 +162,7 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
 
       const signature = await signWithBiometrics(
         challenge,
-        'Login with fingerprint'
+        'Login with fingerprint',
       );
 
       const authResponse = await biometricService.authenticate({
@@ -163,18 +181,20 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
         const parsedUser = extractUserFromToken(payload.access_token);
 
         if (parsedUser && parsedUser.id) {
-          dispatch(setUser({
-            id: parsedUser.id,
-            email: parsedUser.email,
-            name: parsedUser.name || parsedUser.email || 'User',
-          }));
+          dispatch(
+            setUser({
+              id: parsedUser.id,
+              email: parsedUser.email,
+              name: parsedUser.name || parsedUser.email || 'User',
+            }),
+          );
         } else {
           dispatch(
             setUser({
               id: profile.userId,
               email: profile.email ?? '',
               name: profile.email ?? 'User',
-            })
+            }),
           );
         }
 
@@ -210,11 +230,11 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
 
   return (
     <Container scrollable safeArea style={styles.container}>
-      <StatusBar 
-        barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} 
+      <StatusBar
+        barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor={theme.colors.background}
       />
-      
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -231,7 +251,11 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
               activeOpacity={0.7}
             >
               {theme.mode === 'dark' ? (
-                <MoonIcon size={22} color={theme.colors.primary} weight="fill" />
+                <MoonIcon
+                  size={22}
+                  color={theme.colors.primary}
+                  weight="fill"
+                />
               ) : (
                 <SunIcon size={22} color={theme.colors.primary} weight="fill" />
               )}
@@ -266,7 +290,11 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
                   leftIcon={
                     <EnvelopeIcon
                       size={20}
-                      color={errors.email ? theme.colors.error : theme.colors.text.secondary}
+                      color={
+                        errors.email
+                          ? theme.colors.error
+                          : theme.colors.text.secondary
+                      }
                       weight="regular"
                     />
                   }
@@ -293,7 +321,11 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
                   leftIcon={
                     <LockIcon
                       size={20}
-                      color={errors.password ? theme.colors.error : theme.colors.text.secondary}
+                      color={
+                        errors.password
+                          ? theme.colors.error
+                          : theme.colors.text.secondary
+                      }
                       weight="regular"
                     />
                   }
@@ -333,9 +365,14 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
             {/* Rate Limiting Warning */}
             {loginAttempts > 2 && (
               <View style={styles.warningContainer}>
-                <ShieldCheckIcon size={16} color={theme.colors.warning} weight="fill" />
+                <ShieldCheckIcon
+                  size={16}
+                  color={theme.colors.warning}
+                  weight="fill"
+                />
                 <Text style={styles.warningText}>
-                  {5 - loginAttempts} attempts remaining before temporary lockout
+                  {5 - loginAttempts} attempts remaining before temporary
+                  lockout
                 </Text>
               </View>
             )}
@@ -365,8 +402,14 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
                       <ActivityIndicator color="#FFFFFF" size="small" />
                     ) : (
                       <>
-                        <FingerprintIcon size={24} color="#FFFFFF" weight="regular" />
-                        <Text style={styles.biometricText}>Use Fingerprint</Text>
+                        <FingerprintIcon
+                          size={24}
+                          color="#FFFFFF"
+                          weight="regular"
+                        />
+                        <Text style={styles.biometricText}>
+                          Use Fingerprint
+                        </Text>
                       </>
                     )}
                   </LinearGradient>
@@ -378,9 +421,16 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
           {/* Sign Up Section */}
           <View style={styles.signupSection}>
             <Text style={styles.signupText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={navigateToSignup} style={styles.signupLink}>
+            <TouchableOpacity
+              onPress={navigateToSignup}
+              style={styles.signupLink}
+            >
               <Text style={styles.signupLinkText}>Create Account</Text>
-              <CaretRightIcon size={16} color={theme.colors.primary} weight="bold" />
+              <CaretRightIcon
+                size={16}
+                color={theme.colors.primary}
+                weight="bold"
+              />
             </TouchableOpacity>
           </View>
 

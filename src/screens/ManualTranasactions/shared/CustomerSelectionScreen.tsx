@@ -1,3 +1,5 @@
+// shared/CustomerSelectionScreen.tsx
+// Reusable customer selection screen for Sales, Receipt, Purchase, Payment flows
 import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import {
   View,
@@ -18,29 +20,27 @@ import {
   WarningCircleIcon,
   UserCirclePlusIcon,
   ArrowRightIcon,
+  ClockIcon,
 } from 'phosphor-react-native';
-import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  RouteProp,
+  useFocusEffect,
+} from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 
-import { useTheme, useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { useTheme } from '../../../store/hooks';
 import { SearchBar } from '../../../components/common';
 import { Customer } from '../../../services/api/customers';
-import {
-  fetchRecentCustomers,
-  searchCustomers,
-  setSelectedCustomer,
-  setWalkInSale,
-  selectRecentCustomers,
-  selectSalesError,
-  clearError,
-} from '../../../store/slices/salesSlice';
+import { useCustomerSelectionFlow } from './hooks/useFlowAdapter';
+import { FlowType } from '../../../types/trasactions';
 
 type RouteParams = {
   CustomerSelection: {
-    flowType?: 'sales' | 'receipt' | 'standalone';
+    flowType?: FlowType;
     nextScreen?: string;
     allowWalkIn?: boolean;
-    onCustomerSelect?: (customer: Customer) => void;
   };
 };
 
@@ -51,41 +51,58 @@ const CustomerSelectionScreen: React.FC = () => {
 
   const {
     flowType = 'sales',
-    nextScreen = 'ProductSelection',
-    allowWalkIn = true,
-    onCustomerSelect,
+    nextScreen: customNextScreen,
+    allowWalkIn,
   } = route.params || {};
 
-  const dispatch = useAppDispatch();
-
-  const customers = useAppSelector(selectRecentCustomers);
-  const customersLoading = useAppSelector((state) => state.sales.customersLoading);
-  const error = useAppSelector(selectSalesError);
+  // Use flow adapter hook
+  const {
+    config,
+    customers,
+    isLoading,
+    error,
+    fetchCustomers,
+    searchCustomersByQuery,
+    selectCustomer,
+    handleWalkIn,
+    resetFlow,
+    clearError,
+  } = useCustomerSelectionFlow(flowType);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Fetch customers on mount and when screen regains focus (e.g., after adding new customer)
+  // Determine next screen - custom override or config default
+  const nextScreen = customNextScreen || config.nextScreen;
+
+  // Determine if walk-in is allowed
+  const showWalkIn =
+    allowWalkIn !== undefined ? allowWalkIn : config.showWalkIn;
+
+  // Reset flow and fetch customers on screen focus
   useFocusEffect(
     useCallback(() => {
-      dispatch(fetchRecentCustomers());
-    }, [dispatch])
+      if (flowType === 'receipt') {
+        resetFlow();
+      }
+      fetchCustomers();
+    }, [flowType, resetFlow, fetchCustomers]),
   );
 
-  // Handle search
+  // Handle search with debounce
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (searchQuery.trim()) {
-        dispatch(searchCustomers(searchQuery));
+        searchCustomersByQuery(searchQuery);
       } else {
-        dispatch(fetchRecentCustomers());
+        fetchCustomers();
       }
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, dispatch]);
+  }, [searchQuery, searchCustomersByQuery, fetchCustomers]);
 
   // Handle error
   useEffect(() => {
@@ -95,42 +112,47 @@ const CustomerSelectionScreen: React.FC = () => {
         text1: 'Error',
         text2: error,
       });
-      dispatch(clearError());
+      clearError();
     }
-  }, [error, dispatch]);
+  }, [error, clearError]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await dispatch(fetchRecentCustomers());
+    await fetchCustomers();
     setIsRefreshing(false);
-  }, [dispatch]);
+  }, [fetchCustomers]);
 
   const handleCustomerSelect = useCallback(
     (customer: Customer) => {
-      dispatch(setSelectedCustomer(customer));
-
-      if (onCustomerSelect) {
-        onCustomerSelect(customer);
-      }
+      selectCustomer(customer);
 
       // @ts-ignore
       navigation.navigate(nextScreen, { customer, flowType });
     },
-    [dispatch, navigation, nextScreen, flowType, onCustomerSelect]
+    [selectCustomer, navigation, nextScreen, flowType],
   );
 
   const handleWalkInSale = useCallback(() => {
-    dispatch(setWalkInSale());
+    handleWalkIn();
     // @ts-ignore
     navigation.navigate(nextScreen, { flowType });
-  }, [dispatch, navigation, nextScreen, flowType]);
+  }, [handleWalkIn, navigation, nextScreen, flowType]);
 
   const handleAddCustomer = useCallback(() => {
-    // Navigate to Root Navigator's AddCustomer screen
-    // When user saves, they'll goBack() and useFocusEffect will refresh the list
     // @ts-ignore - navigating to parent navigator
-    navigation.navigate('AddCustomer', { fromFlow: true });
-  }, [navigation]);
+    navigation.navigate('AddCustomer', { fromFlow: true, flowType });
+  }, [navigation, flowType]);
+
+  // Check if a customer's payment is overdue (based on last sale date)
+  const isOverdue = useCallback((customer: Customer) => {
+    if (!customer?.lastPaymentDate) return false;
+    const lastSaleDate = new Date(customer?.lastPaymentDate);
+    const creditPeriod = customer?.creditPeriodDays || 30;
+    const daysSinceLastSale = Math.floor(
+      (Date.now() - lastSaleDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    return daysSinceLastSale > creditPeriod; // Consider overdue if more than 30 days
+  }, []);
 
   const formatCurrency = (amount: number): string => {
     if (amount >= 100000) {
@@ -140,10 +162,12 @@ const CustomerSelectionScreen: React.FC = () => {
   };
 
   const formatDate = (dateString?: string): string => {
-    if (!dateString) return 'No sales yet';
+    if (!dateString) return 'No activity yet';
     const date = new Date(dateString);
     const now = new Date();
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
+    );
 
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
@@ -152,72 +176,141 @@ const CustomerSelectionScreen: React.FC = () => {
   };
 
   const renderCustomerItem = useCallback(
-    ({ item }: { item: Customer }) => (
-      <TouchableOpacity
-        style={styles.customerCard}
-        onPress={() => handleCustomerSelect(item)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.customerAvatar}>
-          <UserIcon size={24} color={theme.colors.primary} weight="fill" />
-        </View>
-
-        <View style={styles.customerInfo}>
-          <Text style={styles.customerName}>{item.name}</Text>
-
-          <View style={styles.customerMeta}>
-            {item.phone && (
-              <View style={styles.metaItem}>
-                <PhoneIcon size={12} color={theme.colors.text.secondary} />
-                <Text style={styles.metaText}>{item.phone}</Text>
-              </View>
-            )}
-            {item.city && (
-              <View style={styles.metaItem}>
-                <MapPinIcon size={12} color={theme.colors.text.secondary} />
-                <Text style={styles.metaText}>{item.city}</Text>
-              </View>
-            )}
+    ({ item }: { item: Customer }) => {
+      const overdue = config.showOverdueBadge && isOverdue(item);
+      const hasOutstanding = item?.totalOutstanding > 0;
+      console.log(item);
+      return (
+        <TouchableOpacity
+          style={styles.customerCard}
+          onPress={() => handleCustomerSelect(item)}
+          activeOpacity={0.7}
+        >
+          {/* Avatar */}
+          <View
+            style={[
+              styles.customerAvatar,
+              overdue && styles.customerAvatarOverdue,
+            ]}
+          >
+            <UserIcon
+              size={24}
+              color={overdue ? theme.colors.error : theme.colors.primary}
+              weight="fill"
+            />
           </View>
 
-          <View style={styles.customerStats}>
-            <Text style={styles.lastSale}>
-              Last sale: {formatDate(item.last_sale_date)}
-              {item.last_sale_amount && ` • PKR ${formatCurrency(item.last_sale_amount)}`}
-            </Text>
-          </View>
+          {/* Customer Info */}
+          <View style={styles.customerInfo}>
+            <View style={styles.nameRow}>
+              <Text style={styles.customerName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              {config.showOverdueBadge && overdue && (
+                <View style={styles.overdueBadge}>
+                  <WarningCircleIcon size={12} color={theme.colors.error} />
+                  <Text style={styles.overdueText}>Overdue</Text>
+                </View>
+              )}
+            </View>
 
-          {item.outstanding_balance > 0 && (
-            <View style={styles.outstandingBadge}>
-              <WarningCircleIcon size={14} color={theme.colors.error} weight="fill" />
-              <Text style={styles.outstandingText}>
-                Due: PKR {formatCurrency(item.outstanding_balance)}
+            <View style={styles.customerMeta}>
+              {item.phone && (
+                <View style={styles.metaItem}>
+                  <PhoneIcon size={12} color={theme.colors.text.secondary} />
+                  <Text style={styles.metaText}>{item.phone}</Text>
+                </View>
+              )}
+              {item.city && (
+                <View style={styles.metaItem}>
+                  <MapPinIcon size={12} color={theme.colors.text.secondary} />
+                  <Text style={styles.metaText}>{item.city}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Last activity */}
+            <View style={styles.lastActivityRow}>
+              <ClockIcon size={12} color={theme.colors.text.disabled} />
+              <Text style={styles.lastActivityText}>
+                Last: {formatDate(item?.lastPaymentDate)}
               </Text>
             </View>
-          )}
-        </View>
 
-        <CaretRightIcon size={20} color={theme.colors.text.disabled} />
-      </TouchableOpacity>
-    ),
-    [styles, theme, handleCustomerSelect]
+            {/* Outstanding Badge - shown based on config */}
+            {config.showOutstandingBadge && hasOutstanding && (
+              <View
+                style={[
+                  styles.outstandingBadge,
+                  overdue && styles.outstandingBadgeOverdue,
+                ]}
+              >
+                <WarningCircleIcon
+                  size={14}
+                  color={overdue ? theme.colors.error : theme.colors.warning}
+                  weight="fill"
+                />
+                <Text
+                  style={[
+                    styles.outstandingText,
+                    overdue && styles.outstandingTextOverdue,
+                  ]}
+                >
+                  {flowType === 'receipt' ? 'Receivable' : 'Due'}: PKR{' '}
+                  {formatCurrency(item?.totalOutstanding)}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Right Section - Amount for receipt flow */}
+          {flowType === 'receipt' && hasOutstanding ? (
+            <View style={styles.balanceContainer}>
+              <Text style={styles.balanceLabel}>Outstanding</Text>
+              <Text
+                style={[
+                  styles.balanceAmount,
+                  overdue && styles.balanceAmountOverdue,
+                ]}
+              >
+                PKR {formatCurrency(item?.totalOutstanding)}
+              </Text>
+            </View>
+          ) : (
+            <CaretRightIcon size={20} color={theme.colors.text.disabled} />
+          )}
+        </TouchableOpacity>
+      );
+    },
+    [styles, theme, config, flowType, handleCustomerSelect, isOverdue],
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <UserIcon size={48} color={theme.colors.text.disabled} />
       <Text style={styles.emptyTitle}>
-        {searchQuery ? 'No customers found' : 'No customers yet'}
+        {searchQuery ? 'No customers found' : config.emptyTitle}
       </Text>
       <Text style={styles.emptySubtitle}>
         {searchQuery
           ? 'Try a different search term or add a new customer'
-          : 'Add your first customer to get started'}
+          : config.emptySubtitle}
       </Text>
       <TouchableOpacity style={styles.emptyButton} onPress={handleAddCustomer}>
         <PlusIcon size={18} color="#FFFFFF" weight="bold" />
         <Text style={styles.emptyButtonText}>Add Customer</Text>
       </TouchableOpacity>
+    </View>
+  );
+
+  const renderHeader = () => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>
+        {searchQuery ? 'Search Results' : config.sectionTitle}
+      </Text>
+      <Text style={styles.sectionCount}>
+        {customers.length} {customers.length === 1 ? 'customer' : 'customers'}
+      </Text>
     </View>
   );
 
@@ -228,21 +321,13 @@ const CustomerSelectionScreen: React.FC = () => {
         <SearchBar
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search by name, phone, or city..."
+          placeholder={config.searchPlaceholder}
           onClear={() => setSearchQuery('')}
         />
       </View>
 
-      {/* Section Header */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>
-          {searchQuery ? 'Search Results' : 'Recent Customers'}
-        </Text>
-        <Text style={styles.sectionCount}>{customers.length} customers</Text>
-      </View>
-
       {/* Customers List */}
-      {customersLoading && customers.length === 0 ? (
+      {isLoading && customers.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Loading customers...</Text>
@@ -251,9 +336,10 @@ const CustomerSelectionScreen: React.FC = () => {
         <FlatList
           data={customers}
           renderItem={renderCustomerItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={customers.length > 0 ? renderHeader : null}
           ListEmptyComponent={renderEmptyState}
           refreshControl={
             <RefreshControl
@@ -266,14 +352,21 @@ const CustomerSelectionScreen: React.FC = () => {
         />
       )}
 
-      {/* Walk-in Sale Section */}
-      {allowWalkIn && flowType === 'sales' && (
+      {/* Walk-in Sale Section - only for sales flow */}
+      {showWalkIn && flowType === 'sales' && (
         <View style={styles.walkInSection}>
           <Text style={styles.walkInInfo}>
             Don't have customer details? Use walk-in sale
           </Text>
-          <TouchableOpacity style={styles.walkInButton} onPress={handleWalkInSale}>
-            <UserCirclePlusIcon size={20} color={theme.colors.primary} weight="bold" />
+          <TouchableOpacity
+            style={styles.walkInButton}
+            onPress={handleWalkInSale}
+          >
+            <UserCirclePlusIcon
+              size={20}
+              color={theme.colors.primary}
+              weight="bold"
+            />
             <Text style={styles.walkInButtonText}>Walk-in Customer</Text>
             <ArrowRightIcon size={18} color={theme.colors.primary} />
           </TouchableOpacity>
@@ -301,13 +394,15 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     searchContainer: {
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
+      backgroundColor: theme.colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
     },
     sectionHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
+      marginBottom: theme.spacing.md,
     },
     sectionTitle: {
       fontSize: 13,
@@ -321,8 +416,9 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       color: theme.colors.text.disabled,
     },
     listContent: {
-      paddingHorizontal: theme.spacing.md,
+      padding: theme.spacing.md,
       paddingBottom: 200,
+      flexGrow: 1,
     },
     loadingContainer: {
       flex: 1,
@@ -351,14 +447,37 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       justifyContent: 'center',
       marginRight: theme.spacing.md,
     },
+    customerAvatarOverdue: {
+      backgroundColor: `${theme.colors.error}15`,
+    },
     customerInfo: {
       flex: 1,
+    },
+    nameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+      marginBottom: 4,
     },
     customerName: {
       fontSize: 16,
       fontWeight: '600',
       color: theme.colors.text.primary,
-      marginBottom: 4,
+      flex: 1,
+    },
+    overdueBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: `${theme.colors.error}15`,
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: 2,
+      borderRadius: theme.borderRadius.sm,
+      gap: 2,
+    },
+    overdueText: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: theme.colors.error,
     },
     customerMeta: {
       flexDirection: 'row',
@@ -375,12 +494,15 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontSize: 12,
       color: theme.colors.text.secondary,
     },
-    customerStats: {
+    lastActivityRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
       marginTop: 2,
     },
-    lastSale: {
+    lastActivityText: {
       fontSize: 12,
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.disabled,
     },
     outstandingBadge: {
       flexDirection: 'row',
@@ -389,13 +511,36 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       marginTop: 6,
       paddingHorizontal: 8,
       paddingVertical: 4,
-      backgroundColor: `${theme.colors.error}15`,
+      backgroundColor: `${theme.colors.warning}15`,
       borderRadius: theme.borderRadius.sm,
       alignSelf: 'flex-start',
+    },
+    outstandingBadgeOverdue: {
+      backgroundColor: `${theme.colors.error}15`,
     },
     outstandingText: {
       fontSize: 11,
       fontWeight: '600',
+      color: theme.colors.warning,
+    },
+    outstandingTextOverdue: {
+      color: theme.colors.error,
+    },
+    balanceContainer: {
+      alignItems: 'flex-end',
+      marginLeft: theme.spacing.sm,
+    },
+    balanceLabel: {
+      fontSize: 10,
+      color: theme.colors.text.disabled,
+      marginBottom: 2,
+    },
+    balanceAmount: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: theme.colors.primary,
+    },
+    balanceAmountOverdue: {
       color: theme.colors.error,
     },
     emptyState: {

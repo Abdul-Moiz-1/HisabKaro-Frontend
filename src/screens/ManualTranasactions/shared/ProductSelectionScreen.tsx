@@ -1,3 +1,6 @@
+// shared/ProductSelectionScreen.tsx
+// Reusable product selection screen that works across Sales and Purchase flows
+
 import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import {
   View,
@@ -19,36 +22,20 @@ import {
   PlusIcon,
   PackageIcon,
   CaretRightIcon,
-  WarningCircleIcon,
   ArrowRightIcon,
   ShoppingCartIcon,
-  XCircleIcon,
 } from 'phosphor-react-native';
 import Toast from 'react-native-toast-message';
 
-import { useTheme, useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { useTheme } from '../../../store/hooks';
 import { SearchBar } from '../../../components/common';
 import { Product } from '../../../services/api/products';
-import {
-  fetchSalesProducts,
-  searchSalesProducts,
-  addItem,
-  setDirectTotalMode,
-  selectSalesProducts,
-  selectSelectedCustomer,
-  selectIsWalkInSale,
-  selectSaleItems,
-  selectSalesError,
-  clearError,
-} from '../../../store/slices/salesSlice';
+import { useProductSelectionFlow } from './hooks/useFlowAdapter';
+import { FlowType } from '../../../types/trasactions';
 
 type RouteParams = {
   ProductSelection: {
-    flowType?: 'sales' | 'purchase' | 'standalone';
-    customer?: any;
-    nextScreen?: string;
-    allowDirectTotal?: boolean;
-    onProductSelect?: (product: Product) => void;
+    flowType?: FlowType;
   };
 };
 
@@ -57,46 +44,48 @@ const ProductSelectionScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RouteParams, 'ProductSelection'>>();
 
+  // Get flowType from route params, default to 'sales'
+  const { flowType = 'sales' } = route.params || {};
+
+  // Use the flow adapter hook
   const {
-    flowType = 'sales',
-    nextScreen = 'ProductQuantityPrice',
-    allowDirectTotal = true,
-    onProductSelect,
-  } = route.params || {};
-
-  const dispatch = useAppDispatch();
-
-  const customer = useAppSelector(selectSelectedCustomer);
-  const isWalkIn = useAppSelector(selectIsWalkInSale);
-  const products = useAppSelector(selectSalesProducts);
-  const cartItems = useAppSelector(selectSaleItems);
-  const productsLoading = useAppSelector(state => state.sales.productsLoading);
-  const error = useAppSelector(selectSalesError);
+    config,
+    partyName,
+    products,
+    cartItems,
+    isLoading,
+    error,
+    fetchProducts,
+    searchProductsByQuery,
+    addItemToCart,
+    setDirectTotalMode,
+    clearError,
+  } = useProductSelectionFlow(flowType);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Fetch products on mount
+  // Fetch products on mount and focus
   useFocusEffect(
     useCallback(() => {
-      dispatch(fetchSalesProducts());
-    }, [dispatch]),
+      fetchProducts();
+    }, [fetchProducts]),
   );
 
-  // Handle search
+  // Handle search with debounce
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (searchQuery.trim()) {
-        dispatch(searchSalesProducts(searchQuery));
+        searchProductsByQuery(searchQuery);
       } else {
-        dispatch(fetchSalesProducts());
+        fetchProducts();
       }
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, dispatch]);
+  }, [searchQuery, searchProductsByQuery, fetchProducts]);
 
   // Handle error
   useEffect(() => {
@@ -106,31 +95,27 @@ const ProductSelectionScreen: React.FC = () => {
         text1: 'Error',
         text2: error,
       });
-      dispatch(clearError());
+      clearError();
     }
-  }, [error, dispatch]);
+  }, [error, clearError]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await dispatch(fetchSalesProducts());
+    await fetchProducts();
     setIsRefreshing(false);
-  }, [dispatch]);
+  }, [fetchProducts]);
 
   const handleProductSelect = useCallback(
     (product: Product) => {
-      if (onProductSelect) {
-        onProductSelect(product);
-      }
-
-      // @ts-ignore
-      navigation.navigate(nextScreen, { product, flowType });
+      // @ts-ignore - Navigation typing
+      navigation.navigate(config.nextScreen, { product, flowType });
     },
-    [navigation, nextScreen, flowType, onProductSelect],
+    [navigation, config.nextScreen, flowType],
   );
 
   const handleQuickAdd = useCallback(
     (product: Product) => {
-      dispatch(addItem({ product, quantity: 1 }));
+      addItemToCart(product, 1);
       Toast.show({
         type: 'success',
         text1: 'Added to cart',
@@ -138,29 +123,34 @@ const ProductSelectionScreen: React.FC = () => {
         visibilityTime: 1500,
       });
     },
-    [dispatch],
+    [addItemToCart],
   );
 
   const handleAddProduct = useCallback(() => {
-    // @ts-ignore
-    navigation.navigate('AddProduct', {
-      fromFlow: true,
-    });
-  }, [navigation, flowType]);
+    // @ts-ignore - Navigation typing
+    navigation.navigate(config.addProductScreen, { fromFlow: true, flowType });
+  }, [navigation, config.addProductScreen, flowType]);
 
   const handleSkipToTotal = useCallback(() => {
-    dispatch(setDirectTotalMode(true));
-    // @ts-ignore
-    navigation.navigate('DirectTotal', { flowType });
-  }, [dispatch, navigation, flowType]);
+    setDirectTotalMode(true);
+    // @ts-ignore - Navigation typing
+    navigation.navigate(config.directTotalScreen, { flowType });
+  }, [setDirectTotalMode, navigation, config.directTotalScreen, flowType]);
 
   const handleViewCart = useCallback(() => {
-    // @ts-ignore
-    navigation.navigate('ShoppingCart', { flowType });
-  }, [navigation, flowType]);
+    // @ts-ignore - Navigation typing
+    navigation.navigate(config.cartScreen, { flowType });
+  }, [navigation, config.cartScreen, flowType]);
 
   const formatCurrency = (amount: number): string => {
     return amount.toLocaleString();
+  };
+
+  const getProductPrice = (product: Product): number => {
+    if (config.priceField === 'defaultPurchasingPrice') {
+      return Number(product?.defaultPurchasingPrice) || 0;
+    }
+    return Number(product.defaultSellingPrice) || 0;
   };
 
   const getItemInCart = (productId: string) => {
@@ -170,14 +160,15 @@ const ProductSelectionScreen: React.FC = () => {
   const renderProductItem = useCallback(
     ({ item }: { item: Product }) => {
       const cartItem = getItemInCart(item.id);
-      console.log(item);
+      const price = getProductPrice(item);
+
       return (
         <TouchableOpacity
-          style={[styles.productCard]}
+          style={styles.productCard}
           onPress={() => handleProductSelect(item)}
           activeOpacity={0.7}
         >
-          <View style={[styles.productIcon]}>
+          <View style={styles.productIcon}>
             <PackageIcon size={24} color={theme.colors.primary} weight="fill" />
           </View>
 
@@ -192,8 +183,8 @@ const ProductSelectionScreen: React.FC = () => {
             </View>
 
             <View style={styles.priceRow}>
-              <Text style={[styles.productPrice]}>
-                PKR {formatCurrency(Number(item.defaultSellingPrice))}
+              <Text style={styles.productPrice}>
+                PKR {formatCurrency(price)}
               </Text>
             </View>
 
@@ -206,7 +197,7 @@ const ProductSelectionScreen: React.FC = () => {
             )}
           </View>
 
-          {flowType === 'sales' && (
+          {config.showQuickAdd && (
             <TouchableOpacity
               style={styles.quickAddButton}
               onPress={() => handleQuickAdd(item)}
@@ -218,23 +209,23 @@ const ProductSelectionScreen: React.FC = () => {
         </TouchableOpacity>
       );
     },
-    [styles, theme, cartItems, flowType, handleProductSelect, handleQuickAdd],
+    [styles, theme, cartItems, config, handleProductSelect, handleQuickAdd],
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <PackageIcon size={48} color={theme.colors.text.disabled} />
       <Text style={styles.emptyTitle}>
-        {searchQuery ? 'No products found' : 'No products yet'}
+        {searchQuery ? 'No products found' : config.emptyTitle}
       </Text>
       <Text style={styles.emptySubtitle}>
         {searchQuery
           ? 'Try a different search term or add a new product'
-          : 'Add your first product to get started'}
+          : config.emptySubtitle}
       </Text>
       <TouchableOpacity style={styles.emptyButton} onPress={handleAddProduct}>
         <PlusIcon size={18} color="#FFFFFF" weight="bold" />
-        <Text style={styles.emptyButtonText}>Add Product</Text>
+        <Text style={styles.emptyButtonText}>{config.addButtonText}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -247,14 +238,12 @@ const ProductSelectionScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      {/* Customer Banner */}
-      {flowType === 'sales' && (
-        <View style={styles.customerBanner}>
-          <Text style={styles.customerBannerText}>
-            Selling to:{' '}
-            <Text style={styles.customerBannerName}>
-              {isWalkIn ? 'Walk-in Customer' : customer?.name || 'N/A'}
-            </Text>
+      {/* Party Banner */}
+      {partyName && (
+        <View style={styles.partyBanner}>
+          <Text style={styles.partyBannerText}>
+            {config.partyLabel}:{' '}
+            <Text style={styles.partyBannerName}>{partyName}</Text>
           </Text>
         </View>
       )}
@@ -264,7 +253,7 @@ const ProductSelectionScreen: React.FC = () => {
         <SearchBar
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search by name, SKU, or barcode..."
+          placeholder={config.searchPlaceholder}
           onClear={() => setSearchQuery('')}
         />
       </View>
@@ -278,7 +267,7 @@ const ProductSelectionScreen: React.FC = () => {
       </View>
 
       {/* Products List */}
-      {productsLoading && products.length === 0 ? (
+      {isLoading && products.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Loading products...</Text>
@@ -303,23 +292,21 @@ const ProductSelectionScreen: React.FC = () => {
       )}
 
       {/* Skip to Direct Total */}
-      {allowDirectTotal && flowType === 'sales' && (
+      {config.allowDirectTotal && (
         <View style={styles.skipSection}>
           <Text style={styles.dividerText}>OR</Text>
           <TouchableOpacity
             style={styles.skipButton}
             onPress={handleSkipToTotal}
           >
-            <Text style={styles.skipButtonText}>
-              Skip products - Enter total directly
-            </Text>
+            <Text style={styles.skipButtonText}>{config.skipButtonText}</Text>
             <ArrowRightIcon size={18} color={theme.colors.text.secondary} />
           </TouchableOpacity>
         </View>
       )}
 
       {/* Cart Summary / Proceed Button */}
-      {cartItemsCount > 0 && flowType === 'sales' && (
+      {config.showCart && cartItemsCount > 0 && (
         <TouchableOpacity style={styles.cartSummary} onPress={handleViewCart}>
           <View style={styles.cartInfo}>
             <View style={styles.cartBadge}>
@@ -343,7 +330,7 @@ const ProductSelectionScreen: React.FC = () => {
       )}
 
       {/* Add Product FAB */}
-      {(cartItemsCount === 0 || flowType !== 'sales') && (
+      {(!config.showCart || cartItemsCount === 0) && (
         <TouchableOpacity
           style={styles.fab}
           onPress={handleAddProduct}
@@ -362,18 +349,18 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       flex: 1,
       backgroundColor: theme.colors.background,
     },
-    customerBanner: {
+    partyBanner: {
       backgroundColor: `${theme.colors.primary}15`,
       paddingVertical: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
     },
-    customerBannerText: {
+    partyBannerText: {
       fontSize: 13,
       color: theme.colors.text.secondary,
     },
-    customerBannerName: {
+    partyBannerName: {
       color: theme.colors.primary,
       fontWeight: '600',
     },
@@ -421,9 +408,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       marginBottom: theme.spacing.sm,
       ...theme.shadows.sm,
     },
-    productCardDisabled: {
-      opacity: 0.6,
-    },
     productIcon: {
       width: 48,
       height: 48,
@@ -432,12 +416,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: theme.spacing.md,
-    },
-    productIconDisabled: {
-      backgroundColor: theme.colors.divider,
-    },
-    productIconLowStock: {
-      backgroundColor: `${theme.colors.warning}15`,
     },
     productInfo: {
       flex: 1,
@@ -452,10 +430,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontSize: 15,
       fontWeight: '600',
       color: theme.colors.text.primary,
-      // flex: 1,
-    },
-    textDisabled: {
-      color: theme.colors.text.disabled,
     },
     productSku: {
       fontSize: 11,
@@ -464,19 +438,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       paddingHorizontal: 6,
       paddingVertical: 3,
       borderRadius: 4,
-    },
-    productMeta: {
-      flexDirection: 'row',
-      gap: theme.spacing.sm,
-      marginBottom: 4,
-    },
-    productStock: {
-      fontSize: 12,
-      fontWeight: '500',
-    },
-    productCategory: {
-      fontSize: 12,
-      color: theme.colors.text.disabled,
     },
     priceRow: {
       flexDirection: 'row',
@@ -487,20 +448,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontSize: 13,
       fontWeight: '600',
       color: theme.colors.primary,
-    },
-    lowStockBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      backgroundColor: `${theme.colors.warning}15`,
-      borderRadius: 4,
-    },
-    lowStockText: {
-      fontSize: 10,
-      fontWeight: '600',
-      color: theme.colors.warning,
     },
     inCartBadge: {
       marginTop: 6,

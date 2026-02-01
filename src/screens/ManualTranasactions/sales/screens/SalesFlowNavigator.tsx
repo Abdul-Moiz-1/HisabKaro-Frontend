@@ -3,14 +3,27 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 
+// Import sales-specific screens
 import ProductQuantityPriceScreen from './ProductQuantityPriceScreen';
-import ShoppingCartScreen from './ShoppingCartScreen';
 import DirectTotalScreen from './DirectTotalScreen';
 import CreditTermsScreen from './CreditTermsScreen';
 import ConfirmationScreen from './ConfirmationScreen';
-import { CustomerSelectionScreen, ProductSelectionScreen } from '../../shared';
+
+// Import shared reusable screens
+import {
+  CustomerSelectionScreen,
+  ProductSelectionScreen,
+  BankSelectionScreen,
+  PaymentMethodScreen,
+  ShoppingCartScreen,
+} from '../../shared';
 
 const Stack = createStackNavigator();
+
+// Wrapper components to use shared screens with sales flowType
+const SalesCustomerSelection = () => <CustomerSelectionScreen />;
+const SalesPaymentMethod = () => <PaymentMethodScreen />;
+const SalesBankSelection = () => <BankSelectionScreen />;
 
 const SalesFlowNavigator: React.FC = () => {
   return (
@@ -28,18 +41,26 @@ const SalesFlowNavigator: React.FC = () => {
     >
       <Stack.Screen
         name="CustomerSelection"
-        component={CustomerSelectionScreen}
+        component={SalesCustomerSelection}
         options={{ title: 'Sold something' }}
+        initialParams={{ flowType: 'sales' }}
       />
-      {/* <Stack.Screen
-        name="AddCustomer"
-        component={AddCustomerScreen}
-        options={{ title: 'Add Customer' }}
-      /> */}
       <Stack.Screen
         name="ProductSelection"
         component={ProductSelectionScreen}
         options={{ title: 'What did you sell?' }}
+      />
+      <Stack.Screen
+        name="PaymentMethod"
+        component={SalesPaymentMethod}
+        options={{ title: 'Payment Method' }}
+        initialParams={{ flowType: 'sales' }}
+      />
+      <Stack.Screen
+        name="BankSelection"
+        component={SalesBankSelection}
+        options={{ title: 'Select Bank Account' }}
+        initialParams={{ flowType: 'sales' }}
       />
       <Stack.Screen
         name="ProductQuantityPrice"
@@ -50,6 +71,7 @@ const SalesFlowNavigator: React.FC = () => {
         name="ShoppingCart"
         component={ShoppingCartScreen}
         options={{ title: 'Shopping Cart' }}
+        initialParams={{ flowType: 'sales' }}
       />
       <Stack.Screen
         name="DirectTotal"

@@ -1,4 +1,6 @@
-import React, { useCallback, useMemo } from 'react';
+// shared/AmountEntryScreen.tsx
+// Reusable amount entry screen for Receipt and Supplier Payment flows using adapter pattern
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,252 +8,203 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { CurrencyCircleDollarIcon, WarningCircleIcon } from 'phosphor-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { InfoIcon } from 'phosphor-react-native';
 
 import { useTheme } from '../../../store/hooks';
-import Button from '../../../components/common/Button';
-import Input from '../../../components/forms/Input';
+import { useAmountEntryFlow } from './hooks/useFlowAdapter';
+import ActionButton from '../../../components/common/ActionButton';
+import { AmountInputField } from '../../../components/DynamicForm';
+import { FieldType } from '../../../types/forms';
+import { FlowType } from '../../../types/trasactions';
 
-// Zod Schema
-const amountEntrySchema = z.object({
-  amount: z
-    .number()
-    .min(1, 'Amount must be greater than 0')
-    .refine((val) => val > 0, 'Please enter a valid amount'),
-});
-
-type AmountEntryFormValues = z.infer<typeof amountEntrySchema>;
-
-type RouteParams = {
-  AmountEntry: {
-    flowType: 'receipt' | 'payment';
-    customerName?: string;
-    customerOutstanding?: number;
-    customerId?: string;
-    nextScreen?: string;
-    onAmountSet?: (amount: number, remaining: number) => void;
-  };
+type AmountEntryScreenRouteParams = {
+  flowType: FlowType;
 };
 
 const AmountEntryScreen: React.FC = () => {
   const theme = useTheme();
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<RouteParams, 'AmountEntry'>>();
+  const route = useRoute<RouteProp<{ params: AmountEntryScreenRouteParams }>>();
+
+  const { flowType = 'receipt' } = route.params || {};
 
   const {
-    flowType = 'receipt',
-    customerName = 'Customer',
-    customerOutstanding = 0,
-    nextScreen = 'PaymentMethod',
-    onAmountSet,
-  } = route.params || {};
+    config,
+    partyName,
+    balance,
+    storedAmount,
+    setAmount,
+    getInfoLabel,
+    getQuestionLabel,
+    getAdvanceWarning,
+  } = useAmountEntryFlow(flowType);
+
+  const [localAmount, setLocalAmount] = useState<number>(storedAmount || 0);
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const {
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isValid },
-  } = useForm<AmountEntryFormValues>({
-    resolver: zodResolver(amountEntrySchema),
-    mode: 'onChange',
-    defaultValues: {
-      amount: 0,
-    },
-  });
+  // Calculate remaining
+  const remaining = balance - localAmount;
 
-  const amount = watch('amount');
-
-  const remaining = useMemo(() => {
-    if (flowType === 'receipt') {
-      return customerOutstanding - amount;
-    }
-    return 0;
-  }, [amount, customerOutstanding, flowType]);
-
+  // Quick amount options
   const quickAmounts = useMemo(() => {
-    const amounts = [];
+    const amounts: { label: string; value: number }[] = [];
 
-    if (flowType === 'receipt' && customerOutstanding > 0) {
+    if (balance > 0) {
       amounts.push({
-        label: `Full ${customerOutstanding.toLocaleString()}`,
-        value: customerOutstanding,
+        label: `Full ${balance.toLocaleString()}`,
+        value: balance,
       });
+    }
 
-      if (customerOutstanding > 1) {
-        amounts.push({
-          label: `Half ${Math.floor(customerOutstanding / 2).toLocaleString()}`,
-          value: Math.floor(customerOutstanding / 2),
-        });
-      }
+    if (balance >= 2) {
+      const half = Math.floor(balance / 2);
+      amounts.push({
+        label: `Half ${half.toLocaleString()}`,
+        value: half,
+      });
+    }
 
-      if (customerOutstanding >= 25000) {
-        amounts.push({ label: '25k', value: 25000 });
-      }
-      if (customerOutstanding >= 10000) {
-        amounts.push({ label: '10k', value: 10000 });
-      }
-      if (customerOutstanding >= 5000) {
-        amounts.push({ label: '5k', value: 5000 });
-      }
-    } else {
-      // Default quick amounts
-      amounts.push(
-        { label: '1k', value: 1000 },
-        { label: '5k', value: 5000 },
-        { label: '10k', value: 10000 },
-        { label: '25k', value: 25000 }
-      );
+    if (balance >= 25000) {
+      amounts.push({ label: '25k', value: 25000 });
+    }
+
+    if (balance >= 10000) {
+      amounts.push({ label: '10k', value: 10000 });
+    }
+
+    if (balance >= 5000) {
+      amounts.push({ label: '5k', value: 5000 });
     }
 
     return amounts;
-  }, [flowType, customerOutstanding]);
+  }, [balance]);
 
-  const handleContinue = useCallback(
-    (data: AmountEntryFormValues) => {
-      if (onAmountSet) {
-        onAmountSet(data.amount, remaining);
-      }
+  const handleAmountChange = useCallback((value: string) => {
+    const numeric = Number(value.replace(/,/g, ''));
+    setLocalAmount(isNaN(numeric) ? 0 : numeric);
+  }, []);
 
-      // @ts-ignore
-      navigation.navigate(nextScreen, {
-        amount: data.amount,
-        remaining,
-      });
-    },
-    [navigation, nextScreen, remaining, onAmountSet]
-  );
+  const handleQuickAmount = useCallback((value: number) => {
+    setLocalAmount(value);
+  }, []);
 
-  const getRemainingColor = () => {
+  const handleContinue = useCallback(() => {
+    setAmount(localAmount);
+    // @ts-ignore
+    navigation.navigate(config.nextScreen, { flowType });
+  }, [setAmount, localAmount, navigation, config.nextScreen, flowType]);
+
+  // Determine remaining text color
+  const getRemainingColor = useCallback(() => {
     if (remaining === 0) return theme.colors.success;
     if (remaining < 0) return theme.colors.warning;
     return theme.colors.primary;
-  };
+  }, [remaining, theme]);
 
-  const formatAmount = (value: number): string => {
-    return value.toLocaleString('en-PK', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    });
-  };
+  // Is this an advance payment?
+  const isAdvance = localAmount > balance;
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <CurrencyCircleDollarIcon
-              size={32}
-              color={theme.colors.primary}
-              weight="fill"
-            />
-          </View>
-          <Text style={styles.headerTitle}>
-            {flowType === 'receipt' ? 'Receipt Amount' : 'Payment Amount'}
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Info Card */}
+        <View style={styles.infoCard}>
+          <Text style={styles.infoLabel}>{getInfoLabel()}</Text>
+          <Text style={styles.infoAmount}>
+            PKR {balance.toLocaleString()}
           </Text>
         </View>
 
-        {/* Customer Info Card */}
-        {flowType === 'receipt' && customerOutstanding > 0 && (
-          <View style={styles.infoCard}>
-            <Text style={styles.infoLabel}>{customerName} owes you:</Text>
-            <Text style={styles.infoAmount}>
-              PKR {formatAmount(customerOutstanding)}
-            </Text>
-          </View>
-        )}
-
         {/* Question */}
-        <Text style={styles.question}>
-          {flowType === 'receipt'
-            ? `How much did ${customerName} pay?`
-            : 'Enter payment amount:'}
-        </Text>
+        <Text style={styles.question}>{getQuestionLabel()}</Text>
 
         {/* Amount Input */}
-        <Controller
-          control={control}
-          name="amount"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <View style={styles.inputContainer}>
-              <View style={styles.amountInputWrapper}>
-                <Text style={styles.currencySymbol}>PKR</Text>
-                <Input
-                  placeholder="0"
-                  value={value?.toString() || ''}
-                  onChangeText={(text) => {
-                    const numeric = parseFloat(text.replace(/,/g, '')) || 0;
-                    onChange(numeric);
-                  }}
-                  onBlur={onBlur}
-                  keyboardType="numeric"
-                  style={styles.amountInput}
-                  error={errors.amount?.message}
-                />
-              </View>
-            </View>
-          )}
+        <AmountInputField
+          field={{
+            id: 'amount',
+            name: 'amount',
+            label: config.amountLabel,
+            type: FieldType.AMOUNT,
+            required: true,
+          }}
+          value={localAmount.toString()}
+          onChange={handleAmountChange}
+          onBlur={() => {}}
         />
 
         {/* Quick Amounts */}
-        <View style={styles.quickAmountsContainer}>
-          <Text style={styles.quickAmountsLabel}>Quick amounts:</Text>
-          <View style={styles.quickAmounts}>
-            {quickAmounts.map((quickAmount) => (
-              <TouchableOpacity
-                key={quickAmount.label}
-                style={styles.quickAmountButton}
-                onPress={() => setValue('amount', quickAmount.value, { shouldValidate: true })}
-              >
-                <Text style={styles.quickAmountText}>{quickAmount.label}</Text>
-              </TouchableOpacity>
-            ))}
+        {quickAmounts.length > 0 && (
+          <View style={styles.quickAmountsContainer}>
+            <Text style={styles.quickAmountsLabel}>Quick amounts:</Text>
+            <View style={styles.quickAmounts}>
+              {quickAmounts.map((quickAmount, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.quickAmountButton,
+                    localAmount === quickAmount.value &&
+                      styles.quickAmountSelected,
+                  ]}
+                  onPress={() => handleQuickAmount(quickAmount.value)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.quickAmountText,
+                      localAmount === quickAmount.value &&
+                        styles.quickAmountTextSelected,
+                    ]}
+                  >
+                    {quickAmount.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
+        )}
+
+        {/* Remaining Display */}
+        <View style={styles.remainingCard}>
+          <Text style={styles.remainingLabel}>
+            {isAdvance ? config.advanceLabel : config.remainingLabel}
+          </Text>
+          <Text
+            style={[styles.remainingAmount, { color: getRemainingColor() }]}
+          >
+            PKR {Math.abs(remaining).toLocaleString()}
+          </Text>
         </View>
 
-        {/* Remaining Display (for receipts) */}
-        {flowType === 'receipt' && (
-          <View style={styles.remainingCard}>
-            <Text style={styles.remainingLabel}>Remaining:</Text>
-            <Text
-              style={[
-                styles.remainingAmount,
-                { color: getRemainingColor() },
-              ]}
-            >
-              PKR {formatAmount(remaining)}
+        {/* Warning for advance payment */}
+        {isAdvance && (
+          <View style={styles.warningCard}>
+            <InfoIcon size={18} color={theme.colors.warning} />
+            <Text style={styles.warningText}>
+              {getAdvanceWarning(Math.abs(remaining))}
             </Text>
           </View>
         )}
 
-        {/* Warning for overpayment */}
-        {flowType === 'receipt' &&
-          customerOutstanding > 0 &&
-          amount > customerOutstanding * 1.1 && (
-            <View style={styles.warningCard}>
-              <WarningCircleIcon size={20} color={theme.colors.warning} weight="fill" />
-              <Text style={styles.warningText}>
-                Amount exceeds outstanding. Excess will be recorded as advance.
-              </Text>
-            </View>
-          )}
+        {/* Full payment badge */}
+        {remaining === 0 && localAmount > 0 && (
+          <View style={styles.successCard}>
+            <Text style={styles.successText}>{config.fullPaymentMessage}</Text>
+          </View>
+        )}
       </ScrollView>
 
-      {/* Footer */}
       <View style={styles.footer}>
-        <Button
-          title="Continue"
-          onPress={handleSubmit(handleContinue)}
-          disabled={!isValid || amount === 0}
-          variant="primary"
+        <ActionButton
+          title={config.continueButtonText}
+          onPress={handleContinue}
+          disabled={localAmount === 0}
         />
       </View>
     </SafeAreaView>
@@ -266,73 +219,34 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     },
     content: {
       padding: theme.spacing.md,
-    },
-    header: {
-      alignItems: 'center',
-      marginBottom: theme.spacing.lg,
-    },
-    iconContainer: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      backgroundColor: `${theme.colors.primary}15`,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: theme.spacing.md,
-    },
-    headerTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: theme.colors.text.primary,
+      paddingBottom: theme.spacing.xxl,
     },
     infoCard: {
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.lg,
       padding: theme.spacing.lg,
-      marginBottom: theme.spacing.lg,
+      marginBottom: theme.spacing.xl,
       alignItems: 'center',
       ...theme.shadows.sm,
     },
     infoLabel: {
-      fontSize: 13,
+      fontSize: 14,
       color: theme.colors.text.secondary,
       marginBottom: theme.spacing.xs,
     },
     infoAmount: {
-      fontSize: 28,
-      fontWeight: 'bold',
+      fontSize: 32,
+      fontWeight: '700',
       color: theme.colors.primary,
     },
     question: {
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: '600',
       color: theme.colors.text.primary,
       marginBottom: theme.spacing.lg,
     },
-    inputContainer: {
-      marginBottom: theme.spacing.lg,
-    },
-    amountInputWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.lg,
-      paddingHorizontal: theme.spacing.md,
-      ...theme.shadows.sm,
-    },
-    currencySymbol: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: theme.colors.text.secondary,
-      marginRight: theme.spacing.sm,
-    },
-    amountInput: {
-      flex: 1,
-      fontSize: 24,
-      fontWeight: '600',
-      padding: theme.spacing.md,
-    },
     quickAmountsContainer: {
+      marginTop: theme.spacing.md,
       marginBottom: theme.spacing.lg,
     },
     quickAmountsLabel: {
@@ -353,12 +267,18 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.md,
-      ...theme.shadows.xs,
+    },
+    quickAmountSelected: {
+      backgroundColor: `${theme.colors.primary}15`,
+      borderColor: theme.colors.primary,
     },
     quickAmountText: {
-      fontSize: 14,
-      fontWeight: '600',
+      fontSize: 13,
       color: theme.colors.text.primary,
+      fontWeight: '600',
+    },
+    quickAmountTextSelected: {
+      color: theme.colors.primary,
     },
     remainingCard: {
       backgroundColor: theme.colors.surface,
@@ -367,30 +287,42 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: theme.spacing.md,
       ...theme.shadows.sm,
     },
     remainingLabel: {
-      fontSize: 16,
+      fontSize: 14,
       color: theme.colors.text.secondary,
     },
     remainingAmount: {
       fontSize: 20,
-      fontWeight: 'bold',
+      fontWeight: '700',
     },
     warningCard: {
       flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing.sm,
+      alignItems: 'flex-start',
       backgroundColor: `${theme.colors.warning}15`,
       borderRadius: theme.borderRadius.md,
       padding: theme.spacing.md,
       marginTop: theme.spacing.md,
+      gap: theme.spacing.sm,
     },
     warningText: {
       flex: 1,
       fontSize: 13,
       color: theme.colors.warning,
+      lineHeight: 18,
+    },
+    successCard: {
+      backgroundColor: `${theme.colors.success}15`,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      marginTop: theme.spacing.md,
+      alignItems: 'center',
+    },
+    successText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.colors.success,
     },
     footer: {
       padding: theme.spacing.md,

@@ -1,24 +1,28 @@
 // flows/receipt/ReceiptFlowNavigator.tsx
+// Receipt Flow using Redux for state management (NO Context Provider needed)
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 
-// Import all screens
-import CustomerSelectionScreen from './screens/CustomerSelection';
-import AddCustomerScreen from './screens/AddCustomerScreen';
-import AmountEntryScreen from './screens/AmountEntryScreen';
-import PaymentMethodScreen from './screens/PaymentMethodScreen';
-import BankSelectionScreen from './screens/BankSelectionScreen';
-import WalletSelectionScreen from './screens/WalletSelectionScreen';
-import ChequeDetailsScreen from './screens/ChequeDetailsScreen';
+// Import receipt-specific screens
 import ConfirmationScreen from './screens/ConfirmationScreen';
+
+// Import shared reusable screens
+import {
+  CustomerSelectionScreen,
+  PaymentMethodScreen,
+  BankSelectionScreen,
+  AmountEntryScreen,
+  InvoiceAllocationScreen,
+} from '../shared';
+
+// Import hooks
 import { useTheme } from '../../../store/hooks';
-import AddBankAccountScreen from './screens/AddBankAccountScreen';
-import { ReceiptFlowProvider } from './context/ReceiptFlowContext';
 
 const Stack = createStackNavigator();
 
-const ReceiptFlowStack: React.FC = () => {
+const ReceiptFlowNavigator: React.FC = () => {
   const theme = useTheme();
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -33,62 +37,53 @@ const ReceiptFlowStack: React.FC = () => {
         },
       }}
     >
+      {/* Step 1: Select Customer */}
       <Stack.Screen
         name="CustomerSelection"
         component={CustomerSelectionScreen}
         options={{ title: 'Customer paid me' }}
-      />
-      <Stack.Screen
-        name="AddCustomer"
-        component={AddCustomerScreen}
-        options={{ title: 'Add Customer' }}
+        initialParams={{ flowType: 'receipt' }}
       />
 
+      {/* Step 2: Enter Amount */}
       <Stack.Screen
         name="AmountEntry"
         component={AmountEntryScreen}
-        options={{ title: 'Amount Entry' }}
+        options={{ title: 'Amount Received' }}
+        initialParams={{ flowType: 'receipt' }}
       />
+
+      {/* Step 3: Payment Method */}
       <Stack.Screen
         name="PaymentMethod"
         component={PaymentMethodScreen}
         options={{ title: 'Payment Method' }}
+        initialParams={{ flowType: 'receipt' }}
       />
+
+      {/* Step 4a: Bank Selection (if Bank selected) */}
       <Stack.Screen
         name="BankSelection"
         component={BankSelectionScreen}
-        options={{ title: 'Bank Transfer' }}
+        options={{ title: 'Select Bank Account' }}
+        initialParams={{ flowType: 'receipt' }}
       />
+
+      {/* Step 5: Invoice Allocation (Reconciliation) */}
       <Stack.Screen
-        name="AddBankAccount"
-        component={AddBankAccountScreen}
-        options={{ title: 'Add Bank Account' }}
+        name="InvoiceAllocation"
+        component={InvoiceAllocationScreen}
+        options={{ title: 'Allocate Payment' }}
+        initialParams={{ flowType: 'receipt' }}
       />
-      <Stack.Screen
-        name="WalletSelection"
-        component={WalletSelectionScreen}
-        options={{ title: 'Mobile Wallet' }}
-      />
-      <Stack.Screen
-        name="ChequeDetails"
-        component={ChequeDetailsScreen}
-        options={{ title: 'Cheque Payment' }}
-      />
+
+      {/* Step 6: Confirmation */}
       <Stack.Screen
         name="Confirmation"
         component={ConfirmationScreen}
-        options={{ title: 'Payment Recorded' }}
+        options={{ title: 'Payment Recorded', headerShown: false }}
       />
     </Stack.Navigator>
-  );
-};
-
-// Wrap the navigator with the ReceiptFlowProvider
-const ReceiptFlowNavigator: React.FC = () => {
-  return (
-    <ReceiptFlowProvider>
-      <ReceiptFlowStack />
-    </ReceiptFlowProvider>
   );
 };
 

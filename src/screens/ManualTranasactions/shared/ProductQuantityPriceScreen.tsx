@@ -1,4 +1,6 @@
-// flows/sales/screens/ProductQuantityPriceScreen.tsx
+// shared/ProductQuantityPriceScreen.tsx
+// Reusable product quantity and price screen that works across Sales and Purchase flows
+
 import React, { useMemo, useCallback } from 'react';
 import {
   View,
@@ -12,26 +14,54 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useTheme, useAppDispatch } from '../../../../store/hooks';
-import { addItem } from '../../../../store/slices/salesSlice';
+import { useTheme, useAppDispatch } from '../../../store/hooks';
+import { addItem as addSalesItem } from '../../../store/slices/salesSlice';
+import { addItem as addPurchaseItem } from '../../../store/slices/purchasesSlice';
 import {
   quantityPriceSchema,
   QuantityPriceFormValues,
-} from '../schemas/salesSchemas';
-import { Product } from '../../../../services/api/products';
+} from '../sales/schemas/salesSchemas';
+import { Product } from '../../../services/api/products';
 import {
   AmountInputField,
   NumberInputField,
-} from '../../../../components/DynamicForm';
-import ActionButton from '../../../../components/common/ActionButton';
-import { FieldType } from '../../../../types/forms';
-import Icon from '../../../../components/Icon';
-import { formatCurrency } from '../../../../utils';
+} from '../../../components/DynamicForm';
+import ActionButton from '../../../components/common/ActionButton';
+import { FieldType } from '../../../types/forms';
+import Icon from '../../../components/Icon';
+import { formatCurrency } from '../../../utils';
+import { FlowType } from '../../../types/trasactions';
 
 type RouteParams = {
   ProductQuantityPrice: {
     product: Product;
+    flowType?: FlowType;
   };
+};
+
+interface ProductQuantityPriceConfig {
+  priceLabel: string;
+  defaultPriceLabel: string;
+  priceField: 'defaultSellingPrice' | 'defaultPurchasingPrice';
+  buttonText: string;
+  nextScreen: string;
+}
+
+const flowConfigs: Record<string, ProductQuantityPriceConfig> = {
+  sales: {
+    priceLabel: 'Selling Price per unit',
+    defaultPriceLabel: 'Default Price',
+    priceField: 'defaultSellingPrice',
+    buttonText: 'Add to Cart',
+    nextScreen: 'ShoppingCart',
+  },
+  purchase: {
+    priceLabel: 'Purchase Price per unit',
+    defaultPriceLabel: 'Default Cost',
+    priceField: 'defaultPurchasingPrice',
+    buttonText: 'Add to Bill',
+    nextScreen: 'PurchaseBillSummary',
+  },
 };
 
 const ProductQuantityPriceScreen: React.FC = () => {
@@ -41,8 +71,20 @@ const ProductQuantityPriceScreen: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const product = route.params?.product;
+  const flowType = route.params?.flowType || 'sales';
+
+  // Get flow-specific config
+  const config = flowConfigs[flowType] || flowConfigs.sales;
 
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Get the default price based on flow type
+  const getDefaultPrice = (): number => {
+    if (config.priceField === 'defaultPurchasingPrice') {
+      return Number(product?.defaultPurchasingPrice) || 0;
+    }
+    return Number(product?.defaultSellingPrice) || 0;
+  };
 
   // React Hook Form setup with Zod validation
   const {
@@ -56,7 +98,7 @@ const ProductQuantityPriceScreen: React.FC = () => {
     mode: 'onChange',
     defaultValues: {
       quantity: 1,
-      unit_price: Number(product?.defaultSellingPrice) || 0,
+      unit_price: getDefaultPrice(),
       discount: 0,
       discount_type: 'amount',
     },
@@ -75,19 +117,30 @@ const ProductQuantityPriceScreen: React.FC = () => {
     (data: QuantityPriceFormValues) => {
       if (!product) return;
 
-      dispatch(
-        addItem({
-          product,
-          quantity: data.quantity,
-          unit_price: data.unit_price,
-        }),
-      );
+      // Dispatch to correct slice based on flow type
+      if (flowType === 'purchase') {
+        dispatch(
+          addPurchaseItem({
+            product,
+            quantity: data.quantity,
+            unit_price: data.unit_price,
+          }),
+        );
+      } else {
+        dispatch(
+          addSalesItem({
+            product,
+            quantity: data.quantity,
+            unit_price: data.unit_price,
+          }),
+        );
+      }
 
-      // Navigate to shopping cart
+      // Navigate to cart/bill summary
       // @ts-ignore
-      navigation.navigate('ShoppingCart');
+      navigation.navigate(config.nextScreen, { flowType });
     },
-    [product, dispatch, navigation],
+    [product, dispatch, navigation, flowType, config.nextScreen],
   );
 
   const quickQuantities = [1, 2, 5, 10];
@@ -133,10 +186,8 @@ const ProductQuantityPriceScreen: React.FC = () => {
           <View style={styles.productInfo}>
             <Text style={styles.productName}>{product.name}</Text>
             <Text style={styles.productOriginalPrice}>
-              Default Price: PKR{' '}
-              {formatCurrency(
-                Number(product.defaultSellingPrice),
-              )?.toLocaleString()}
+              {config.defaultPriceLabel}: PKR{' '}
+              {formatCurrency(getDefaultPrice())?.toLocaleString()}
             </Text>
           </View>
         </View>
@@ -212,9 +263,7 @@ const ProductQuantityPriceScreen: React.FC = () => {
 
         {/* Price Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Price per {product.productCode}
-          </Text>
+          <Text style={styles.sectionTitle}>{config.priceLabel}</Text>
           <Controller
             control={control}
             name="unit_price"
@@ -295,7 +344,7 @@ const ProductQuantityPriceScreen: React.FC = () => {
 
       <View style={styles.footer}>
         <ActionButton
-          title="Add to Cart ✓"
+          title={`${config.buttonText} ✓`}
           onPress={handleSubmit(handleAddToCart)}
           disabled={!isValid || quantity <= 0 || unit_price <= 0}
         />
@@ -354,11 +403,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       color: theme.colors.text.primary,
       fontWeight: '600',
       marginBottom: theme.spacing.xs,
-    },
-    productStock: {
-      fontSize: 12,
-      color: theme.colors.text.secondary,
-      marginBottom: 2,
     },
     productOriginalPrice: {
       fontSize: 12,

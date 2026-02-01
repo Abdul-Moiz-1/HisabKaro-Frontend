@@ -206,7 +206,7 @@ export const productsApi = {
         filtered = filtered.filter(
           p =>
             p.name.toLowerCase().includes(searchLower) ||
-            p.sku?.toLowerCase().includes(searchLower),
+            p.productCode?.toLowerCase().includes(searchLower),
         );
       }
 

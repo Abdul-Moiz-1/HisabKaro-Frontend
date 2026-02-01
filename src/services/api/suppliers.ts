@@ -359,8 +359,6 @@ export const suppliersApi = {
     const response = await apiClient.get<PaginatedResponse<Supplier>>(
       '/suppliers',
       {
-        sort_by: 'created_at',
-        sort_order: 'desc',
         limit: limit || 5,
       },
     );

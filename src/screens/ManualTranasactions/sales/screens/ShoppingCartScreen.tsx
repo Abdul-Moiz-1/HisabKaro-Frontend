@@ -17,7 +17,11 @@ import {
   WarningCircleIcon,
 } from 'phosphor-react-native';
 
-import { useTheme, useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import {
+  useTheme,
+  useAppDispatch,
+  useAppSelector,
+} from '../../../../store/hooks';
 import {
   selectSelectedCustomer,
   selectIsWalkInSale,
@@ -50,15 +54,23 @@ const ShoppingCartScreen: React.FC = () => {
     navigation.navigate('CreditTerms');
   }, [navigation]);
 
-  const handleRemoveItem = useCallback((productId: string) => {
-    dispatch(removeItem(productId));
-  }, [dispatch]);
+  const handleRemoveItem = useCallback(
+    (productId: string) => {
+      dispatch(removeItem(productId));
+    },
+    [dispatch],
+  );
 
-  const customerName = isWalkIn ? 'Walk-in Customer' : customer?.name || 'Unknown';
+  const customerName = isWalkIn
+    ? 'Walk-in Customer'
+    : customer?.name || 'Unknown';
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Customer Info */}
         <View style={styles.customerCard}>
           <UserIcon size={20} color={theme.colors.primary} weight="fill" />
@@ -68,11 +80,17 @@ const ShoppingCartScreen: React.FC = () => {
         {/* Outstanding Balance Warning */}
         {customer && customer.outstanding_balance > 0 && (
           <View style={styles.warningBanner}>
-            <WarningCircleIcon size={20} color={theme.colors.error} weight="fill" />
+            <WarningCircleIcon
+              size={20}
+              color={theme.colors.error}
+              weight="fill"
+            />
             <View style={styles.warningContent}>
               <Text style={styles.warningTitle}>Outstanding Balance</Text>
               <Text style={styles.warningText}>
-                This customer has PKR {customer.outstanding_balance.toLocaleString()} pending from previous sales
+                This customer has PKR{' '}
+                {customer.outstanding_balance.toLocaleString()} pending from
+                previous sales
               </Text>
             </View>
           </View>
@@ -83,7 +101,11 @@ const ShoppingCartScreen: React.FC = () => {
 
         {cartItems.length === 0 ? (
           <View style={styles.emptyCart}>
-            <ShoppingCartIcon size={64} color={theme.colors.text.disabled} weight="regular" />
+            <ShoppingCartIcon
+              size={64}
+              color={theme.colors.text.disabled}
+              weight="regular"
+            />
             <Text style={styles.emptyText}>Your cart is empty</Text>
             <TouchableOpacity
               style={styles.addButton}
@@ -96,7 +118,7 @@ const ShoppingCartScreen: React.FC = () => {
           </View>
         ) : (
           <>
-            {cartItems.map((item) => (
+            {cartItems.map(item => (
               <View key={item.product_id} style={styles.cartItem}>
                 <View style={styles.itemHeader}>
                   <Text style={styles.itemName}>{item.product.name}</Text>
@@ -104,13 +126,17 @@ const ShoppingCartScreen: React.FC = () => {
                     onPress={() => handleRemoveItem(item.product_id)}
                     activeOpacity={0.7}
                   >
-                    <TrashIcon size={20} color={theme.colors.error} weight="regular" />
+                    <TrashIcon
+                      size={20}
+                      color={theme.colors.error}
+                      weight="regular"
+                    />
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.itemDetails}>
                   <Text style={styles.itemDetail}>
-                    Qty: {item.quantity} {item.product.unit}
+                    Qty: {item.quantity} {item.product.productCode}
                   </Text>
                   <Text style={styles.itemDetail}>
                     @ PKR {item.unit_price.toLocaleString()}
@@ -125,7 +151,8 @@ const ShoppingCartScreen: React.FC = () => {
 
                 <View style={styles.itemFooter}>
                   <Text style={styles.itemSubtotal}>
-                    Subtotal: PKR {(item.quantity * item.unit_price).toLocaleString()}
+                    Subtotal: PKR{' '}
+                    {(item.quantity * item.unit_price).toLocaleString()}
                   </Text>
                   <Text style={styles.itemTotal}>
                     PKR {item.total.toLocaleString()}
@@ -140,7 +167,11 @@ const ShoppingCartScreen: React.FC = () => {
               onPress={handleAddMoreProducts}
               activeOpacity={0.7}
             >
-              <PlusCircleIcon size={20} color={theme.colors.primary} weight="regular" />
+              <PlusCircleIcon
+                size={20}
+                color={theme.colors.primary}
+                weight="regular"
+              />
               <Text style={styles.addMoreText}>Add more products</Text>
             </TouchableOpacity>
           </>
@@ -163,13 +194,17 @@ const ShoppingCartScreen: React.FC = () => {
 
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>PKR {totals.subtotal.toLocaleString()}</Text>
+              <Text style={styles.summaryValue}>
+                PKR {totals.subtotal.toLocaleString()}
+              </Text>
             </View>
 
             {totals.discount > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Discount</Text>
-                <Text style={[styles.summaryValue, { color: theme.colors.success }]}>
+                <Text
+                  style={[styles.summaryValue, { color: theme.colors.success }]}
+                >
                   - PKR {totals.discount.toLocaleString()}
                 </Text>
               </View>
@@ -178,7 +213,9 @@ const ShoppingCartScreen: React.FC = () => {
             {totals.tax > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Tax</Text>
-                <Text style={styles.summaryValue}>PKR {totals.tax.toLocaleString()}</Text>
+                <Text style={styles.summaryValue}>
+                  PKR {totals.tax.toLocaleString()}
+                </Text>
               </View>
             )}
 

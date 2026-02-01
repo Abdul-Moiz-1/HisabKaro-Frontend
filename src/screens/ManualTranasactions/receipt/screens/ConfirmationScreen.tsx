@@ -1,90 +1,216 @@
 // flows/receipt/screens/ConfirmationScreen.tsx
-import React from 'react';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useThemedStyles } from '../../../../theme';
-import ActionButton from '../../../../components/common/ActionButton';
-import { Theme } from '../../../../constants/theme';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useReceiptFlow } from '../context/ReceiptFlowContext';
-import Icon from '../../../../components/Icon';
+import {
+  CheckCircleIcon,
+  PaperPlaneTiltIcon,
+  BellIcon,
+  NoteIcon,
+  ArrowCounterClockwiseIcon,
+  PlusIcon,
+  BankIcon,
+  MoneyIcon,
+} from 'phosphor-react-native';
+
+import {
+  useTheme,
+  useAppDispatch,
+  useAppSelector,
+} from '../../../../store/hooks';
+import ActionButton from '../../../../components/common/ActionButton';
+import {
+  selectReceiptCustomer,
+  selectReceiptAmount,
+  selectRemainingAfterPayment,
+  selectReceiptPaymentMethod,
+  selectInvoiceAllocations,
+  selectAllocationSummary,
+  selectReceiptsLoading,
+  selectReceiptsError,
+  selectPaymentResponse,
+  submitReceiptPayment,
+  resetReceiptsFlow,
+} from '../../../../store/slices/receiptsSlice';
+import Toast from 'react-native-toast-message';
 
 const ConfirmationScreen: React.FC = () => {
-  const styles = useThemedStyles(createStyles);
+  const theme = useTheme();
   const navigation = useNavigation();
-  const { getReceiptData, resetFlow } = useReceiptFlow();
+  const dispatch = useAppDispatch();
 
-  // Get all data from context
-  const { customer, amount, remaining, paymentMethod, paymentDetails } = getReceiptData();
+  // Redux selectors
+  const customer = useAppSelector(selectReceiptCustomer);
+  const amount = useAppSelector(selectReceiptAmount);
+  const remainingAfterPayment = useAppSelector(selectRemainingAfterPayment);
+  const paymentMethod = useAppSelector(selectReceiptPaymentMethod);
+  const invoiceAllocations = useAppSelector(selectInvoiceAllocations);
+  const allocationSummary = useAppSelector(selectAllocationSummary);
+  const isLoading = useAppSelector(selectReceiptsLoading);
+  const error = useAppSelector(selectReceiptsError);
+  const paymentResponse = useAppSelector(selectPaymentResponse);
+  const [isRedirect, setRedirect] = useState<boolean>(false);
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  console.log(remainingAfterPayment);
+  // Submit payment on mount
+  useEffect(() => {
+    if (!paymentResponse && !isLoading && !error && !isRedirect) {
+      dispatch(submitReceiptPayment());
+    }
+  }, [dispatch, paymentResponse, isLoading, error, isRedirect]);
 
+  console.log(paymentMethod);
   // Get payment method label
-  const getPaymentMethodLabel = () => {
+  const getPaymentMethodLabel = useCallback(() => {
     switch (paymentMethod) {
-      case 'cash':
+      case 'Cash':
         return 'Cash';
-      case 'bank':
+      case 'Bank':
         return 'Bank Transfer';
-      case 'wallet':
-        return 'Mobile Wallet';
-      case 'cheque':
-        return 'Cheque';
-      case 'card':
-        return 'Card/POS';
       default:
         return paymentMethod || 'Unknown';
     }
-  };
+  }, [paymentMethod]);
 
-  // Get additional payment details for display
-  const getPaymentDetailsText = () => {
-    if (paymentMethod === 'bank' && paymentDetails.bankAccount) {
-      return `${paymentDetails.bankAccount.bankName} - ${paymentDetails.bankAccount.accountNumber}`;
+  // Get payment method icon
+  const PaymentMethodIcon = useMemo(() => {
+    return paymentMethod === 'Bank' ? BankIcon : MoneyIcon;
+  }, [paymentMethod]);
+
+  const handleDone = useCallback(() => {
+    setRedirect(true);
+    dispatch(resetReceiptsFlow());
+    // Reset to home/dashboard
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Home' as never }],
+      }),
+    );
+  }, [dispatch, navigation]);
+
+  const handleUndo = useCallback(() => {
+    // TODO: Implement undo functionality with API
+    dispatch(resetReceiptsFlow());
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Dashboard' as never }],
+      }),
+    );
+  }, [dispatch, navigation]);
+
+  const handleAddAnother = useCallback(() => {
+    setRedirect(true);
+    dispatch(resetReceiptsFlow());
+    // Navigate back to customer selection
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'CustomerSelection' as never }],
+      }),
+    );
+  }, [dispatch, navigation]);
+
+  const handleSendReceipt = useCallback(() => {
+    if (customer?.phoneNumber) {
+      const message =
+        `📒 Payment Recived - ${customer?.name}\n\n` +
+        `Amount Recieved: Rs. ${amount?.toLocaleString() || 0}\n` +
+        `Payment Method: ${getPaymentMethodLabel()}\n` +
+        `Date: ${new Date().toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })}\n\n` +
+        `Generated by HisabKaro`;
+      // Clean the phone number and format for WhatsApp
+      const cleanPhone = customer.phoneNumber.replace(/\D/g, '');
+      Linking.openURL(
+        `whatsapp://send?phone=${cleanPhone}&text=${encodeURIComponent(
+          message,
+        )}`,
+      );
+    } else {
+      Toast.show({
+        type: 'info',
+        text1: 'No Phone',
+        text2: 'No phone number available for this customer',
+      });
     }
-    if (paymentMethod === 'wallet' && paymentDetails.walletDetails) {
-      const walletName = paymentDetails.walletDetails.walletType;
-      return walletName.charAt(0).toUpperCase() + walletName.slice(1);
-    }
-    if (paymentMethod === 'cheque' && paymentDetails.chequeDetails) {
-      return `Cheque #${paymentDetails.chequeDetails.chequeNumber} - ${paymentDetails.chequeDetails.chequeBankName}`;
-    }
-    return null;
-  };
+    // TODO: Implement send receipt functionality
+    console.log('Send receipt to', customer?.name);
+  }, [customer]);
 
-  const handleDone = () => {
-    resetFlow();
-    // @ts-ignore
-    navigation.navigate('Home');
-  };
+  const handleSetReminder = useCallback(() => {
+    // TODO: Implement reminder functionality
+    console.log('Set reminder for', customer?.name);
+  }, [customer]);
 
-  const handleUndo = () => {
-    resetFlow();
-    // @ts-ignore
-    navigation.navigate('Dashboard');
-  };
+  const handleAddNote = useCallback(() => {
+    // TODO: Implement add note functionality
+    console.log('Add note');
+  }, []);
 
-  const handleAddAnother = () => {
-    resetFlow();
-    // @ts-ignore
-    navigation.navigate('CustomerSelection');
-  };
+  // Loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Recording payment...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  const paymentDetailsText = getPaymentDetailsText();
+  // Error state
+  if (error && !paymentResponse) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Payment Failed</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <ActionButton
+            title="Try Again"
+            onPress={() => dispatch(submitReceiptPayment())}
+            variant="primary"
+          />
+          <TouchableOpacity
+            style={styles.errorBackButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.errorBackText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Success Header */}
         <View style={styles.successHeader}>
-          <Icon name="checkmark-circle" size={64} color="#34C759" />
-          <Text style={styles.successTitle}>✅ Payment Recorded</Text>
+          <View style={styles.successIconContainer}>
+            <CheckCircleIcon
+              size={64}
+              color={theme.colors.success}
+              weight="fill"
+            />
+          </View>
+          <Text style={styles.successTitle}>Payment Recorded</Text>
           <Text style={styles.successSubtitle}>
-            Invoice created successfully
+            Receipt created successfully
           </Text>
         </View>
 
@@ -98,71 +224,40 @@ const ConfirmationScreen: React.FC = () => {
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Amount Received</Text>
             <Text style={[styles.summaryValue, styles.summaryValueLarge]}>
-              PKR {Number(amount || 0).toLocaleString()}
+              PKR {amount.toLocaleString()}
             </Text>
           </View>
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Payment Method</Text>
-            <Text style={styles.summaryValue}>{getPaymentMethodLabel()}</Text>
+            <View style={styles.paymentMethodValue}>
+              <PaymentMethodIcon
+                size={16}
+                color={theme.colors.text.secondary}
+              />
+              <Text>{getPaymentMethodLabel()}</Text>
+            </View>
           </View>
 
-          {/* Additional payment details */}
-          {paymentDetailsText && (
+          {/* Show allocated invoices count */}
+          {invoiceAllocations.length > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Payment Details</Text>
-              <Text style={styles.summaryValue}>{paymentDetailsText}</Text>
-            </View>
-          )}
-
-          {/* Show transfer date for bank transfers */}
-          {paymentMethod === 'bank' && paymentDetails.transferDate && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Transfer Date</Text>
+              <Text style={styles.summaryLabel}>Invoices Allocated</Text>
               <Text style={styles.summaryValue}>
-                {new Date(paymentDetails.transferDate).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
+                {invoiceAllocations.length} invoice
+                {invoiceAllocations.length > 1 ? 's' : ''}
               </Text>
             </View>
           )}
 
-          {/* Show wallet date for wallet payments */}
-          {paymentMethod === 'wallet' && paymentDetails.walletDetails?.walletDate && (
+          {/* Unallocated amount (advance) */}
+          {allocationSummary.unallocatedAmount > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Payment Date</Text>
-              <Text style={styles.summaryValue}>
-                {new Date(paymentDetails.walletDetails.walletDate).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
+              <Text style={styles.summaryLabel}>Advance Payment</Text>
+              <Text style={[styles.summaryValue, styles.advanceValue]}>
+                PKR {allocationSummary.unallocatedAmount.toLocaleString()}
               </Text>
             </View>
-          )}
-
-          {/* Show cheque date and status for cheque payments */}
-          {paymentMethod === 'cheque' && paymentDetails.chequeDetails && (
-            <>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Cheque Date</Text>
-                <Text style={styles.summaryValue}>
-                  {new Date(paymentDetails.chequeDetails.chequeDate).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Cheque Status</Text>
-                <Text style={styles.summaryValue}>
-                  {paymentDetails.chequeDetails.chequeStatus === 'cleared' ? 'Cleared' : 'Received (Not Cleared)'}
-                </Text>
-              </View>
-            </>
           )}
 
           <View style={styles.summaryRow}>
@@ -186,15 +281,16 @@ const ConfirmationScreen: React.FC = () => {
                 styles.summaryValueBold,
                 {
                   color:
-                    remaining > 0
-                      ? '#FF9500'
-                      : remaining === 0
-                        ? '#34C759'
-                        : '#007AFF',
+                    remainingAfterPayment > 0
+                      ? theme.colors.warning
+                      : remainingAfterPayment === 0
+                      ? theme.colors.success
+                      : theme.colors.info,
                 },
               ]}
             >
-              PKR {Number(remaining || 0).toLocaleString()}
+              PKR {Math.abs(remainingAfterPayment).toLocaleString()}
+              {remainingAfterPayment < 0 && ' (Credit)'}
             </Text>
           </View>
         </View>
@@ -202,56 +298,68 @@ const ConfirmationScreen: React.FC = () => {
         {/* Actions Section */}
         <Text style={styles.actionsTitle}>What's next?</Text>
 
-        <TouchableOpacity style={styles.actionCard}>
-          <Icon name="send" size={24} color="#007AFF" />
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={handleSendReceipt}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: '#007AFF15' }]}>
+            <PaperPlaneTiltIcon size={24} color="#007AFF" weight="fill" />
+          </View>
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>
               Send Receipt to {customer?.name || 'Customer'}
             </Text>
             <Text style={styles.actionDescription}>WhatsApp / SMS / Email</Text>
           </View>
-          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
         </TouchableOpacity>
 
-        {remaining > 0 && (
-          <TouchableOpacity style={styles.actionCard}>
-            <Icon name="notifications" size={24} color="#FF9500" />
+        {remainingAfterPayment > 0 && (
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={handleSetReminder}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: '#FF950015' }]}>
+              <BellIcon size={24} color="#FF9500" weight="fill" />
+            </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionLabel}>
                 Remind {customer?.name || 'Customer'} for remaining
               </Text>
               <Text style={styles.actionDescription}>
-                Set reminder for PKR {Number(remaining || 0).toLocaleString()}
+                Set reminder for PKR {remainingAfterPayment.toLocaleString()}
               </Text>
             </View>
-            <Icon name="chevron-forward" size={20} color="#C7C7CC" />
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity style={styles.actionCard}>
-          <Icon name="create" size={24} color="#5856D6" />
+        {/* <TouchableOpacity
+          style={styles.actionCard}
+          onPress={handleAddNote}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: '#5856D615' }]}>
+            <NoteIcon size={24} color="#5856D6" weight="fill" />
+          </View>
           <View style={styles.actionContent}>
             <Text style={styles.actionLabel}>Add Note</Text>
             <Text style={styles.actionDescription}>Optional memo</Text>
           </View>
-          <Icon name="chevron-forward" size={20} color="#C7C7CC" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
 
       {/* Bottom Actions */}
       <View style={styles.bottomActions}>
-        <ActionButton title="✓ Done" onPress={handleDone} variant="primary" />
+        <ActionButton title="Done" onPress={handleDone} variant="primary" />
 
         <View style={styles.secondaryActions}>
-          <TouchableOpacity style={styles.secondaryButton} onPress={handleUndo}>
-            <Text style={styles.secondaryButtonText}>↩️ Undo</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={handleAddAnother}
           >
-            <Text style={styles.secondaryButtonText}>➕ Add Another</Text>
+            <PlusIcon size={18} color={theme.colors.text.secondary} />
+            <Text style={styles.secondaryButtonText}>Add Another</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -259,117 +367,179 @@ const ConfirmationScreen: React.FC = () => {
   );
 };
 
-const createStyles = (theme: Theme) => ({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    padding: theme.spacing.md,
-  },
-  successHeader: {
-    alignItems: 'center' as const,
-    marginBottom: theme.spacing.lg,
-  },
-  successTitle: {
-    ...theme.typography.h2,
-    color: theme.colors.text.primary,
-    fontWeight: 'bold' as const,
-    marginTop: theme.spacing.sm,
-  },
-  successSubtitle: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
-  },
-  summaryCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-    ...theme.shadows.sm,
-  },
-  summaryRow: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'center' as const,
-    paddingVertical: theme.spacing.sm,
-  },
-  summaryLabel: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-  },
-  summaryValue: {
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-    textAlign: 'right' as const,
-    flex: 1,
-    marginLeft: theme.spacing.sm,
-  },
-  summaryValueLarge: {
-    ...theme.typography.h3,
-    fontWeight: 'bold' as const,
-  },
-  summaryValueBold: {
-    fontWeight: '700' as const,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: theme.colors.divider,
-    marginVertical: theme.spacing.sm,
-  },
-  actionsTitle: {
-    ...theme.typography.h3,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-  },
-  actionCard: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-    ...theme.shadows.sm,
-  },
-  actionContent: {
-    flex: 1,
-    marginLeft: theme.spacing.md,
-  },
-  actionLabel: {
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-    fontWeight: '600' as const,
-    marginBottom: 2,
-  },
-  actionDescription: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-  },
-  bottomActions: {
-    padding: theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    gap: theme.spacing.sm,
-  },
-  secondaryActions: {
-    flexDirection: 'row' as const,
-    gap: theme.spacing.sm,
-  },
-  secondaryButton: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.sm,
-    alignItems: 'center' as const,
-  },
-  secondaryButtonText: {
-    ...theme.typography.button,
-    color: theme.colors.text.secondary,
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    content: {
+      padding: theme.spacing.md,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: theme.spacing.md,
+    },
+    loadingText: {
+      fontSize: 16,
+      color: theme.colors.text.secondary,
+      marginTop: theme.spacing.md,
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: theme.spacing.xl,
+    },
+    errorTitle: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: theme.colors.error,
+      marginBottom: theme.spacing.sm,
+    },
+    errorMessage: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      textAlign: 'center',
+      marginBottom: theme.spacing.lg,
+    },
+    errorBackButton: {
+      marginTop: theme.spacing.md,
+      padding: theme.spacing.sm,
+    },
+    errorBackText: {
+      fontSize: 14,
+      color: theme.colors.primary,
+    },
+    successHeader: {
+      alignItems: 'center',
+      marginBottom: theme.spacing.lg,
+    },
+    successIconContainer: {
+      marginBottom: theme.spacing.sm,
+    },
+    successTitle: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: theme.colors.text.primary,
+      marginTop: theme.spacing.sm,
+    },
+    successSubtitle: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      marginTop: theme.spacing.xs,
+    },
+    summaryCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.lg,
+      padding: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+      ...theme.shadows.sm,
+    },
+    summaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.sm,
+    },
+    summaryLabel: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+    },
+    summaryValue: {
+      fontSize: 14,
+      color: theme.colors.text.primary,
+      textAlign: 'right',
+      flex: 1,
+      marginLeft: theme.spacing.sm,
+    },
+    summaryValueLarge: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: theme.colors.primary,
+    },
+    summaryValueBold: {
+      fontWeight: '700',
+    },
+    advanceValue: {
+      color: theme.colors.info,
+    },
+    paymentMethodValue: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: theme.colors.divider,
+      marginVertical: theme.spacing.sm,
+    },
+    actionsTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.md,
+    },
+    actionCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.lg,
+      padding: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
+      ...theme.shadows.sm,
+    },
+    actionIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: theme.spacing.md,
+    },
+    actionContent: {
+      flex: 1,
+    },
+    actionLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
+      marginBottom: 2,
+    },
+    actionDescription: {
+      fontSize: 12,
+      color: theme.colors.text.secondary,
+    },
+    bottomActions: {
+      padding: theme.spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+      gap: theme.spacing.sm,
+    },
+    secondaryActions: {
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+    },
+    secondaryButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing.xs,
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    secondaryButtonText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: theme.colors.text.secondary,
+    },
+  });
 
 export default ConfirmationScreen;

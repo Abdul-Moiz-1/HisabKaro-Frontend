@@ -5,19 +5,20 @@ import apiClient, { PaginatedResponse } from './client';
 export type BankAccountType = 'savings' | 'current' | 'business' | 'other';
 
 export interface BankAccount {
-  id: string;
-  bank_name: string;
-  account_title: string;
-  account_number: string;
+  id: number;
+  bankId: number;
+  bankName: string;
+  accountTitle: string;
+  accountNumber: string;
   account_type: BankAccountType;
-  current_balance: number;
+  currentBalance: number;
   opening_balance: number;
   branch_name?: string;
   branch_code?: string;
   iban?: string;
   swift_code?: string;
   notes?: string;
-  is_default: boolean;
+  isDefault: boolean;
   created_at: string;
   updated_at: string;
 }

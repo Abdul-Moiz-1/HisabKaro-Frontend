@@ -2,71 +2,94 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 
-// Import screens
-import SupplierSelectionScreen from './screens/SupplierSelectionScreen';
-import AddSupplierScreen from '../purchases/screens/AddSupplierScreen'; // Reuse
-import AmountEntryScreen from './screens/AmountEntryScreen';
-import PaymentMethodScreen from './screens/PaymentMethodScreen';
-import BankSelectionScreen from '../receipt/screens/BankSelectionScreen'; // Reuse
-import WalletSelectionScreen from '../receipt/screens/WalletSelectionScreen'; // Reuse
-import ChequeDetailsScreen from '../receipt/screens/ChequeDetailsScreen'; // Reuse
+// Import supplier payment-specific screens
 import ConfirmationScreen from './screens/ConfirmationScreen';
+
+// Import shared reusable screens
+import {
+  AmountEntryScreen,
+  BankSelectionScreen,
+  PaymentMethodScreen,
+  SupplierSelectionScreen,
+  InvoiceAllocationScreen,
+  ChequeDetailsScreen,
+} from '../shared';
+
+// Import hooks
+import { useTheme } from '../../../store/hooks';
 
 const Stack = createStackNavigator();
 
 const SupplierPaymentFlowNavigator: React.FC = () => {
+  const theme = useTheme();
+
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: true,
         headerStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: theme.colors.background,
         },
-        headerTintColor: '#000000',
+        headerTintColor: theme.colors.text.primary,
         headerTitleStyle: {
-          fontWeight: '600',
+          color: theme.colors.text.primary,
+          fontWeight: theme.typography.h1.fontWeight,
         },
       }}
     >
+      {/* Step 1: Select Supplier */}
       <Stack.Screen
         name="SupplierSelection"
         component={SupplierSelectionScreen}
         options={{ title: 'Pay Supplier' }}
+        initialParams={{ flowType: 'payment' }}
       />
-      <Stack.Screen
-        name="AddSupplier"
-        component={AddSupplierScreen}
-        options={{ title: 'Add Supplier' }}
-      />
+
+      {/* Step 2: Enter Amount */}
       <Stack.Screen
         name="AmountEntry"
         component={AmountEntryScreen}
         options={{ title: 'Payment Amount' }}
+        initialParams={{ flowType: 'payment' }}
       />
+
+      {/* Step 3: Payment Method */}
       <Stack.Screen
         name="PaymentMethod"
         component={PaymentMethodScreen}
         options={{ title: 'Payment Method' }}
+        initialParams={{ flowType: 'payment' }}
       />
+
+      {/* Step 4a: Bank Selection (if Bank selected) */}
       <Stack.Screen
         name="BankSelection"
         component={BankSelectionScreen}
         options={{ title: 'Select Bank Account' }}
+        initialParams={{ flowType: 'payment' }}
       />
-      <Stack.Screen
-        name="WalletSelection"
-        component={WalletSelectionScreen}
-        options={{ title: 'Select Wallet' }}
-      />
+
+      {/* Step 4b: Cheque Details (if Cheque selected) */}
       <Stack.Screen
         name="ChequeDetails"
         component={ChequeDetailsScreen}
         options={{ title: 'Cheque Details' }}
+        initialParams={{ flowType: 'payment' }}
       />
+
+      {/* Step 5: Invoice Allocation (Reconciliation) */}
+      <Stack.Screen
+        name="InvoiceAllocation"
+        component={InvoiceAllocationScreen}
+        options={{ title: 'Allocate Payment' }}
+        initialParams={{ flowType: 'payment' }}
+      />
+
+      {/* Step 6: Confirmation */}
       <Stack.Screen
         name="Confirmation"
         component={ConfirmationScreen}
-        options={{ title: 'Payment Complete' }}
+        options={{ title: 'Payment Complete', headerShown: false }}
       />
     </Stack.Navigator>
   );

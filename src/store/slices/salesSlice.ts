@@ -48,6 +48,7 @@ interface SalesFlowState {
   // Payment details
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod | null;
+  selectedBankAccountId: number | null;
   paidAmount: number;
   remainingAmount: number;
   dueDate: string | null;
@@ -85,6 +86,7 @@ const initialState: SalesFlowState = {
   directTotal: 0,
   paymentStatus: 'paid', // Default to cash sale
   paymentMethod: 'Cash',
+  selectedBankAccountId: null,
   paidAmount: 0,
   remainingAmount: 0,
   dueDate: null,
@@ -242,7 +244,8 @@ export const createSalesInvoice = createAsyncThunk<
         }));
 
     const directAmount = state.isDirectTotalMode ? state.directTotal : null;
-
+    const amountReceived =
+      state.paymentStatus == 'partial' ? state.paidAmount : null;
     const customerId = state.isWalkInSale
       ? undefined
       : state.selectedCustomer?.id;
@@ -261,21 +264,19 @@ export const createSalesInvoice = createAsyncThunk<
       isWalkIn: state.isWalkInSale, // Use 0 for walk-in
       items: invoiceItems,
       discountAmount: state.discountAmount,
-      discountType: null,
-      discountValue: null,
       directAmount,
-      directAmountDescription: null,
 
       paymentMethod: state.paymentMethod,
-      bankAccountId: null,
-      mobileWalletProviderId: null,
-      amountReceived: null,
+      bankAccountId: state.selectedBankAccountId,
+      amountReceived: amountReceived,
       creditDays: creditDays,
       remarks: state.notes || undefined,
     };
+    console.log(payload);
 
     const result = await salesInvoicesApi.create(payload);
     const invoice = result.data;
+    // const invoice = payload;
 
     // Update stock for each item (reduce stock for sales)
     // if (!state.isDirectTotalMode) {
@@ -319,7 +320,7 @@ const salesSlice = createSlice({
       state.isWalkInSale = true;
       // Walk-in sales are always cash
       state.paymentStatus = 'paid';
-      state.paymentMethod = 'cash';
+      state.paymentMethod = 'Cash';
     },
 
     // Product management
@@ -458,17 +459,24 @@ const salesSlice = createSlice({
       } else if (action.payload === 'pending') {
         state.paidAmount = 0;
         state.remainingAmount = state.grandTotal;
-        state.paymentMethod = 'Credit';
       }
     },
 
     setPaymentMethod: (state, action: PayloadAction<PaymentMethod | null>) => {
       state.paymentMethod = action.payload;
-      if (action.payload === 'Credit') {
-        state.paymentStatus = 'pending';
-        state.paidAmount = 0;
-        state.remainingAmount = state.grandTotal;
+      // if (action.payload === 'Cash') {
+      //   state.paymentStatus = 'pending';
+      //   state.paidAmount = 0;
+      //   state.remainingAmount = state.grandTotal;
+      // }
+      // Clear bank selection if not bank transfer
+      if (action.payload !== 'Bank') {
+        state.selectedBankAccountId = null;
       }
+    },
+
+    setSelectedBankAccount: (state, action: PayloadAction<number | null>) => {
+      state.selectedBankAccountId = action.payload;
     },
 
     setPaidAmount: (state, action: PayloadAction<number>) => {
@@ -635,6 +643,7 @@ export const {
   setTaxAmount,
   setPaymentStatus,
   setPaymentMethod,
+  setSelectedBankAccount,
   setPaidAmount,
   setDueDate,
   setNotes,
@@ -658,10 +667,13 @@ export const selectSaleTotals = (state: { sales: SalesFlowState }) => ({
 export const selectSalePaymentDetails = (state: { sales: SalesFlowState }) => ({
   status: state.sales.paymentStatus,
   method: state.sales.paymentMethod,
+  selectedBankAccountId: state.sales.selectedBankAccountId,
   paidAmount: state.sales.paidAmount,
   remainingAmount: state.sales.remainingAmount,
   dueDate: state.sales.dueDate,
 });
+export const selectSelectedBankAccountId = (state: { sales: SalesFlowState }) =>
+  state.sales.selectedBankAccountId;
 export const selectRecentCustomers = (state: { sales: SalesFlowState }) =>
   state.sales.recentCustomers;
 export const selectSalesProducts = (state: { sales: SalesFlowState }) =>

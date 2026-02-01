@@ -61,11 +61,7 @@ export enum DiscountType {
 }
 
 export type PaymentStatus = 'paid' | 'partial' | 'pending';
-export type PaymentMethod =
-  | 'Cash'
-  | 'Credit'
-  | 'Bank Transfer'
-  | 'Mobile Wallet';
+export type PaymentMethod = 'Cash' | 'Bank' | 'Credit';
 
 export interface CreateSalesInvoicePayload {
   customerId: number;
@@ -94,15 +90,26 @@ export interface CreateSalesInvoicePayload {
 }
 
 export interface CreatePurchaseInvoicePayload {
+  isWalkIn: boolean;
+  items: Omit<InvoiceItem, 'id' | 'amount' | 'netAmount' | 'itemName'>[];
+  remarks?: string;
+  // Invoice-level discount
+  discountType?: DiscountType | null;
+  discountValue?: number | null;
+  discountAmount?: number;
+
+  // Direct payment (walk-in / cash invoice)
+  directAmount?: number | null;
+
+  // Payment info
+  paymentMethod: PaymentMethod | null;
+  bankAccountId?: number | null;
+  amountReceived?: number | null;
+  creditDays?: number | null;
   supplierId: number;
   billNumber?: string;
   billDate?: string;
-  invoiceDate: string;
   dueDate?: string;
-  currency?: string;
-  items: Omit<InvoiceItem, 'id' | 'amount' | 'netAmount'>[];
-  discountAmount?: number;
-  remarks?: string;
 }
 
 export interface InvoiceFilters {
@@ -354,6 +361,7 @@ export const salesInvoicesApi = {
         ],
       };
     }
+
     return apiClient.post<{ data: Invoice; glEntries: GLEntry[] }>(
       '/sales/invoices',
       payload,
@@ -668,13 +676,12 @@ export const invoicesApi = {
     return result.data;
   },
   create: async (payload: any) => {
-    if (payload.customerId) {
-      const result = await salesInvoicesApi.create(payload);
-      return result.data;
-    } else {
-      const result = await purchaseInvoicesApi.create(payload);
-      return result.data;
-    }
+    const result = await salesInvoicesApi.create(payload);
+    return result.data;
+  },
+  createPurchaseInvoice: async (payload: any) => {
+    const result = await purchaseInvoicesApi.create(payload);
+    return result.data;
   },
   update: async (id: string, payload: any) => {
     const result = await salesInvoicesApi.update(Number(id), payload);

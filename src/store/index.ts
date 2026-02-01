@@ -13,6 +13,8 @@ import searchReducer from './slices/searchSlice';
 import paymentsReducer from './slices/paymentsSlice';
 import purchasesReducer from './slices/purchasesSlice';
 import salesReducer from './slices/salesSlice';
+import receiptsReducer from './slices/receiptsSlice';
+import supplierPaymentReducer from './slices/supplierPayment';
 import bankAccountsReducer from './slices/bankAccountsSlice';
 import accountTransfersReducer from './slices/accountTransfersSlice';
 import expensesReducer from './slices/expensesSlice';
@@ -33,6 +35,8 @@ const rootReducer = combineReducers({
   payments: paymentsReducer,
   purchases: purchasesReducer,
   sales: salesReducer,
+  receipts: receiptsReducer,
+  supplierPayment: supplierPaymentReducer,
   bankAccounts: bankAccountsReducer,
   accountTransfers: accountTransfersReducer,
   expenses: expensesReducer,
@@ -42,7 +46,7 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
   reducer: persistedReducer,
-  middleware: (getDefaultMiddleware) =>
+  middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],

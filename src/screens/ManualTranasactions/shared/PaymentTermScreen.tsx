@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -18,35 +18,36 @@ import {
   CheckCircleIcon,
 } from 'phosphor-react-native';
 
-import {
-  useTheme,
-  useAppDispatch,
-  useAppSelector,
-} from '../../../../store/hooks';
-import {
-  selectSelectedCustomer,
-  selectIsWalkInSale,
-  selectSaleTotals,
-  setPaymentStatus,
-  setDueDate,
-  setPaidAmount,
-  setNotes,
-  selectSalePaymentDetails,
-} from '../../../../store/slices/salesSlice';
-import { Button } from '../../../../components/common';
+import { useTheme } from '../../../store/hooks';
+
+import { Button } from '../../../components/common';
+import { usePaymentTermsFlow } from './hooks/useFlowAdapter';
+import { FlowType } from '../../../types/trasactions';
 
 type PaymentType = 'full' | 'credit' | 'partial';
-
-const CreditTermsScreen: React.FC = () => {
+type RouteParams = {
+  PaymentTerm: {
+    flowType?: FlowType;
+  };
+};
+const PaymentMethodTermScreen: React.FC = () => {
   const theme = useTheme();
   const navigation = useNavigation();
-  const dispatch = useAppDispatch();
+  const route = useRoute<RouteProp<RouteParams, 'PaymentTerm'>>();
 
-  const customer = useAppSelector(selectSelectedCustomer);
-  const isWalkIn = useAppSelector(selectIsWalkInSale);
-  const totals = useAppSelector(selectSaleTotals);
-  const paymentDetails = useAppSelector(selectSalePaymentDetails);
+  const { flowType = 'sales' } = route.params || {};
 
+  const {
+    party,
+    totals,
+    isWalkIn,
+    paymentDetails,
+    setNotes,
+    setDueDate,
+    setPaidAmount,
+    setPaymentStatus,
+    setPaymentMethod,
+  } = usePaymentTermsFlow(flowType);
   const [paymentType, setLocalPaymentType] = useState<PaymentType | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(
@@ -57,30 +58,24 @@ const CreditTermsScreen: React.FC = () => {
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const customerName = isWalkIn
-    ? 'Walk-in Customer'
-    : customer?.name || 'Unknown';
+  const partyName = isWalkIn ? 'Walk-in party' : party?.name || 'Unknown';
 
-  const handlePaymentTypeSelect = useCallback(
-    (type: PaymentType) => {
-      setLocalPaymentType(type);
+  // Get outstanding balance - Customer has outstanding_balance, Supplier has payable_balance
+  const getOutstandingBalance = (): number => {
+    if (!party) return 0;
+    if ('outstanding_balance' in party) {
+      return (party as any).outstanding_balance || 0;
+    }
+    if ('payable_balance' in party) {
+      return (party as any).payable_balance || 0;
+    }
+    return 0;
+  };
+  const outstandingBalance = getOutstandingBalance();
 
-      if (type === 'full') {
-        // dispatch(setPaymentStatus('paid'));
-        // dispatch(setPaymentMethod('Cash'));
-        // dispatch(setPaidAmount(totals.grandTotal));
-        // dispatch(setDueDate(null));
-      } else if (type === 'credit') {
-        // dispatch(setPaymentStatus('pending'));
-        // dispatch(setPaymentMethod('Credit'));
-        // dispatch(setPaidAmount(0));
-      } else if (type === 'partial') {
-        // Will be set when amount is entered
-        // dispatch(setPaymentMethod('Cash'));
-      }
-    },
-    [dispatch, totals.grandTotal],
-  );
+  const handlePaymentTypeSelect = useCallback((type: PaymentType) => {
+    setLocalPaymentType(type);
+  }, []);
 
   const handlePartialAmountChange = useCallback(
     (text: string) => {
@@ -89,53 +84,69 @@ const CreditTermsScreen: React.FC = () => {
 
       if (cleaned) {
         const amount = Number(cleaned);
-        dispatch(setPaidAmount(amount));
+        setPaidAmount(amount);
       }
     },
-    [dispatch],
+    [setPaidAmount],
   );
 
-  const handleDateChange = useCallback(
-    (event: any, date?: Date) => {
-      setShowDatePicker(false);
-      if (date) {
-        setSelectedDate(date);
-        dispatch(setDueDate(date.toISOString().split('T')[0]));
-      }
-    },
-    [dispatch],
-  );
+  const handleDateChange = useCallback((event: any, date?: Date) => {
+    setShowDatePicker(false);
+    if (date) {
+      setSelectedDate(date);
+    }
+  }, []);
+  console.log(paymentType);
 
   const handleContinue = useCallback(() => {
     if (!paymentType) return;
 
     // Set notes
-    dispatch(setNotes(notes));
+    setNotes(notes);
 
     // Set payment status based on payment type
     if (paymentType === 'full') {
-      dispatch(setPaymentStatus('paid'));
-      dispatch(setPaidAmount(totals.grandTotal));
+      setPaymentStatus('paid');
+      setPaidAmount(totals?.grandTotal || 0);
     } else if (paymentType === 'credit') {
-      dispatch(setPaymentStatus('pending'));
-      dispatch(setPaidAmount(0));
-      dispatch(setDueDate(selectedDate.toISOString().split('T')[0]));
+      setPaymentStatus('pending');
+      setPaymentMethod('Credit');
+      setPaidAmount(0);
+      setDueDate(selectedDate.toISOString().split('T')[0]);
     } else if (paymentType === 'partial') {
-      dispatch(setPaymentStatus('partial'));
-      dispatch(setPaidAmount(Number(partialAmount || 0)));
-      dispatch(setDueDate(selectedDate.toISOString().split('T')[0]));
+      setPaymentStatus('partial');
+      setPaidAmount(Number(partialAmount || 0));
+      setDueDate(selectedDate.toISOString().split('T')[0]);
     }
 
-    // Navigate to PaymentMethod screen to select Cash or Bank
-    // @ts-ignore
-    navigation.navigate('PaymentMethod');
-  }, [paymentType, notes, selectedDate, partialAmount, totals.grandTotal, dispatch, navigation]);
+    if (paymentType === 'credit') {
+      console.log('HERE');
+      // @ts-ignore
+      navigation.navigate('Confirmation', { flowType });
+    } else {
+      // Navigate to PaymentMethod screen to select Cash or Bank
+      // @ts-ignore
+      navigation.navigate('PaymentMethod', { flowType });
+    }
+  }, [
+    paymentType,
+    notes,
+    selectedDate,
+    partialAmount,
+    totals?.grandTotal,
+    flowType,
+    navigation,
+    setNotes,
+    setPaymentStatus,
+    setPaidAmount,
+    setDueDate,
+  ]);
 
   const isFormValid = () => {
     if (!paymentType) return false;
     if (paymentType === 'partial') {
       const amount = Number(partialAmount);
-      return amount > 0 && amount < totals.grandTotal;
+      return amount > 0 && amount < (totals?.grandTotal || 0);
     }
     return true;
   };
@@ -150,19 +161,19 @@ const CreditTermsScreen: React.FC = () => {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Customer</Text>
-            <Text style={styles.summaryValue}>{customerName}</Text>
+            <Text style={styles.summaryValue}>{partyName}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Total Amount</Text>
             <Text style={styles.summaryValueLarge}>
-              PKR {totals.grandTotal.toLocaleString()}
+              PKR {totals?.grandTotal.toLocaleString()}
             </Text>
           </View>
-          {customer && customer.outstanding_balance > 0 && (
+          {party && outstandingBalance > 0 && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Previous Outstanding</Text>
               <Text style={[styles.summaryValue, styles.outstandingText]}>
-                PKR {customer.outstanding_balance.toLocaleString()}
+                PKR {outstandingBalance.toLocaleString()}
               </Text>
             </View>
           )}
@@ -312,7 +323,7 @@ const CreditTermsScreen: React.FC = () => {
             <Text style={styles.inputHint}>
               Remaining: PKR{' '}
               {(
-                totals.grandTotal - Number(partialAmount || 0)
+                (totals?.grandTotal || 0) - Number(partialAmount || 0)
               ).toLocaleString()}
             </Text>
           </View>
@@ -547,4 +558,4 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     },
   });
 
-export default CreditTermsScreen;
+export default PaymentMethodTermScreen;

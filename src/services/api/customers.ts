@@ -10,6 +10,7 @@ export interface Customer {
   address?: string;
   city?: string;
   outstanding_balance: number;
+  totalOutstanding?: number; // Alias for outstanding_balance
   total_sales: number;
   total_payments: number;
   last_sale_date?: string;
@@ -449,9 +450,7 @@ export const customersApi = {
     const response = await apiClient.get<PaginatedResponse<Customer>>(
       '/customers',
       {
-        min_balance: 1,
-        sort_by: 'outstanding_balance',
-        sort_order: 'desc',
+        hasPendingOnly: true,
       },
     );
     return response.data;

@@ -18,5 +18,15 @@ export const creditTermsSchema = z.object({
     .optional(),
 });
 
+export const directTotalSchema = z.object({
+  total: z.number().min(1, 'Total amount must be greater than 0'),
+  notes: z
+    .string()
+    .max(500, 'Notes must be less than 500 characters')
+    .optional(),
+});
+
+export type DirectTotalFormValues = z.infer<typeof directTotalSchema>;
+
 export type QuantityPriceFormValues = z.infer<typeof quantityPriceSchema>;
 export type CreditTermsFormValues = z.infer<typeof creditTermsSchema>;
