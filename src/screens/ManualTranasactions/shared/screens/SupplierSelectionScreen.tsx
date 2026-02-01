@@ -21,7 +21,11 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 
-import { useTheme, useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import {
+  useTheme,
+  useAppDispatch,
+  useAppSelector,
+} from '../../../../store/hooks';
 import { SearchBar } from '../../../../components/common';
 import { Supplier } from '../../../../services/api/suppliers';
 import {
@@ -39,7 +43,9 @@ const SupplierSelectionScreen: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const suppliers = useAppSelector(selectRecentSuppliers);
-  const suppliersLoading = useAppSelector((state) => state.purchases.suppliersLoading);
+  const suppliersLoading = useAppSelector(
+    state => state.purchases.suppliersLoading,
+  );
   const error = useAppSelector(selectPurchasesError);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,7 +55,7 @@ const SupplierSelectionScreen: React.FC = () => {
 
   // Fetch suppliers on mount
   useEffect(() => {
-    dispatch(fetchRecentSuppliers());
+    dispatch(fetchRecentSuppliers({}));
   }, [dispatch]);
 
   // Handle search
@@ -58,7 +64,7 @@ const SupplierSelectionScreen: React.FC = () => {
       if (searchQuery.trim()) {
         dispatch(searchSuppliers(searchQuery));
       } else {
-        dispatch(fetchRecentSuppliers());
+        dispatch(fetchRecentSuppliers({}));
       }
     }, 300);
 
@@ -79,7 +85,7 @@ const SupplierSelectionScreen: React.FC = () => {
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await dispatch(fetchRecentSuppliers());
+    await dispatch(fetchRecentSuppliers({}));
     setIsRefreshing(false);
   }, [dispatch]);
 
@@ -89,7 +95,7 @@ const SupplierSelectionScreen: React.FC = () => {
       // @ts-ignore
       navigation.navigate('ProductSelection', { supplier });
     },
-    [dispatch, navigation]
+    [dispatch, navigation],
   );
 
   const handleAddSupplier = useCallback(() => {
@@ -108,7 +114,9 @@ const SupplierSelectionScreen: React.FC = () => {
     if (!dateString) return 'No purchases yet';
     const date = new Date(dateString);
     const now = new Date();
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
+    );
 
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
@@ -148,13 +156,18 @@ const SupplierSelectionScreen: React.FC = () => {
           <View style={styles.supplierStats}>
             <Text style={styles.lastPurchase}>
               Last: {formatDate(item.last_purchase_date)}
-              {item.last_purchase_amount && ` • PKR ${formatCurrency(item.last_purchase_amount)}`}
+              {item.last_purchase_amount &&
+                ` • PKR ${formatCurrency(item.last_purchase_amount)}`}
             </Text>
           </View>
 
           {item.payable_balance > 0 && (
             <View style={styles.outstandingBadge}>
-              <WarningCircleIcon size={14} color={theme.colors.warning} weight="fill" />
+              <WarningCircleIcon
+                size={14}
+                color={theme.colors.warning}
+                weight="fill"
+              />
               <Text style={styles.outstandingText}>
                 Outstanding: PKR {formatCurrency(item.payable_balance)}
               </Text>
@@ -165,7 +178,7 @@ const SupplierSelectionScreen: React.FC = () => {
         <CaretRightIcon size={20} color={theme.colors.text.disabled} />
       </TouchableOpacity>
     ),
-    [styles, theme, handleSupplierSelect]
+    [styles, theme, handleSupplierSelect],
   );
 
   const renderEmptyState = () => (
@@ -216,7 +229,7 @@ const SupplierSelectionScreen: React.FC = () => {
         <FlatList
           data={suppliers}
           renderItem={renderSupplierItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}

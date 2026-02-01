@@ -119,7 +119,6 @@ import {
 } from '../../../../store/slices/purchasesSlice';
 
 // Import Payment slice
-import { setAmount as setPaymentAmount } from '../../../../store/slices/paymentsSlice';
 import { FlowType } from '../../../../types/trasactions';
 
 // ============================================
@@ -444,7 +443,10 @@ export const useSupplierSelectionFlow = (flowType: FlowType) => {
   const error = useAppSelector(selectPurchasesError);
 
   const fetchSuppliers = useCallback(() => {
-    return dispatch(fetchRecentSuppliers());
+    if (flowType == 'payment') {
+      return dispatch(fetchRecentSuppliers({ hasPayableDue: true }));
+    }
+    return dispatch(fetchRecentSuppliers({}));
   }, [dispatch]);
 
   const searchSuppliersByQuery = useCallback(
@@ -456,7 +458,10 @@ export const useSupplierSelectionFlow = (flowType: FlowType) => {
 
   const selectSupplier = useCallback(
     (supplier: Supplier) => {
-      return dispatch(setSelectedSupplier(supplier));
+      if (flowType == 'purchase') {
+        return dispatch(setSelectedSupplier(supplier));
+      }
+      return dispatch(setPaymentSupplier(supplier));
     },
     [dispatch],
   );
@@ -830,6 +835,12 @@ export const usePaymentMethodFlow = (flowType: FlowType) => {
   const purchaseTotals = useAppSelector(selectPurchaseTotals);
   const purchasePaymentDetails = useAppSelector(selectPurchasePaymentDetails);
 
+  const paymentSupplier = useAppSelector(selectPayableSupplier);
+  const paymentTotals = useAppSelector(selectPayableAmount);
+  const payableRemainingAfterPayment = useAppSelector(
+    selectPayableRemainingAfterPayment,
+  );
+
   const { party, amount, paymentStatus, remainingAmount } = useMemo(() => {
     switch (flowType) {
       case 'receipt':
@@ -845,12 +856,23 @@ export const usePaymentMethodFlow = (flowType: FlowType) => {
           remainingAmount: Math.abs(remainingAfterPayment),
         };
       case 'purchase':
-      case 'payment':
         return {
           party: purchaseSupplier,
           amount: purchaseTotals.grandTotal,
           paymentStatus: purchasePaymentDetails.status,
           remainingAmount: purchasePaymentDetails.remainingAmount,
+        };
+      case 'payment':
+        return {
+          party: paymentSupplier,
+          amount: paymentTotals,
+          paymentStatus:
+            payableRemainingAfterPayment === 0
+              ? 'full'
+              : payableRemainingAfterPayment < 0
+              ? 'partial'
+              : 'advance',
+          remainingAmount: Math.abs(payableRemainingAfterPayment),
         };
       case 'sales':
       default:
@@ -883,8 +905,9 @@ export const usePaymentMethodFlow = (flowType: FlowType) => {
         case 'receipt':
           return dispatch(setReceiptPaymentMethod(method as any));
         case 'purchase':
-        case 'payment':
           return dispatch(setPurchasePaymentMethod(method as any));
+        case 'payment':
+          return dispatch(setPayablePaymentMethod(method as any));
         case 'sales':
         default:
           return dispatch(setSalesPaymentMethod(method as any));
@@ -1276,7 +1299,7 @@ const invoiceAllocationConfigs: Record<
     continueButtonText: 'Continue',
     emptyStateTitle: 'No Pending Invoices',
     emptyStateSubtitle: 'This customer has no outstanding invoices',
-    nextScreen: 'Confirmation',
+    nextScreen: 'Review',
   },
   payment: {
     title: 'Allocate Payment',
@@ -1290,7 +1313,7 @@ const invoiceAllocationConfigs: Record<
     continueButtonText: 'Continue',
     emptyStateTitle: 'No Pending Invoices',
     emptyStateSubtitle: 'This supplier has no outstanding invoices',
-    nextScreen: 'Confirmation',
+    nextScreen: 'Review',
   },
 };
 
@@ -1487,10 +1510,7 @@ export const useShoppingCartFlow = (flowType: FlowType) => {
 
   // Configuration
   const config = useMemo(() => {
-    return (
-      shoppingCartConfigs[flowType] ||
-      shoppingCartConfigs.sales
-    );
+    return shoppingCartConfigs[flowType] || shoppingCartConfigs.sales;
   }, [flowType]);
 
   // Party (Customer or Supplier)
@@ -1649,6 +1669,9 @@ export const useAmountEntryFlow = (flowType: FlowType) => {
   // Party (Customer or Supplier)
   const receiptCustomer = useAppSelector(selectReceiptCustomer);
   const payableSupplier = useAppSelector(selectPayableSupplier);
+
+  console.log(payableSupplier);
+  console.log(receiptCustomer);
 
   const party = useMemo(() => {
     switch (flowType) {

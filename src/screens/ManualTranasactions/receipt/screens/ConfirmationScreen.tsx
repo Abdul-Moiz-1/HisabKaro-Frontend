@@ -1,13 +1,14 @@
 // flows/receipt/screens/ConfirmationScreen.tsx
-import React, { useEffect, useMemo, useCallback, useState } from 'react';
+// Displays success state after ReviewScreen submits the payment
+import React, { useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Linking,
+  BackHandler,
 } from 'react-native';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,11 +16,10 @@ import {
   CheckCircleIcon,
   PaperPlaneTiltIcon,
   BellIcon,
-  NoteIcon,
-  ArrowCounterClockwiseIcon,
   PlusIcon,
   BankIcon,
   MoneyIcon,
+  HouseIcon,
 } from 'phosphor-react-native';
 
 import {
@@ -35,10 +35,7 @@ import {
   selectReceiptPaymentMethod,
   selectInvoiceAllocations,
   selectAllocationSummary,
-  selectReceiptsLoading,
-  selectReceiptsError,
   selectPaymentResponse,
-  submitReceiptPayment,
   resetReceiptsFlow,
 } from '../../../../store/slices/receiptsSlice';
 import Toast from 'react-native-toast-message';
@@ -55,20 +52,22 @@ const ConfirmationScreen: React.FC = () => {
   const paymentMethod = useAppSelector(selectReceiptPaymentMethod);
   const invoiceAllocations = useAppSelector(selectInvoiceAllocations);
   const allocationSummary = useAppSelector(selectAllocationSummary);
-  const isLoading = useAppSelector(selectReceiptsLoading);
-  const error = useAppSelector(selectReceiptsError);
   const paymentResponse = useAppSelector(selectPaymentResponse);
-  const [isRedirect, setRedirect] = useState<boolean>(false);
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  console.log(remainingAfterPayment);
-  // Submit payment on mount
-  useEffect(() => {
-    if (!paymentResponse && !isLoading && !error && !isRedirect) {
-      dispatch(submitReceiptPayment());
-    }
-  }, [dispatch, paymentResponse, isLoading, error, isRedirect]);
 
-  console.log(paymentMethod);
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Prevent going back - this is a terminal screen
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        handleDone();
+        return true;
+      },
+    );
+
+    return () => backHandler.remove();
+  }, []);
   // Get payment method label
   const getPaymentMethodLabel = useCallback(() => {
     switch (paymentMethod) {
@@ -86,10 +85,9 @@ const ConfirmationScreen: React.FC = () => {
     return paymentMethod === 'Bank' ? BankIcon : MoneyIcon;
   }, [paymentMethod]);
 
+  // Handle done - reset flow and go home
   const handleDone = useCallback(() => {
-    setRedirect(true);
     dispatch(resetReceiptsFlow());
-    // Reset to home/dashboard
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
@@ -98,25 +96,13 @@ const ConfirmationScreen: React.FC = () => {
     );
   }, [dispatch, navigation]);
 
-  const handleUndo = useCallback(() => {
-    // TODO: Implement undo functionality with API
-    dispatch(resetReceiptsFlow());
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: 'Dashboard' as never }],
-      }),
-    );
-  }, [dispatch, navigation]);
-
+  // Handle add another receipt
   const handleAddAnother = useCallback(() => {
-    setRedirect(true);
     dispatch(resetReceiptsFlow());
-    // Navigate back to customer selection
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{ name: 'CustomerSelection' as never }],
+        routes: [{ name: 'ReceiptFlow' as never }],
       }),
     );
   }, [dispatch, navigation]);
@@ -161,40 +147,13 @@ const ConfirmationScreen: React.FC = () => {
     console.log('Add note');
   }, []);
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Recording payment...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Error state
-  if (error && !paymentResponse) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorTitle}>Payment Failed</Text>
-          <Text style={styles.errorMessage}>{error}</Text>
-          <ActionButton
-            title="Try Again"
-            onPress={() => dispatch(submitReceiptPayment())}
-            variant="primary"
-          />
-          <TouchableOpacity
-            style={styles.errorBackButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.errorBackText}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  // Generate receipt number from payment response
+  const receiptNumber = useMemo(() => {
+    if (paymentResponse?.payment?.paymentNumber) {
+      return `RCP-${paymentResponse?.payment?.paymentNumber}`;
+    }
+    return `RCP-${Date.now().toString().slice(-6)}`;
+  }, [paymentResponse]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -208,10 +167,16 @@ const ConfirmationScreen: React.FC = () => {
               weight="fill"
             />
           </View>
-          <Text style={styles.successTitle}>Payment Recorded</Text>
+          <Text style={styles.successTitle}>Payment Recorded!</Text>
           <Text style={styles.successSubtitle}>
-            Receipt created successfully
+            Receipt has been recorded successfully
           </Text>
+        </View>
+
+        {/* Receipt Number */}
+        <View style={styles.receiptNumberCard}>
+          <Text style={styles.receiptLabel}>Receipt #</Text>
+          <Text style={styles.receiptValue}>{receiptNumber}</Text>
         </View>
 
         {/* Summary Card */}
@@ -351,7 +316,12 @@ const ConfirmationScreen: React.FC = () => {
 
       {/* Bottom Actions */}
       <View style={styles.bottomActions}>
-        <ActionButton title="Done" onPress={handleDone} variant="primary" />
+        <ActionButton
+          title="Done"
+          onPress={handleDone}
+          variant="primary"
+          icon={<HouseIcon size={20} color="#FFFFFF" weight="bold" />}
+        />
 
         <View style={styles.secondaryActions}>
           <TouchableOpacity
@@ -359,7 +329,9 @@ const ConfirmationScreen: React.FC = () => {
             onPress={handleAddAnother}
           >
             <PlusIcon size={18} color={theme.colors.text.secondary} />
-            <Text style={styles.secondaryButtonText}>Add Another</Text>
+            <Text style={styles.secondaryButtonText}>
+              Record Another Receipt
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -375,43 +347,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     },
     content: {
       padding: theme.spacing.md,
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: theme.spacing.md,
-    },
-    loadingText: {
-      fontSize: 16,
-      color: theme.colors.text.secondary,
-      marginTop: theme.spacing.md,
-    },
-    errorContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: theme.spacing.xl,
-    },
-    errorTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: theme.colors.error,
-      marginBottom: theme.spacing.sm,
-    },
-    errorMessage: {
-      fontSize: 14,
-      color: theme.colors.text.secondary,
-      textAlign: 'center',
-      marginBottom: theme.spacing.lg,
-    },
-    errorBackButton: {
-      marginTop: theme.spacing.md,
-      padding: theme.spacing.sm,
-    },
-    errorBackText: {
-      fontSize: 14,
-      color: theme.colors.primary,
     },
     successHeader: {
       alignItems: 'center',
@@ -430,6 +365,24 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontSize: 14,
       color: theme.colors.text.secondary,
       marginTop: theme.spacing.xs,
+    },
+    receiptNumberCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.lg,
+      padding: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+      alignItems: 'center',
+      ...theme.shadows.sm,
+    },
+    receiptLabel: {
+      fontSize: 12,
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing.xs,
+    },
+    receiptValue: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: theme.colors.primary,
     },
     summaryCard: {
       backgroundColor: theme.colors.surface,

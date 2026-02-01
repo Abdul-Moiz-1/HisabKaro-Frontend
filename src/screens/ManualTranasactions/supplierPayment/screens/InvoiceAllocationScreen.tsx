@@ -28,30 +28,31 @@ import {
   useAppDispatch,
   useAppSelector,
 } from '../../../../store/hooks';
+
+import ActionButton from '../../../../components/common/ActionButton';
 import {
-  fetchCustomerPendingInvoices,
-  setInvoiceAllocation,
   autoAllocate,
   clearAllocations,
-  selectReceiptCustomer,
-  selectReceiptAmount,
-  selectPendingInvoices,
-  selectAllocationSummary,
-  selectInvoicesLoading,
+  fetchSupplierPendingInvoices,
   PendingInvoice,
-} from '../../../../store/slices/receiptsSlice';
-import ActionButton from '../../../../components/common/ActionButton';
+  selectPayableAllocationSummary,
+  selectPayableAmount,
+  selectPayableInvoicesLoading,
+  selectPayableSupplier,
+  selectPendingPayableInvoices,
+  setInvoiceAllocation,
+} from '../../../../store/slices/supplierPayment';
 
 const InvoiceAllocationScreen: React.FC = () => {
   const theme = useTheme();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
-  const customer = useAppSelector(selectReceiptCustomer);
-  const amount = useAppSelector(selectReceiptAmount);
-  const pendingInvoices = useAppSelector(selectPendingInvoices);
-  const allocationSummary = useAppSelector(selectAllocationSummary);
-  const isLoading = useAppSelector(selectInvoicesLoading);
+  const supplier = useAppSelector(selectPayableSupplier);
+  const amount = useAppSelector(selectPayableAmount);
+  const pendingInvoices = useAppSelector(selectPendingPayableInvoices);
+  const allocationSummary = useAppSelector(selectPayableAllocationSummary);
+  const isLoading = useAppSelector(selectPayableInvoicesLoading);
 
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<PendingInvoice | null>(
@@ -63,10 +64,10 @@ const InvoiceAllocationScreen: React.FC = () => {
   // Fetch pending invoices on mount
   useFocusEffect(
     useCallback(() => {
-      if (customer?.id) {
-        dispatch(fetchCustomerPendingInvoices(customer.id));
+      if (supplier?.id) {
+        dispatch(fetchSupplierPendingInvoices(supplier.id));
       }
-    }, [dispatch, customer?.id]),
+    }, [dispatch, supplier?.id]),
   );
 
   const handleAutoAllocate = useCallback(() => {
@@ -78,7 +79,6 @@ const InvoiceAllocationScreen: React.FC = () => {
   }, [dispatch]);
 
   const handleInvoicePress = useCallback((invoice: PendingInvoice) => {
-    console.log('HERE');
     setEditingInvoice(invoice);
     setEditAmount(
       invoice.allocatedAmount > 0 ? invoice.allocatedAmount.toString() : '',
@@ -135,13 +135,13 @@ const InvoiceAllocationScreen: React.FC = () => {
 
   const handleContinue = useCallback(() => {
     // @ts-ignore
-    navigation.navigate('Confirmation');
+    navigation.navigate('Review');
   }, [navigation]);
 
   const handleSkipAllocation = useCallback(() => {
     dispatch(clearAllocations());
     // @ts-ignore
-    navigation.navigate('Confirmation');
+    navigation.navigate('Review');
   }, [dispatch, navigation]);
 
   const renderInvoiceItem = useCallback(

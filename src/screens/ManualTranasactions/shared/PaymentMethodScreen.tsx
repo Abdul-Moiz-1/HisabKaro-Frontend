@@ -17,7 +17,7 @@ import ActionButton from '../../../components/common/ActionButton';
 import { usePaymentMethodFlow } from './hooks/useFlowAdapter';
 import { FlowType } from '../../../types/trasactions';
 
-type PaymentMethodType = 'Cash' | 'Bank';
+type PaymentMethodType = 'Cash' | 'Bank Transfer';
 
 type RouteParams = {
   PaymentMethod: {
@@ -81,7 +81,7 @@ const PaymentMethodScreen: React.FC = () => {
             : 'Paid in cash',
       },
       {
-        value: 'Bank',
+        value: 'Bank Transfer',
         label: 'Bank Transfer',
         icon: BankIcon,
         iconColor: '#8B5CF6',

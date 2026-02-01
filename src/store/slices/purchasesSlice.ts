@@ -127,16 +127,19 @@ const calculateTotals = (state: PurchaseFlowState) => {
 // Async Thunks
 export const fetchRecentSuppliers = createAsyncThunk<
   Supplier[],
-  void,
+  { hasPayableDue?: boolean },
   { rejectValue: string }
->('purchases/fetchRecentSuppliers', async (_, { rejectWithValue }) => {
-  try {
-    const suppliers = await suppliersApi.getRecent(10);
-    return suppliers;
-  } catch (error: any) {
-    return rejectWithValue(error.message || 'Failed to fetch suppliers');
-  }
-});
+>(
+  'purchases/fetchRecentSuppliers',
+  async ({ hasPayableDue }, { rejectWithValue }) => {
+    try {
+      const suppliers = await suppliersApi.getRecent(10, hasPayableDue);
+      return suppliers;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch suppliers');
+    }
+  },
+);
 
 export const searchSuppliers = createAsyncThunk<
   Supplier[],

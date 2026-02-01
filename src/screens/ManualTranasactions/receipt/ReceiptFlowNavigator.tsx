@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 // Import receipt-specific screens
 import ConfirmationScreen from './screens/ConfirmationScreen';
+import ReviewScreen from './screens/ReviewScreen';
 
 // Import shared reusable screens
 import {
@@ -77,7 +78,14 @@ const ReceiptFlowNavigator: React.FC = () => {
         initialParams={{ flowType: 'receipt' }}
       />
 
-      {/* Step 6: Confirmation */}
+      {/* Step 6: Review Receipt */}
+      <Stack.Screen
+        name="Review"
+        component={ReviewScreen}
+        options={{ title: 'Review Receipt' }}
+      />
+
+      {/* Step 7: Confirmation */}
       <Stack.Screen
         name="Confirmation"
         component={ConfirmationScreen}

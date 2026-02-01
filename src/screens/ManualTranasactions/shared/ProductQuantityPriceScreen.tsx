@@ -60,7 +60,7 @@ const flowConfigs: Record<string, ProductQuantityPriceConfig> = {
     defaultPriceLabel: 'Default Cost',
     priceField: 'defaultPurchasingPrice',
     buttonText: 'Add to Bill',
-    nextScreen: 'PurchaseBillSummary',
+    nextScreen: 'ShoppingCart',
   },
 };
 

@@ -117,10 +117,7 @@ const autoAllocateInvoices = (
     if (allocateAmount > 0) {
       allocations.push({
         invoiceId: invoice.id,
-        invoiceNumber: invoice.invoiceNumber,
         allocatedAmount: allocateAmount,
-        previousOutstanding: invoice.outstandingAmount,
-        newOutstanding: invoice.outstandingAmount - allocateAmount,
       });
     }
 
@@ -163,30 +160,35 @@ export const fetchSupplierPendingInvoices = createAsyncThunk<
   PendingInvoice[],
   string,
   { rejectValue: string }
->('supplierPayment/fetchPendingInvoices', async (supplierId, { rejectWithValue }) => {
-  try {
-    const response = await purchaseInvoicesApi.getAll({
-      supplierId: Number(supplierId),
-      isPendingOnly: true,
-    });
+>(
+  'supplierPayment/fetchPendingInvoices',
+  async (supplierId, { rejectWithValue }) => {
+    try {
+      const response = await purchaseInvoicesApi.getAll({
+        supplierId: Number(supplierId),
+        isPendingOnly: true,
+      });
 
-    const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0];
 
-    return response.data.map(invoice => ({
-      id: invoice.id,
-      invoiceNumber: invoice.invoiceNumber,
-      invoiceDate: invoice.invoiceDate,
-      dueDate: invoice.dueDate,
-      totalAmount: invoice.totalAmount,
-      paidAmount: invoice.paidAmount,
-      outstandingAmount: invoice.outstandingAmount,
-      isOverdue: invoice.dueDate ? invoice.dueDate < today : false,
-      allocatedAmount: 0,
-    }));
-  } catch (error: any) {
-    return rejectWithValue(error.message || 'Failed to fetch pending invoices');
-  }
-});
+      return response.data.map(invoice => ({
+        id: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        invoiceDate: invoice.invoiceDate,
+        dueDate: invoice.dueDate,
+        totalAmount: invoice.totalAmount,
+        paidAmount: invoice.paidAmount,
+        outstandingAmount: invoice.outstandingAmount,
+        isOverdue: invoice.dueDate ? invoice.dueDate < today : false,
+        allocatedAmount: 0,
+      }));
+    } catch (error: any) {
+      return rejectWithValue(
+        error.message || 'Failed to fetch pending invoices',
+      );
+    }
+  },
+);
 
 export const submitPayablePayment = createAsyncThunk<
   PaymentResponse,
@@ -216,7 +218,10 @@ export const submitPayablePayment = createAsyncThunk<
       paymentDate: new Date().toISOString().split('T')[0],
       invoiceAllocations:
         state.invoiceAllocations.length > 0
-          ? state.invoiceAllocations
+          ? state.invoiceAllocations.map(inv => ({
+              invoiceId: inv.invoiceId,
+              allocatedAmount: inv.allocatedAmount,
+            }))
           : undefined,
       notes: state.notes || undefined,
     };
@@ -299,10 +304,7 @@ const supplierPaymentSlice = createSlice({
         const invoice = state.pendingInvoices.find(inv => inv.id === invoiceId);
         const allocation: InvoiceAllocation = {
           invoiceId,
-          invoiceNumber: invoice?.invoiceNumber,
           allocatedAmount: amount,
-          previousOutstanding: invoice?.outstandingAmount || 0,
-          newOutstanding: (invoice?.outstandingAmount || 0) - amount,
         };
 
         if (existingIndex >= 0) {

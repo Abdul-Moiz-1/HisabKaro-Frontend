@@ -344,7 +344,10 @@ export const suppliersApi = {
   },
 
   // Get recent suppliers (with recent purchases)
-  getRecent: async (limit?: number): Promise<Supplier[]> => {
+  getRecent: async (
+    limit?: number,
+    hasPayableDue?: boolean,
+  ): Promise<Supplier[]> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay(200);
       return [...MOCK_SUPPLIERS]
@@ -359,6 +362,7 @@ export const suppliersApi = {
     const response = await apiClient.get<PaginatedResponse<Supplier>>(
       '/suppliers',
       {
+        hasPayableDue,
         limit: limit || 5,
       },
     );

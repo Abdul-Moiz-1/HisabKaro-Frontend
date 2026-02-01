@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 // Import supplier payment-specific screens
 import ConfirmationScreen from './screens/ConfirmationScreen';
+import ReviewScreen from './screens/ReviewScreen';
 
 // Import shared reusable screens
 import {
@@ -11,12 +12,12 @@ import {
   BankSelectionScreen,
   PaymentMethodScreen,
   SupplierSelectionScreen,
-  InvoiceAllocationScreen,
   ChequeDetailsScreen,
 } from '../shared';
 
 // Import hooks
 import { useTheme } from '../../../store/hooks';
+import InvoiceAllocationScreen from './screens/InvoiceAllocationScreen';
 
 const Stack = createStackNavigator();
 
@@ -85,7 +86,14 @@ const SupplierPaymentFlowNavigator: React.FC = () => {
         initialParams={{ flowType: 'payment' }}
       />
 
-      {/* Step 6: Confirmation */}
+      {/* Step 6: Review Payment */}
+      <Stack.Screen
+        name="Review"
+        component={ReviewScreen}
+        options={{ title: 'Review Payment' }}
+      />
+
+      {/* Step 7: Confirmation */}
       <Stack.Screen
         name="Confirmation"
         component={ConfirmationScreen}

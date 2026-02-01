@@ -31,18 +31,13 @@ type ShoppingCartScreenRouteParams = {
 const ShoppingCartScreen: React.FC = () => {
   const theme = useTheme();
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<{ params: ShoppingCartScreenRouteParams }>>();
+  const route =
+    useRoute<RouteProp<{ params: ShoppingCartScreenRouteParams }>>();
 
   const { flowType = 'sales' } = route.params || {};
 
-  const {
-    config,
-    party,
-    isWalkIn,
-    cartItems,
-    totals,
-    removeItem,
-  } = useShoppingCartFlow(flowType);
+  const { config, party, isWalkIn, cartItems, totals, removeItem } =
+    useShoppingCartFlow(flowType);
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -98,13 +93,13 @@ const ShoppingCartScreen: React.FC = () => {
     }
   }, [party, flowType]);
 
-  const balanceLabel = flowType === 'purchase'
-    ? 'This supplier has PKR'
-    : 'This customer has PKR';
+  const balanceLabel =
+    flowType === 'purchase' ? 'This supplier has PKR' : 'This customer has PKR';
 
-  const balanceDescription = flowType === 'purchase'
-    ? 'pending from previous purchases'
-    : 'pending from previous sales';
+  const balanceDescription =
+    flowType === 'purchase'
+      ? 'pending from previous purchases'
+      : 'pending from previous sales';
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -117,7 +112,6 @@ const ShoppingCartScreen: React.FC = () => {
           <PartyIcon size={20} color={theme.colors.primary} weight="fill" />
           <Text style={styles.partyName}>{partyName}</Text>
         </View>
-
         {/* Outstanding/Payable Balance Warning */}
         {hasBalance && (
           <View style={styles.warningBanner}>
@@ -128,21 +122,21 @@ const ShoppingCartScreen: React.FC = () => {
             />
             <View style={styles.warningContent}>
               <Text style={styles.warningTitle}>
-                {flowType === 'purchase' ? 'Payable Balance' : 'Outstanding Balance'}
+                {flowType === 'purchase'
+                  ? 'Payable Balance'
+                  : 'Outstanding Balance'}
               </Text>
               <Text style={styles.warningText}>
-                {balanceLabel}{' '}
-                {balanceAmount.toLocaleString()} {balanceDescription}
+                {balanceLabel} {balanceAmount.toLocaleString()}{' '}
+                {balanceDescription}
               </Text>
             </View>
           </View>
         )}
-
         {/* Cart Items */}
         <Text style={styles.sectionTitle}>
           {config.itemsLabel} ({cartItems.length})
         </Text>
-
         {cartItems.length === 0 ? (
           <View style={styles.emptyCart}>
             <ShoppingCartIcon
@@ -158,7 +152,9 @@ const ShoppingCartScreen: React.FC = () => {
               activeOpacity={0.7}
             >
               <PlusCircleIcon size={20} color="#FFFFFF" weight="bold" />
-              <Text style={styles.addButtonText}>{config.emptyCartButtonText}</Text>
+              <Text style={styles.addButtonText}>
+                {config.emptyCartButtonText}
+              </Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -221,7 +217,6 @@ const ShoppingCartScreen: React.FC = () => {
             </TouchableOpacity>
           </>
         )}
-
         {/* Summary Card */}
         {cartItems.length > 0 && (
           <View style={styles.summaryCard}>

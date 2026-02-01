@@ -135,13 +135,13 @@ const InvoiceAllocationScreen: React.FC = () => {
 
   const handleContinue = useCallback(() => {
     // @ts-ignore
-    navigation.navigate('Confirmation');
+    navigation.navigate('Review');
   }, [navigation]);
 
   const handleSkipAllocation = useCallback(() => {
     dispatch(clearAllocations());
     // @ts-ignore
-    navigation.navigate('Confirmation');
+    navigation.navigate('Review');
   }, [dispatch, navigation]);
 
   const renderInvoiceItem = useCallback(
