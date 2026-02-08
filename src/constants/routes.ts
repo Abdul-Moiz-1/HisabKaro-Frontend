@@ -69,6 +69,15 @@ export const ROUTES = {
   BANK_ACCOUNT_DETAIL: 'BankAccountDetail',
   ADD_BANK_ACCOUNT: 'AddBankAccount',
   EDIT_BANK_ACCOUNT: 'EditBankAccount',
+
+  ADD_JOURNAL_ENTRY: 'AddJournalEntry',
+
+  // Report Screens
+  GENERAL_JOURNAL: 'GeneralJournal',
+  GENERAL_LEDGER: 'GeneralLedger',
+  PROFIT_LOSS: 'ProfitLoss',
+  TRIAL_BALANCE: 'TrialBalance',
+  BALANCE_SHEET: 'BalanceSheet',
 } as const;
 
 export type RouteName = (typeof ROUTES)[keyof typeof ROUTES];

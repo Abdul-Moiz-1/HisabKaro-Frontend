@@ -84,6 +84,16 @@ import {
 
 // Directory Screen
 import DirectoryScreen from '../screens/Directory/DirectoryScreen';
+import JournalEntryNavigator from '../screens/ManualTranasactions/journalEntry/JournalEntryNavigator';
+
+// Report Screens
+import {
+  GeneralJournalScreen,
+  GeneralLedgerScreen,
+  ProfitLossScreen,
+  TrialBalanceScreen,
+  BalanceSheetScreen,
+} from '../screens/Reports';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -148,6 +158,10 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen
           name={ROUTES.ADD_TRANSACTION_EXPENSE}
           component={ExpenseFlowNavigator}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_JOURNAL_ENTRY}
+          component={JournalEntryNavigator}
         />
         <Stack.Screen
           name={ROUTES.ADD_TRANSACTION_BANK}
@@ -299,13 +313,32 @@ export const RootNavigator: React.FC = () => {
           name={ROUTES.PRODUCT_DETAIL}
           component={ProductDetailScreen}
         />
-        <Stack.Screen
-          name={ROUTES.ADD_PRODUCT}
-          component={AddProductScreen}
-        />
+        <Stack.Screen name={ROUTES.ADD_PRODUCT} component={AddProductScreen} />
         <Stack.Screen
           name={ROUTES.EDIT_PRODUCT}
           component={EditProductScreen}
+        />
+
+        {/* Report Screens */}
+        <Stack.Screen
+          name={ROUTES.GENERAL_JOURNAL}
+          component={GeneralJournalScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.GENERAL_LEDGER}
+          component={GeneralLedgerScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.PROFIT_LOSS}
+          component={ProfitLossScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.TRIAL_BALANCE}
+          component={TrialBalanceScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.BALANCE_SHEET}
+          component={BalanceSheetScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

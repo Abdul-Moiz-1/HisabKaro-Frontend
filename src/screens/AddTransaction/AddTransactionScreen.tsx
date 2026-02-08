@@ -46,12 +46,12 @@ const menuSections: MenuSection[] = [
       //   icon: '🏦',
       //   route: '/transactions/loan-receipt',
       // },
-      {
-        id: 'bank-deposit',
-        label: 'Cash deposited to bank',
-        icon: '🏧',
-        route: ROUTES.ADD_TRANSACTION_BANK,
-      },
+      // {
+      //   id: 'bank-deposit',
+      //   label: 'Cash deposited to bank',
+      //   icon: '🏧',
+      //   route: ROUTES.ADD_TRANSACTION_BANK,
+      // },
       // {
       //   id: 'other-income',
       //   label: 'Other income',
@@ -78,12 +78,12 @@ const menuSections: MenuSection[] = [
         icon: '📦',
         route: ROUTES.ADD_TRANSACTION_PURCHASE,
       },
-      {
-        id: 'expense',
-        label: 'Paid expense',
-        icon: '🧾',
-        route: ROUTES.ADD_TRANSACTION_EXPENSE,
-      },
+      // {
+      //   id: 'expense',
+      //   label: 'Paid expense',
+      //   icon: '🧾',
+      //   route: ROUTES.ADD_TRANSACTION_EXPENSE,
+      // },
       // {
       //   id: 'advance-given',
       //   label: 'Gave advance payment',
@@ -106,16 +106,22 @@ const menuSections: MenuSection[] = [
     ],
   },
   {
-    id: 'other-actions',
-    title: 'OTHER ACTIONS',
-    emoji: '📊',
+    id: 'advanced-accounting',
+    title: 'Advanced',
+    emoji: '🧮',
     color: '#6366F1',
     options: [
       {
-        id: 'transfer',
-        label: 'Transfer between accounts',
-        icon: '🔄',
-        route: ROUTES.ADD_TRANSACTION_ACCOUNT_TRANSFER,
+        id: 'journal-entry',
+        label: 'Journal Entry',
+        icon: '📘',
+        route: ROUTES.ADD_JOURNAL_ENTRY,
+      },
+      {
+        id: 'ledger-entry',
+        label: 'Gernerl Entry',
+        icon: '📘',
+        route: ROUTES.TRIAL_BALANCE,
       },
       // {
       //   id: 'stock-adjust',

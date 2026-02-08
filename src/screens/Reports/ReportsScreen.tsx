@@ -19,6 +19,10 @@ import {
   CalendarIcon,
   ArrowRightIcon,
   DownloadSimpleIcon,
+  BookOpenIcon,
+  ListNumbersIcon,
+  ScalesIcon,
+  ReceiptIcon,
 } from 'phosphor-react-native';
 import Toast from 'react-native-toast-message';
 import { NavigationProps } from '../../types';
@@ -207,10 +211,92 @@ const ReportsScreen: React.FC<NavigationProps<'Reports'>> = ({ navigation }) => 
     </View>
   );
 
+  // Render accounting reports section
+  const renderAccountingReports = () => (
+    <View style={styles.reportsSection}>
+      <Text style={styles.sectionTitle}>Accounting Reports</Text>
+
+      <TouchableOpacity
+        style={styles.reportCard}
+        onPress={() => navigation.navigate('GeneralJournal')}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.reportIcon, { backgroundColor: `${theme.colors.primary}15` }]}>
+          <BookOpenIcon size={24} color={theme.colors.primary} weight="fill" />
+        </View>
+        <View style={styles.reportInfo}>
+          <Text style={styles.reportTitle}>General Journal</Text>
+          <Text style={styles.reportDescription}>Roznamcha / All journal entries</Text>
+        </View>
+        <ArrowRightIcon size={20} color={theme.colors.text.disabled} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.reportCard}
+        onPress={() => navigation.navigate('GeneralLedger')}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.reportIcon, { backgroundColor: `${theme.colors.info}15` }]}>
+          <ListNumbersIcon size={24} color={theme.colors.info} weight="fill" />
+        </View>
+        <View style={styles.reportInfo}>
+          <Text style={styles.reportTitle}>General Ledger</Text>
+          <Text style={styles.reportDescription}>Khaata / Account-wise transactions</Text>
+        </View>
+        <ArrowRightIcon size={20} color={theme.colors.text.disabled} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.reportCard}
+        onPress={() => navigation.navigate('ProfitLoss')}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.reportIcon, { backgroundColor: `${theme.colors.success}15` }]}>
+          <ChartLineUpIcon size={24} color={theme.colors.success} weight="fill" />
+        </View>
+        <View style={styles.reportInfo}>
+          <Text style={styles.reportTitle}>Profit & Loss</Text>
+          <Text style={styles.reportDescription}>Nafa Nuqsaan / Income statement</Text>
+        </View>
+        <ArrowRightIcon size={20} color={theme.colors.text.disabled} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.reportCard}
+        onPress={() => navigation.navigate('TrialBalance')}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.reportIcon, { backgroundColor: `${theme.colors.warning}15` }]}>
+          <ScalesIcon size={24} color={theme.colors.warning} weight="fill" />
+        </View>
+        <View style={styles.reportInfo}>
+          <Text style={styles.reportTitle}>Trial Balance</Text>
+          <Text style={styles.reportDescription}>Mizaan e Aazmaish</Text>
+        </View>
+        <ArrowRightIcon size={20} color={theme.colors.text.disabled} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.reportCard}
+        onPress={() => navigation.navigate('BalanceSheet')}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.reportIcon, { backgroundColor: `#8B5CF615` }]}>
+          <ReceiptIcon size={24} color="#8B5CF6" weight="fill" />
+        </View>
+        <View style={styles.reportInfo}>
+          <Text style={styles.reportTitle}>Balance Sheet</Text>
+          <Text style={styles.reportDescription}>Mizaan Sheet / Financial position</Text>
+        </View>
+        <ArrowRightIcon size={20} color={theme.colors.text.disabled} />
+      </TouchableOpacity>
+    </View>
+  );
+
   // Render report cards
   const renderReportCards = () => (
     <View style={styles.reportsSection}>
-      <Text style={styles.sectionTitle}>Reports</Text>
+      <Text style={styles.sectionTitle}>Other Reports</Text>
 
       <TouchableOpacity
         style={styles.reportCard}
@@ -417,6 +503,7 @@ const ReportsScreen: React.FC<NavigationProps<'Reports'>> = ({ navigation }) => 
       >
         {renderDateSelector()}
         {renderSummaryCards()}
+        {renderAccountingReports()}
         {renderAgingSummary()}
         {renderReportCards()}
       </ScrollView>

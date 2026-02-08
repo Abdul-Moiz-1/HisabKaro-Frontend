@@ -3,7 +3,15 @@ import { ENV_CONFIG } from '../../constants/env';
 
 // Types matching API documentation
 export type RootType = 'Asset' | 'Liability' | 'Equity' | 'Income' | 'Expense';
-export type AccountType = 'Cash' | 'Bank' | 'Receivable' | 'Payable' | 'Fixed Asset' | 'Revenue' | 'Expense' | 'Equity';
+export type AccountType =
+  | 'Cash'
+  | 'Bank'
+  | 'Receivable'
+  | 'Payable'
+  | 'Fixed Asset'
+  | 'Revenue'
+  | 'Expense'
+  | 'Equity';
 
 export interface Account {
   id: number;
@@ -369,16 +377,19 @@ const MOCK_ACCOUNTS: Account[] = [
   },
 ];
 
-const mockDelay = (ms: number = 300) => new Promise(resolve => setTimeout(resolve, ms));
+const mockDelay = (ms: number = 300) =>
+  new Promise(resolve => setTimeout(resolve, ms));
 
 // Accounting API
 export const accountingApi = {
   // Get chart of accounts
-  getAccounts: async (filters?: AccountFilters): Promise<Account[]> => {
+  getAccounts: async (
+    filters?: AccountFilters,
+  ): Promise<{ data: Account[] }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
       let accounts = [...MOCK_ACCOUNTS];
-      
+
       if (filters?.rootType) {
         accounts = accounts.filter(a => a.rootType === filters.rootType);
       }
@@ -393,12 +404,12 @@ export const accountingApi = {
             return flat;
           }, [] as Account[]);
         };
-        return flattenAccounts(accounts);
+        return { data: flattenAccounts(accounts) };
       }
-      
-      return accounts;
+
+      return { data: accounts };
     }
-    return apiClient.get<Account[]>('/accounting/accounts', filters);
+    return apiClient.get<{ data: Account[] }>('/accounting/accounts', filters);
   },
 
   // Get account by ID
@@ -423,31 +434,54 @@ export const accountingApi = {
   },
 
   // Create account
-  createAccount: async (payload: CreateAccountPayload): Promise<{ data: Account }> => {
+  createAccount: async (
+    payload: CreateAccountPayload,
+  ): Promise<{ data: Account }> => {
     return apiClient.post<{ data: Account }>('/accounting/accounts', payload);
   },
 
   // Update account
-  updateAccount: async (id: number, payload: Partial<CreateAccountPayload>): Promise<{ data: Account }> => {
-    return apiClient.patch<{ data: Account }>(`/accounting/accounts/${id}`, payload);
+  updateAccount: async (
+    id: number,
+    payload: Partial<CreateAccountPayload>,
+  ): Promise<{ data: Account }> => {
+    return apiClient.patch<{ data: Account }>(
+      `/accounting/accounts/${id}`,
+      payload,
+    );
   },
 
   // Get journal entries
-  getJournalEntries: async (filters?: { fromDate?: string; toDate?: string; page?: number; limit?: number }): Promise<{ data: JournalEntry[]; total: number }> => {
+  getJournalEntries: async (filters?: {
+    fromDate?: string;
+    toDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ data: JournalEntry[]; total: number }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
       return { data: [], total: 0 };
     }
-    return apiClient.get<{ data: JournalEntry[]; total: number }>('/accounting/journal-entries', filters);
+    return apiClient.get<{ data: JournalEntry[]; total: number }>(
+      '/accounting/journal-entries',
+      filters,
+    );
   },
 
   // Create journal entry
-  createJournalEntry: async (payload: CreateJournalEntryPayload): Promise<{ data: JournalEntry }> => {
-    return apiClient.post<{ data: JournalEntry }>('/accounting/journal-entries', payload);
+  createJournalEntry: async (
+    payload: CreateJournalEntryPayload,
+  ): Promise<{ data: JournalEntry }> => {
+    return apiClient.post<{ data: JournalEntry }>(
+      '/accounting/journal-entries',
+      payload,
+    );
   },
 
   // Get GL report
-  getGLReport: async (filters: GLReportFilters): Promise<{ data: GLReport }> => {
+  getGLReport: async (
+    filters: GLReportFilters,
+  ): Promise<{ data: GLReport }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
       return {
@@ -467,19 +501,64 @@ export const accountingApi = {
   },
 
   // Get trial balance
-  getTrialBalance: async (asOfDate?: string, includeZeroBalance?: boolean): Promise<{ data: TrialBalance }> => {
+  getTrialBalance: async (
+    asOfDate?: string,
+    includeZeroBalance?: boolean,
+  ): Promise<{ data: TrialBalance }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
       return {
         data: {
           asOfDate: asOfDate || new Date().toISOString().split('T')[0],
           accounts: [
-            { accountId: 3, accountCode: '1110', accountName: 'Cash in Hand', rootType: 'Asset', debit: 100000, credit: 0 },
-            { accountId: 4, accountCode: '1120', accountName: 'Bank Accounts', rootType: 'Asset', debit: 250000, credit: 0 },
-            { accountId: 5, accountCode: '1130', accountName: 'Accounts Receivable', rootType: 'Asset', debit: 430000, credit: 0 },
-            { accountId: 11, accountCode: '2100', accountName: 'Accounts Payable', rootType: 'Liability', debit: 0, credit: 120000 },
-            { accountId: 21, accountCode: '4100', accountName: 'Sales Revenue', rootType: 'Income', debit: 0, credit: 500000 },
-            { accountId: 31, accountCode: '5100', accountName: 'Cost of Goods Sold', rootType: 'Expense', debit: 300000, credit: 0 },
+            {
+              accountId: 3,
+              accountCode: '1110',
+              accountName: 'Cash in Hand',
+              rootType: 'Asset',
+              debit: 100000,
+              credit: 0,
+            },
+            {
+              accountId: 4,
+              accountCode: '1120',
+              accountName: 'Bank Accounts',
+              rootType: 'Asset',
+              debit: 250000,
+              credit: 0,
+            },
+            {
+              accountId: 5,
+              accountCode: '1130',
+              accountName: 'Accounts Receivable',
+              rootType: 'Asset',
+              debit: 430000,
+              credit: 0,
+            },
+            {
+              accountId: 11,
+              accountCode: '2100',
+              accountName: 'Accounts Payable',
+              rootType: 'Liability',
+              debit: 0,
+              credit: 120000,
+            },
+            {
+              accountId: 21,
+              accountCode: '4100',
+              accountName: 'Sales Revenue',
+              rootType: 'Income',
+              debit: 0,
+              credit: 500000,
+            },
+            {
+              accountId: 31,
+              accountCode: '5100',
+              accountName: 'Cost of Goods Sold',
+              rootType: 'Expense',
+              debit: 300000,
+              credit: 0,
+            },
           ],
           totalDebit: 1080000,
           totalCredit: 620000,
@@ -487,11 +566,17 @@ export const accountingApi = {
         },
       };
     }
-    return apiClient.get<{ data: TrialBalance }>('/accounting/reports/trial-balance', { asOfDate, includeZeroBalance });
+    return apiClient.get<{ data: TrialBalance }>(
+      '/accounting/reports/trial-balance',
+      { asOfDate, includeZeroBalance },
+    );
   },
 
   // Get profit & loss
-  getProfitLoss: async (fromDate: string, toDate: string): Promise<{ data: ProfitLoss }> => {
+  getProfitLoss: async (
+    fromDate: string,
+    toDate: string,
+  ): Promise<{ data: ProfitLoss }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
       return {
@@ -499,12 +584,27 @@ export const accountingApi = {
           fromDate,
           toDate,
           income: [
-            { accountId: 21, accountCode: '4100', accountName: 'Sales Revenue', amount: 500000 },
+            {
+              accountId: 21,
+              accountCode: '4100',
+              accountName: 'Sales Revenue',
+              amount: 500000,
+            },
           ],
           totalIncome: 500000,
           expenses: [
-            { accountId: 31, accountCode: '5100', accountName: 'Cost of Goods Sold', amount: 300000 },
-            { accountId: 32, accountCode: '6100', accountName: 'Salary Expense', amount: 100000 },
+            {
+              accountId: 31,
+              accountCode: '5100',
+              accountName: 'Cost of Goods Sold',
+              amount: 300000,
+            },
+            {
+              accountId: 32,
+              accountCode: '6100',
+              accountName: 'Salary Expense',
+              amount: 100000,
+            },
           ],
           totalExpenses: 400000,
           netProfitLoss: 100000,
@@ -512,25 +612,55 @@ export const accountingApi = {
         },
       };
     }
-    return apiClient.get<{ data: ProfitLoss }>('/accounting/reports/profit-loss', { fromDate, toDate });
+    return apiClient.get<{ data: ProfitLoss }>(
+      '/accounting/reports/profit-loss',
+      { fromDate, toDate },
+    );
   },
 
   // Get balance sheet
-  getBalanceSheet: async (asOfDate?: string): Promise<{ data: BalanceSheet }> => {
+  getBalanceSheet: async (
+    asOfDate?: string,
+  ): Promise<{ data: BalanceSheet }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
       return {
         data: {
           asOfDate: asOfDate || new Date().toISOString().split('T')[0],
           assets: [
-            { accountId: 3, accountCode: '1110', accountName: 'Cash in Hand', amount: 100000 },
-            { accountId: 4, accountCode: '1120', accountName: 'Bank Accounts', amount: 250000 },
-            { accountId: 5, accountCode: '1130', accountName: 'Accounts Receivable', amount: 430000 },
+            {
+              accountId: 3,
+              accountCode: '1110',
+              accountName: 'Cash in Hand',
+              amount: 100000,
+            },
+            {
+              accountId: 4,
+              accountCode: '1120',
+              accountName: 'Bank Accounts',
+              amount: 250000,
+            },
+            {
+              accountId: 5,
+              accountCode: '1130',
+              accountName: 'Accounts Receivable',
+              amount: 430000,
+            },
           ],
           totalAssets: 780000,
           liabilities: [
-            { accountId: 11, accountCode: '2100', accountName: 'Accounts Payable', amount: 120000 },
-            { accountId: 12, accountCode: '2200', accountName: 'Sales Tax Payable', amount: 45000 },
+            {
+              accountId: 11,
+              accountCode: '2100',
+              accountName: 'Accounts Payable',
+              amount: 120000,
+            },
+            {
+              accountId: 12,
+              accountCode: '2200',
+              accountName: 'Sales Tax Payable',
+              amount: 45000,
+            },
           ],
           totalLiabilities: 165000,
           equity: [],
@@ -539,7 +669,10 @@ export const accountingApi = {
         },
       };
     }
-    return apiClient.get<{ data: BalanceSheet }>('/accounting/reports/balance-sheet', { asOfDate });
+    return apiClient.get<{ data: BalanceSheet }>(
+      '/accounting/reports/balance-sheet',
+      { asOfDate },
+    );
   },
 
   // Get cash flow
@@ -568,7 +701,10 @@ export const accountingApi = {
         closingCashBalance: 200000,
       };
     }
-    return apiClient.get<CashFlow>('/accounting/reports/cash-flow', { fromDate, toDate });
+    return apiClient.get<CashFlow>('/accounting/reports/cash-flow', {
+      fromDate,
+      toDate,
+    });
   },
 
   // Get aged receivables
@@ -611,7 +747,9 @@ export const accountingApi = {
         },
       };
     }
-    return apiClient.get<{ data: AgedReceivables }>('/accounting/reports/aged-receivables');
+    return apiClient.get<{ data: AgedReceivables }>(
+      '/accounting/reports/aged-receivables',
+    );
   },
 
   // Get aged payables
@@ -644,7 +782,9 @@ export const accountingApi = {
         },
       };
     }
-    return apiClient.get<{ data: AgedPayables }>('/accounting/reports/aged-payables');
+    return apiClient.get<{ data: AgedPayables }>(
+      '/accounting/reports/aged-payables',
+    );
   },
 
   // Get account summary
