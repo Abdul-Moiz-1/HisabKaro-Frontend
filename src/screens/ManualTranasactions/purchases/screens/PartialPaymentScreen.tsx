@@ -29,6 +29,7 @@ const PartialPaymentScreen: React.FC = () => {
 
   const [paidAmount, setPaidAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [paymentDate, setPaymentDate] = useState(new Date());
   const [dueDate, setDueDate] = useState(
     new Date(Date.now() + (supplier?.creditPeriod || 30) * 24 * 60 * 60 * 1000),
   );
@@ -41,6 +42,7 @@ const PartialPaymentScreen: React.FC = () => {
       remainingAmount,
       paymentMethod: paymentMethod ?? undefined,
       paymentStatus: 'partial',
+      paymentDate: paymentDate.toISOString(),
       dueDate: dueDate.toISOString(),
     });
   };
@@ -160,6 +162,37 @@ const PartialPaymentScreen: React.FC = () => {
             </View>
           </View>
         )}
+
+        {/* Payment Date */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Payment Date</Text>
+          <View style={styles.quickDueDates}>
+            <TouchableOpacity
+              style={styles.quickDueDateButton}
+              onPress={() => setPaymentDate(new Date())}
+            >
+              <Text style={styles.quickDueDateText}>Today</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.quickDueDateButton}
+              onPress={() => setPaymentDate(new Date(Date.now() - 24 * 60 * 60 * 1000))}
+            >
+              <Text style={styles.quickDueDateText}>Yesterday</Text>
+            </TouchableOpacity>
+          </View>
+
+          <DateField
+            field={{
+              id: 'paymentDate',
+              name: 'paymentDate',
+              label: '',
+              type: FieldType.DATE,
+            }}
+            value={paymentDate.toISOString()}
+            onChange={(value: string) => setPaymentDate(new Date(value))}
+            onBlur={() => {}}
+          />
+        </View>
 
         {/* Due Date for Remaining */}
         {remainingAmount > 0 && (

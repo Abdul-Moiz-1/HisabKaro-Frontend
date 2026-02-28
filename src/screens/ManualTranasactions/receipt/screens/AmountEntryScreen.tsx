@@ -18,12 +18,14 @@ import {
 } from '../../../../store/hooks';
 import {
   setAmount,
+  setPaymentDate,
   selectReceiptCustomer,
   selectReceiptAmount,
   selectRemainingAfterPayment,
+  selectReceiptPaymentDate,
 } from '../../../../store/slices/receiptsSlice';
 import ActionButton from '../../../../components/common/ActionButton';
-import { AmountInputField } from '../../../../components/DynamicForm';
+import { AmountInputField, DateField } from '../../../../components/DynamicForm';
 import { FieldType } from '../../../../types/forms';
 
 const AmountEntryScreen: React.FC = () => {
@@ -34,8 +36,10 @@ const AmountEntryScreen: React.FC = () => {
   const customer = useAppSelector(selectReceiptCustomer);
   const storedAmount = useAppSelector(selectReceiptAmount);
   const remainingAfterPayment = useAppSelector(selectRemainingAfterPayment);
+  const storedPaymentDate = useAppSelector(selectReceiptPaymentDate);
 
   const [localAmount, setLocalAmount] = useState<number>(storedAmount || 0);
+  const [date, setDate] = useState(new Date(storedPaymentDate || new Date().toISOString()));
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -88,9 +92,10 @@ const AmountEntryScreen: React.FC = () => {
 
   const handleContinue = useCallback(() => {
     dispatch(setAmount(localAmount));
+    dispatch(setPaymentDate(date.toISOString()));
     // @ts-ignore
     navigation.navigate('PaymentMethod');
-  }, [dispatch, localAmount, navigation]);
+  }, [dispatch, localAmount, date, navigation]);
 
   // Determine remaining text color
   const getRemainingColor = useCallback(() => {
@@ -197,6 +202,35 @@ const AmountEntryScreen: React.FC = () => {
             </Text>
           </View>
         )}
+
+        {/* Date Section */}
+        <Text style={styles.sectionTitle}>When did {customer?.name} pay?</Text>
+        <View style={styles.quickDates}>
+          <TouchableOpacity
+            style={styles.quickDateButton}
+            onPress={() => setDate(new Date())}
+          >
+            <Text style={styles.quickDateText}>Today</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickDateButton}
+            onPress={() => setDate(new Date(Date.now() - 24 * 60 * 60 * 1000))}
+          >
+            <Text style={styles.quickDateText}>Yesterday</Text>
+          </TouchableOpacity>
+        </View>
+
+        <DateField
+          field={{
+            id: 'paymentDate',
+            name: 'paymentDate',
+            label: '',
+            type: FieldType.DATE,
+          }}
+          value={date.toISOString()}
+          onChange={(value: string) => setDate(new Date(value))}
+          onBlur={() => {}}
+        />
       </ScrollView>
 
       <View style={styles.footer}>
@@ -322,6 +356,32 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontSize: 14,
       fontWeight: '600',
       color: theme.colors.success,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.md,
+      marginTop: theme.spacing.lg,
+    },
+    quickDates: {
+      flexDirection: 'row' as const,
+      gap: theme.spacing.sm,
+      marginBottom: theme.spacing.md,
+    },
+    quickDateButton: {
+      flex: 1,
+      paddingVertical: theme.spacing.sm,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.md,
+      alignItems: 'center' as const,
+    },
+    quickDateText: {
+      fontSize: 13,
+      color: theme.colors.text.primary,
+      fontWeight: '600' as const,
     },
     footer: {
       padding: theme.spacing.md,

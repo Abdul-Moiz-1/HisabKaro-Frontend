@@ -1,6 +1,6 @@
 // flows/sales/screens/DirectTotalScreen.tsx
-import React, { useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useCallback, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { setDirectTotal, selectSelectedCustomer, selectIsWalkInSale } from '../../../../store/slices/salesSlice';
 import { directTotalSchema, DirectTotalFormValues } from '../schemas/salesSchemas';
-import { AmountInputField } from '../../../../components/DynamicForm';
+import { AmountInputField, DateField } from '../../../../components/DynamicForm';
 import ActionButton from '../../../../components/common/ActionButton';
 import { FieldType } from '../../../../types/forms';
 
@@ -20,6 +20,8 @@ const DirectTotalScreen: React.FC = () => {
 
   const customer = useAppSelector(selectSelectedCustomer);
   const isWalkIn = useAppSelector(selectIsWalkInSale);
+
+  const [date, setDate] = useState(new Date());
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -116,6 +118,35 @@ const DirectTotalScreen: React.FC = () => {
             </View>
           </View>
         )}
+
+        {/* Date Section */}
+        <Text style={styles.sectionTitle}>Sale Date</Text>
+        <View style={styles.quickDates}>
+          <TouchableOpacity
+            style={styles.quickDateButton}
+            onPress={() => setDate(new Date())}
+          >
+            <Text style={styles.quickDateText}>Today</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickDateButton}
+            onPress={() => setDate(new Date(Date.now() - 24 * 60 * 60 * 1000))}
+          >
+            <Text style={styles.quickDateText}>Yesterday</Text>
+          </TouchableOpacity>
+        </View>
+
+        <DateField
+          field={{
+            id: 'saleDate',
+            name: 'saleDate',
+            label: '',
+            type: FieldType.DATE,
+          }}
+          value={date.toISOString()}
+          onChange={(value: string) => setDate(new Date(value))}
+          onBlur={() => {}}
+        />
       </ScrollView>
 
       <View style={styles.footer}>
@@ -199,6 +230,32 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       fontSize: 22,
       color: theme.colors.primary,
       fontWeight: '700',
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.md,
+      marginTop: theme.spacing.lg,
+    },
+    quickDates: {
+      flexDirection: 'row' as const,
+      gap: theme.spacing.sm,
+      marginBottom: theme.spacing.md,
+    },
+    quickDateButton: {
+      flex: 1,
+      paddingVertical: theme.spacing.sm,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.md,
+      alignItems: 'center' as const,
+    },
+    quickDateText: {
+      fontSize: 13,
+      color: theme.colors.text.primary,
+      fontWeight: '600' as const,
     },
     footer: {
       padding: theme.spacing.md,

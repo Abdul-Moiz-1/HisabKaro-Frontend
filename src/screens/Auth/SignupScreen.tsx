@@ -119,7 +119,8 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
   };
 
   const navigateToLogin = () => {
-    navigation.goBack();
+    navigation.replace(ROUTES.LOGIN);
+    // navigation.navigate(ROUTES.SIGNUP);
   };
 
   return (

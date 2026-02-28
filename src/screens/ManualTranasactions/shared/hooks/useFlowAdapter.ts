@@ -53,6 +53,8 @@ import {
   selectCustomersLoading as selectReceiptCustomersLoading,
   clearError as clearReceiptError,
   setAmount as setRecipteAmount,
+  setPaymentDate as setReceiptPaymentDate,
+  selectReceiptPaymentDate,
   fetchCustomerPendingInvoices,
   setInvoiceAllocation as setReceiptInvoiceAllocation,
   autoAllocate as autoAllocateReceipts,
@@ -79,6 +81,8 @@ import {
   selectPayableSuppliersLoading,
   clearError as clearPayableError,
   setAmount as setPayableAmount,
+  setPaymentDate as setPayablePaymentDate,
+  selectPayablePaymentDate,
   fetchSupplierPendingInvoices,
   setInvoiceAllocation as setPayableInvoiceAllocation,
   autoAllocate as autoAllocatePayables,
@@ -1705,6 +1709,20 @@ export const useAmountEntryFlow = (flowType: FlowType) => {
     }
   }, [flowType, party]);
 
+  // Payment date
+  const receiptPaymentDate = useAppSelector(selectReceiptPaymentDate);
+  const payablePaymentDate = useAppSelector(selectPayablePaymentDate);
+
+  const paymentDate = useMemo(() => {
+    switch (flowType) {
+      case 'payment':
+        return payablePaymentDate;
+      case 'receipt':
+      default:
+        return receiptPaymentDate;
+    }
+  }, [flowType, receiptPaymentDate, payablePaymentDate]);
+
   // Stored amount
   const receiptAmount = useAppSelector(selectReceiptAmount);
   const payableAmount = useAppSelector(selectPayableAmount);
@@ -1729,6 +1747,22 @@ export const useAmountEntryFlow = (flowType: FlowType) => {
         case 'receipt':
         default:
           dispatch(setRecipteAmount(amount));
+          break;
+      }
+    },
+    [flowType, dispatch],
+  );
+
+  // Set payment date action
+  const setPaymentDate = useCallback(
+    (date: string) => {
+      switch (flowType) {
+        case 'payment':
+          dispatch(setPayablePaymentDate(date));
+          break;
+        case 'receipt':
+        default:
+          dispatch(setReceiptPaymentDate(date));
           break;
       }
     },
@@ -1760,7 +1794,9 @@ export const useAmountEntryFlow = (flowType: FlowType) => {
     partyName,
     balance,
     storedAmount,
+    paymentDate,
     setAmount,
+    setPaymentDate,
     getInfoLabel,
     getQuestionLabel,
     getAdvanceWarning,

@@ -1,5 +1,5 @@
 // flows/expense/screens/ConfirmationScreen.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ const ConfirmationScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
   const route = useRoute();
   const navigation = useNavigation();
+  const [confirmed, setConfirmed] = useState(false);
 
   const {
     category,
@@ -35,7 +36,6 @@ const ConfirmationScreen: React.FC = () => {
     // @ts-ignore
     route.params?.flowData || {};
 
-  // Mock balance data
   const previousBalance = 45000;
   const newBalance = previousBalance - amount;
 
@@ -45,7 +45,6 @@ const ConfirmationScreen: React.FC = () => {
   };
 
   const handleUndo = () => {
-    // Show confirmation dialog
     // @ts-ignore
     navigation.navigate('Dashboard');
   };
@@ -87,13 +86,157 @@ const ConfirmationScreen: React.FC = () => {
     return 'Balance';
   };
 
+  const formatDate = (dateValue: any) => {
+    try {
+      return new Date(dateValue).toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch {
+      return 'Not specified';
+    }
+  };
+
+  // ─── Phase 1: Review ────────────────────────────────────────────────
+  if (!confirmed) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.reviewContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.reviewHeader}>
+            <Text style={styles.reviewHeaderTitle}>Review Expense</Text>
+            <Text style={styles.reviewHeaderSubtitle}>
+              Please review the details before confirming
+            </Text>
+          </View>
+
+          {/* Category Card */}
+          <View style={styles.reviewCard}>
+            <View style={styles.reviewCardHeader}>
+              <Icon name="pricetag" size={20} color="#007AFF" />
+              <Text style={styles.reviewCardTitle}>Category</Text>
+            </View>
+            <View style={styles.reviewCategoryRow}>
+              <Text style={styles.reviewCategoryIcon}>{category?.icon}</Text>
+              <Text style={styles.reviewCardValue}>
+                {category?.name || 'Not specified'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Amount Card */}
+          <View style={styles.reviewCard}>
+            <View style={styles.reviewCardHeader}>
+              <Icon name="cash" size={20} color="#007AFF" />
+              <Text style={styles.reviewCardTitle}>Amount</Text>
+            </View>
+            <Text style={styles.reviewAmountValue}>
+              PKR {amount?.toLocaleString()}
+            </Text>
+          </View>
+
+          {/* Payment Method Card */}
+          <View style={styles.reviewCard}>
+            <View style={styles.reviewCardHeader}>
+              <Icon name="card" size={20} color="#007AFF" />
+              <Text style={styles.reviewCardTitle}>Payment Method</Text>
+            </View>
+            <Text style={styles.reviewCardValue}>
+              {getPaymentMethodDisplay()}
+            </Text>
+          </View>
+
+          {/* Date Card */}
+          <View style={styles.reviewCard}>
+            <View style={styles.reviewCardHeader}>
+              <Icon name="calendar" size={20} color="#007AFF" />
+              <Text style={styles.reviewCardTitle}>Date</Text>
+            </View>
+            <Text style={styles.reviewCardValue}>{formatDate(date)}</Text>
+          </View>
+
+          {/* Vendor Card */}
+          {vendorName ? (
+            <View style={styles.reviewCard}>
+              <View style={styles.reviewCardHeader}>
+                <Icon name="storefront" size={20} color="#007AFF" />
+                <Text style={styles.reviewCardTitle}>Vendor</Text>
+              </View>
+              <Text style={styles.reviewCardValue}>{vendorName}</Text>
+            </View>
+          ) : null}
+
+          {/* Bill Number Card */}
+          {billNumber ? (
+            <View style={styles.reviewCard}>
+              <View style={styles.reviewCardHeader}>
+                <Icon name="document-text" size={20} color="#007AFF" />
+                <Text style={styles.reviewCardTitle}>Bill Number</Text>
+              </View>
+              <Text style={styles.reviewCardValue}>{billNumber}</Text>
+            </View>
+          ) : null}
+
+          {/* Notes Card */}
+          {notes ? (
+            <View style={styles.reviewCard}>
+              <View style={styles.reviewCardHeader}>
+                <Icon name="create" size={20} color="#007AFF" />
+                <Text style={styles.reviewCardTitle}>Notes</Text>
+              </View>
+              <Text style={styles.reviewCardValue}>{notes}</Text>
+            </View>
+          ) : null}
+
+          {/* Bill Photo Indicator */}
+          {billPhoto ? (
+            <View style={styles.reviewCard}>
+              <View style={styles.reviewCardHeader}>
+                <Icon name="image" size={20} color="#007AFF" />
+                <Text style={styles.reviewCardTitle}>Bill Photo</Text>
+              </View>
+              <View style={styles.reviewPhotoIndicator}>
+                <Icon name="checkmark-circle" size={18} color="#34C759" />
+                <Text style={styles.reviewPhotoText}>Photo attached</Text>
+              </View>
+            </View>
+          ) : null}
+        </ScrollView>
+
+        {/* Footer Actions */}
+        <View style={styles.reviewFooter}>
+          <View style={styles.reviewFooterButtons}>
+            <ActionButton
+              title="Go Back"
+              onPress={() => navigation.goBack()}
+              variant="outline"
+              style={styles.reviewGoBackButton}
+            />
+            <ActionButton
+              title="Confirm Expense"
+              onPress={() => setConfirmed(true)}
+              variant="primary"
+              style={styles.reviewConfirmButton}
+            />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ─── Phase 2: Success ───────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Success Header */}
         <View style={styles.successHeader}>
           <Icon name="checkmark-circle" size={64} color="#34C759" />
-          <Text style={styles.successTitle}>✅ Expense Recorded</Text>
+          <Text style={styles.successTitle}>Expense Recorded</Text>
           <Text style={styles.successSubtitle}>Your books are updated</Text>
         </View>
 
@@ -187,7 +330,7 @@ const ConfirmationScreen: React.FC = () => {
         <TouchableOpacity style={styles.actionCard} onPress={handleViewReport}>
           <Icon name="bar-chart" size={24} color="#007AFF" />
           <View style={styles.actionContent}>
-            <Text style={styles.actionLabel}>📊 View Expense Report</Text>
+            <Text style={styles.actionLabel}>View Expense Report</Text>
             <Text style={styles.actionDescription}>See expense trends</Text>
           </View>
           <Icon name="chevron-forward" size={20} color="#C7C7CC" />
@@ -197,7 +340,7 @@ const ConfirmationScreen: React.FC = () => {
           <TouchableOpacity style={styles.actionCard} onPress={handleViewBill}>
             <Icon name="image" size={24} color="#5856D6" />
             <View style={styles.actionContent}>
-              <Text style={styles.actionLabel}>📸 View Attached Bill</Text>
+              <Text style={styles.actionLabel}>View Attached Bill</Text>
               <Text style={styles.actionDescription}>See bill photo</Text>
             </View>
             <Icon name="chevron-forward" size={20} color="#C7C7CC" />
@@ -207,7 +350,7 @@ const ConfirmationScreen: React.FC = () => {
         <TouchableOpacity style={styles.actionCard} onPress={handleAddNote}>
           <Icon name="create" size={24} color="#34C759" />
           <View style={styles.actionContent}>
-            <Text style={styles.actionLabel}>📝 Add Note</Text>
+            <Text style={styles.actionLabel}>Add Note</Text>
             <Text style={styles.actionDescription}>Add additional details</Text>
           </View>
           <Icon name="chevron-forward" size={20} color="#C7C7CC" />
@@ -216,20 +359,18 @@ const ConfirmationScreen: React.FC = () => {
 
       {/* Bottom Actions */}
       <View style={styles.bottomActions}>
-        <ActionButton title="✓ Done" onPress={handleDone} variant="primary" />
+        <ActionButton title="Done" onPress={handleDone} variant="primary" />
 
         <View style={styles.secondaryActions}>
           <TouchableOpacity style={styles.secondaryButton} onPress={handleUndo}>
-            <Text style={styles.secondaryButtonText}>↩️ Undo</Text>
+            <Text style={styles.secondaryButtonText}>Undo</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={handleAddAnother}
           >
-            <Text style={styles.secondaryButtonText}>
-              ➕ Add Another Expense
-            </Text>
+            <Text style={styles.secondaryButtonText}>Add Another Expense</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -242,6 +383,89 @@ const createStyles = (theme: Theme) => ({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+
+  // ─── Review Phase Styles ──────────────────────────────────────────
+  reviewContent: {
+    padding: theme.spacing.md,
+    paddingBottom: theme.spacing.xxl,
+  },
+  reviewHeader: {
+    marginBottom: theme.spacing.lg,
+  },
+  reviewHeaderTitle: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  reviewHeaderSubtitle: {
+    fontSize: 14,
+    color: theme.colors.text.secondary,
+  },
+  reviewCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.sm,
+  },
+  reviewCardHeader: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  reviewCardTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: theme.colors.text.secondary,
+  },
+  reviewCardValue: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: theme.colors.text.primary,
+  },
+  reviewCategoryRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: theme.spacing.sm,
+  },
+  reviewCategoryIcon: {
+    fontSize: 28,
+  },
+  reviewAmountValue: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    color: theme.colors.error,
+  },
+  reviewPhotoIndicator: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: theme.spacing.xs,
+  },
+  reviewPhotoText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: '#34C759',
+  },
+  reviewFooter: {
+    padding: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  reviewFooterButtons: {
+    flexDirection: 'row' as const,
+    gap: theme.spacing.sm,
+  },
+  reviewGoBackButton: {
+    flex: 1,
+  },
+  reviewConfirmButton: {
+    flex: 2,
+  },
+
+  // ─── Success Phase Styles ─────────────────────────────────────────
   content: {
     padding: theme.spacing.md,
   },
