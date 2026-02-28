@@ -1,5 +1,5 @@
 // flows/accountTransfer/screens/ConfirmationScreen.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-
 
 import { useThemedStyles } from '../../../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +19,7 @@ const ConfirmationScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
   const route = useRoute();
   const navigation = useNavigation();
+  const [confirmed, setConfirmed] = useState(false);
 
   const { sourceAccount, destinationAccount, amount, date, notes } =
     // @ts-ignore
@@ -43,6 +43,218 @@ const ConfirmationScreen: React.FC = () => {
     navigation.navigate('AccountTransferFlow');
   };
 
+  const formattedDate = new Date(date).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  const renderFlowDiagram = () => (
+    <View style={styles.flowCard}>
+      <View style={styles.flowRow}>
+        {/* Source Account */}
+        <View style={styles.flowItem}>
+          <View
+            style={[
+              styles.flowIcon,
+              { backgroundColor: sourceAccount?.color + '20' },
+            ]}
+          >
+            <Icon
+              name={sourceAccount?.icon as any}
+              size={24}
+              color={sourceAccount?.color}
+            />
+          </View>
+          <Text style={styles.flowLabel}>{sourceAccount?.name}</Text>
+          {sourceAccount?.details && (
+            <Text style={styles.flowDetails}>{sourceAccount.details}</Text>
+          )}
+        </View>
+
+        {/* Arrow */}
+        <View style={styles.flowArrow}>
+          <Icon name="arrow-forward" size={32} color="#007AFF" />
+          <Text style={styles.flowAmount}>
+            PKR {amount?.toLocaleString()}
+          </Text>
+        </View>
+
+        {/* Destination Account */}
+        <View style={styles.flowItem}>
+          <View
+            style={[
+              styles.flowIcon,
+              { backgroundColor: destinationAccount?.color + '20' },
+            ]}
+          >
+            <Icon
+              name={destinationAccount?.icon as any}
+              size={24}
+              color={destinationAccount?.color}
+            />
+          </View>
+          <Text style={styles.flowLabel}>{destinationAccount?.name}</Text>
+          {destinationAccount?.details && (
+            <Text style={styles.flowDetails}>
+              {destinationAccount.details}
+            </Text>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderBalanceUpdates = (title: string) => (
+    <View style={styles.balanceUpdatesCard}>
+      <Text style={styles.balanceUpdatesTitle}>{title}</Text>
+
+      {/* Source Account Balance */}
+      <View style={styles.balanceItem}>
+        <View style={styles.balanceHeader}>
+          <View
+            style={[
+              styles.balanceIcon,
+              { backgroundColor: sourceAccount?.color + '20' },
+            ]}
+          >
+            <Icon
+              name={sourceAccount?.icon as any}
+              size={16}
+              color={sourceAccount?.color}
+            />
+          </View>
+          <Text style={styles.balanceItemTitle}>{sourceAccount?.name}</Text>
+        </View>
+        <View style={styles.balanceChange}>
+          <Text style={styles.balanceBefore}>
+            PKR {sourceAccount?.balance.toLocaleString()}
+          </Text>
+          <Icon
+            name="arrow-forward"
+            size={16}
+            color="#8E8E93"
+            style={styles.balanceArrow}
+          />
+          <Text style={[styles.balanceAfter, styles.balanceDecrease]}>
+            PKR {sourceBalanceAfter.toLocaleString()}
+          </Text>
+        </View>
+        <View style={styles.balanceDiff}>
+          <Icon name="trending-down" size={16} color="#FF3B30" />
+          <Text style={[styles.balanceDiffText, { color: '#FF3B30' }]}>
+            -PKR {amount?.toLocaleString()}
+          </Text>
+        </View>
+      </View>
+
+      {/* Destination Account Balance */}
+      <View style={styles.balanceItem}>
+        <View style={styles.balanceHeader}>
+          <View
+            style={[
+              styles.balanceIcon,
+              { backgroundColor: destinationAccount?.color + '20' },
+            ]}
+          >
+            <Icon
+              name={destinationAccount?.icon as any}
+              size={16}
+              color={destinationAccount?.color}
+            />
+          </View>
+          <Text style={styles.balanceItemTitle}>
+            {destinationAccount?.name}
+          </Text>
+        </View>
+        <View style={styles.balanceChange}>
+          <Text style={styles.balanceBefore}>
+            PKR {destinationAccount?.balance.toLocaleString()}
+          </Text>
+          <Icon
+            name="arrow-forward"
+            size={16}
+            color="#8E8E93"
+            style={styles.balanceArrow}
+          />
+          <Text style={[styles.balanceAfter, styles.balanceIncrease]}>
+            PKR {destinationBalanceAfter.toLocaleString()}
+          </Text>
+        </View>
+        <View style={styles.balanceDiff}>
+          <Icon name="trending-up" size={16} color="#34C759" />
+          <Text style={[styles.balanceDiffText, { color: '#34C759' }]}>
+            +PKR {amount?.toLocaleString()}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  // ── Phase 1: Review ──
+  if (!confirmed) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content}>
+          {/* Review Header */}
+          <View style={styles.reviewHeader}>
+            <Icon name="document-text" size={48} color="#007AFF" />
+            <Text style={styles.reviewTitle}>Review Transfer</Text>
+            <Text style={styles.reviewSubtitle}>
+              Please review the details before confirming
+            </Text>
+          </View>
+
+          {/* Transfer Flow Diagram */}
+          {renderFlowDiagram()}
+
+          {/* Details Card */}
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Amount Transferred</Text>
+              <Text style={[styles.summaryValue, styles.summaryValueLarge]}>
+                PKR {amount?.toLocaleString()}
+              </Text>
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Date</Text>
+              <Text style={styles.summaryValue}>{formattedDate}</Text>
+            </View>
+
+            {notes && (
+              <View style={styles.notesSection}>
+                <Text style={styles.notesLabel}>Notes</Text>
+                <Text style={styles.notesText}>{notes}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Balance Preview */}
+          {renderBalanceUpdates('Balance Preview')}
+        </ScrollView>
+
+        {/* Review Footer */}
+        <View style={styles.reviewFooter}>
+          <TouchableOpacity
+            style={styles.goBackButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.goBackButtonText}>Go Back</Text>
+          </TouchableOpacity>
+          <View style={styles.confirmButtonWrapper}>
+            <ActionButton
+              title="Confirm Transfer"
+              onPress={() => setConfirmed(true)}
+              variant="primary"
+            />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Phase 2: Success ──
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -64,59 +276,7 @@ const ConfirmationScreen: React.FC = () => {
         </View>
 
         {/* Transfer Flow Diagram */}
-        <View style={styles.flowCard}>
-          <View style={styles.flowRow}>
-            {/* Source Account */}
-            <View style={styles.flowItem}>
-              <View
-                style={[
-                  styles.flowIcon,
-                  { backgroundColor: sourceAccount?.color + '20' },
-                ]}
-              >
-                <Icon
-                  name={sourceAccount?.icon as any}
-                  size={24}
-                  color={sourceAccount?.color}
-                />
-              </View>
-              <Text style={styles.flowLabel}>{sourceAccount?.name}</Text>
-              {sourceAccount?.details && (
-                <Text style={styles.flowDetails}>{sourceAccount.details}</Text>
-              )}
-            </View>
-
-            {/* Arrow */}
-            <View style={styles.flowArrow}>
-              <Icon name="arrow-forward" size={32} color="#007AFF" />
-              <Text style={styles.flowAmount}>
-                PKR {amount?.toLocaleString()}
-              </Text>
-            </View>
-
-            {/* Destination Account */}
-            <View style={styles.flowItem}>
-              <View
-                style={[
-                  styles.flowIcon,
-                  { backgroundColor: destinationAccount?.color + '20' },
-                ]}
-              >
-                <Icon
-                  name={destinationAccount?.icon as any}
-                  size={24}
-                  color={destinationAccount?.color}
-                />
-              </View>
-              <Text style={styles.flowLabel}>{destinationAccount?.name}</Text>
-              {destinationAccount?.details && (
-                <Text style={styles.flowDetails}>
-                  {destinationAccount.details}
-                </Text>
-              )}
-            </View>
-          </View>
-        </View>
+        {renderFlowDiagram()}
 
         {/* Summary Card */}
         <View style={styles.summaryCard}>
@@ -129,13 +289,7 @@ const ConfirmationScreen: React.FC = () => {
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Date</Text>
-            <Text style={styles.summaryValue}>
-              {new Date(date).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </Text>
+            <Text style={styles.summaryValue}>{formattedDate}</Text>
           </View>
 
           {notes && (
@@ -147,91 +301,7 @@ const ConfirmationScreen: React.FC = () => {
         </View>
 
         {/* Balance Updates */}
-        <View style={styles.balanceUpdatesCard}>
-          <Text style={styles.balanceUpdatesTitle}>
-            Account Balances Updated
-          </Text>
-
-          {/* Source Account Balance */}
-          <View style={styles.balanceItem}>
-            <View style={styles.balanceHeader}>
-              <View
-                style={[
-                  styles.balanceIcon,
-                  { backgroundColor: sourceAccount?.color + '20' },
-                ]}
-              >
-                <Icon
-                  name={sourceAccount?.icon as any}
-                  size={16}
-                  color={sourceAccount?.color}
-                />
-              </View>
-              <Text style={styles.balanceItemTitle}>{sourceAccount?.name}</Text>
-            </View>
-            <View style={styles.balanceChange}>
-              <Text style={styles.balanceBefore}>
-                PKR {sourceAccount?.balance.toLocaleString()}
-              </Text>
-              <Icon
-                name="arrow-forward"
-                size={16}
-                color="#8E8E93"
-                style={styles.balanceArrow}
-              />
-              <Text style={[styles.balanceAfter, styles.balanceDecrease]}>
-                PKR {sourceBalanceAfter.toLocaleString()}
-              </Text>
-            </View>
-            <View style={styles.balanceDiff}>
-              <Icon name="trending-down" size={16} color="#FF3B30" />
-              <Text style={[styles.balanceDiffText, { color: '#FF3B30' }]}>
-                -PKR {amount?.toLocaleString()}
-              </Text>
-            </View>
-          </View>
-
-          {/* Destination Account Balance */}
-          <View style={styles.balanceItem}>
-            <View style={styles.balanceHeader}>
-              <View
-                style={[
-                  styles.balanceIcon,
-                  { backgroundColor: destinationAccount?.color + '20' },
-                ]}
-              >
-                <Icon
-                  name={destinationAccount?.icon as any}
-                  size={16}
-                  color={destinationAccount?.color}
-                />
-              </View>
-              <Text style={styles.balanceItemTitle}>
-                {destinationAccount?.name}
-              </Text>
-            </View>
-            <View style={styles.balanceChange}>
-              <Text style={styles.balanceBefore}>
-                PKR {destinationAccount?.balance.toLocaleString()}
-              </Text>
-              <Icon
-                name="arrow-forward"
-                size={16}
-                color="#8E8E93"
-                style={styles.balanceArrow}
-              />
-              <Text style={[styles.balanceAfter, styles.balanceIncrease]}>
-                PKR {destinationBalanceAfter.toLocaleString()}
-              </Text>
-            </View>
-            <View style={styles.balanceDiff}>
-              <Icon name="trending-up" size={16} color="#34C759" />
-              <Text style={[styles.balanceDiffText, { color: '#34C759' }]}>
-                +PKR {amount?.toLocaleString()}
-              </Text>
-            </View>
-          </View>
-        </View>
+        {renderBalanceUpdates('Account Balances Updated')}
 
         {/* Info Box */}
         <View style={styles.infoBox}>
@@ -302,6 +372,50 @@ const createStyles = (theme: Theme) => ({
   content: {
     padding: theme.spacing.md,
   },
+
+  // ── Review Phase ──
+  reviewHeader: {
+    alignItems: 'center' as const,
+    marginBottom: theme.spacing.lg,
+  },
+  reviewTitle: {
+    ...theme.typography.h2,
+    color: theme.colors.text.primary,
+    fontWeight: 'bold' as const,
+    marginTop: theme.spacing.sm,
+  },
+  reviewSubtitle: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
+  },
+  reviewFooter: {
+    flexDirection: 'row' as const,
+    padding: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    gap: theme.spacing.sm,
+  },
+  goBackButton: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: 14,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  goBackButtonText: {
+    ...theme.typography.button,
+    color: theme.colors.text.secondary,
+  },
+  confirmButtonWrapper: {
+    flex: 2,
+  },
+
+  // ── Success Phase ──
   successHeader: {
     alignItems: 'center' as const,
     marginBottom: theme.spacing.lg,
@@ -334,6 +448,8 @@ const createStyles = (theme: Theme) => ({
     color: theme.colors.primary,
     fontWeight: 'bold' as const,
   },
+
+  // ── Shared: Flow Diagram ──
   flowCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
@@ -381,6 +497,8 @@ const createStyles = (theme: Theme) => ({
     fontWeight: '700' as const,
     marginTop: theme.spacing.xs,
   },
+
+  // ── Shared: Summary / Details Card ──
   summaryCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
@@ -423,6 +541,8 @@ const createStyles = (theme: Theme) => ({
     color: theme.colors.text.primary,
     lineHeight: 20,
   },
+
+  // ── Shared: Balance Updates ──
   balanceUpdatesCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
@@ -492,6 +612,8 @@ const createStyles = (theme: Theme) => ({
     ...theme.typography.caption,
     fontWeight: '600' as const,
   },
+
+  // ── Success-only ──
   infoBox: {
     flexDirection: 'row' as const,
     backgroundColor: theme.colors.primary + '10',

@@ -42,6 +42,9 @@ interface ReceiptsFlowState {
   unallocatedAmount: number;
   isAutoAllocated: boolean;
 
+  // Payment date (ISO string)
+  paymentDate: string;
+
   // Notes
   notes: string;
 
@@ -72,6 +75,7 @@ const initialState: ReceiptsFlowState = {
   totalAllocated: 0,
   unallocatedAmount: 0,
   isAutoAllocated: false,
+  paymentDate: new Date().toISOString(),
   notes: '',
   paymentResponse: null,
   isLoading: false,
@@ -213,7 +217,7 @@ export const submitReceiptPayment = createAsyncThunk<
       paidAmount: state.amount,
       paymentMode: state.paymentMethod,
       bankAccountId: state.selectedBankAccountId || undefined,
-      paymentDate: new Date().toISOString().split('T')[0],
+      paymentDate: state.paymentDate,
       invoiceAllocations:
         state.invoiceAllocations.length > 0
           ? state.invoiceAllocations.map(invoice => {
@@ -352,6 +356,11 @@ const receiptsSlice = createSlice({
       state.isAutoAllocated = false;
     },
 
+    // Payment date
+    setPaymentDate: (state, action: PayloadAction<string>) => {
+      state.paymentDate = action.payload;
+    },
+
     // Notes
     setNotes: (state, action: PayloadAction<string>) => {
       state.notes = action.payload;
@@ -432,6 +441,7 @@ export const {
   setInvoiceAllocation,
   autoAllocate,
   clearAllocations,
+  setPaymentDate,
   setNotes,
   clearError,
   resetReceiptsFlow,
@@ -456,6 +466,8 @@ export const selectAllocationSummary = (state: RootState) => ({
   unallocatedAmount: state.receipts.unallocatedAmount,
   isAutoAllocated: state.receipts.isAutoAllocated,
 });
+export const selectReceiptPaymentDate = (state: RootState) =>
+  state.receipts.paymentDate;
 export const selectCustomersWithReceivables = (state: RootState) =>
   state.receipts.customersWithReceivables;
 export const selectReceiptsLoading = (state: RootState) =>

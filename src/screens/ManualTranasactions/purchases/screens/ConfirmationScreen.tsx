@@ -49,7 +49,6 @@ const ConfirmationScreen: React.FC = () => {
   const route = useRoute();
   const dispatch = useAppDispatch();
 
-  // Get data from route params (passed from previous screen) or Redux
   // @ts-ignore
   const routeParams = route.params?.flowData || route.params || {};
 
@@ -60,9 +59,10 @@ const ConfirmationScreen: React.FC = () => {
   const paymentDetails = useAppSelector(selectPaymentDetails);
   const createdInvoice = useAppSelector(selectCreatedInvoice);
   const isLoading = useAppSelector(selectPurchasesLoading);
-  const [isRedirect, setRedirect] = useState<boolean>(false);
 
-  // Use route params if available, otherwise use Redux
+  const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
   const totalAmount =
     routeParams.totalAmount ||
     routeParams.grandTotal ||
@@ -81,11 +81,21 @@ const ConfirmationScreen: React.FC = () => {
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  useEffect(() => {
-    if (!createdInvoice && !isLoading && !isRedirect) {
-      dispatch(createPurchaseInvoice());
+  const handleConfirmPurchase = useCallback(async () => {
+    try {
+      setSubmitting(true);
+      const result = await dispatch(createPurchaseInvoice()).unwrap();
+      setConfirmed(true);
+    } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Purchase Failed',
+        text2: error?.message || 'Something went wrong. Please try again.',
+      });
+    } finally {
+      setSubmitting(false);
     }
-  }, [dispatch, createdInvoice, isLoading, isRedirect]);
+  }, [dispatch]);
 
   const handleDone = useCallback(() => {
     dispatch(resetPurchaseFlow());
@@ -216,18 +226,191 @@ const ConfirmationScreen: React.FC = () => {
     });
   };
 
-  // Loading state
-  if (isLoading) {
+  // Loading / submitting state
+  if (submitting || isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Recording payment...</Text>
+          <Text style={styles.loadingText}>Recording purchase...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  // ─── Phase 1: Review ───
+  if (!confirmed) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Review Header */}
+          <View style={styles.reviewHeader}>
+            <Text style={styles.reviewTitle}>Review Purchase</Text>
+            <Text style={styles.reviewSubtitle}>
+              Please review the details before confirming
+            </Text>
+          </View>
+
+          {/* Supplier Card */}
+          <View style={styles.reviewCard}>
+            <Text style={styles.reviewSectionTitle}>Supplier</Text>
+            <Text style={styles.reviewSupplierName}>
+              {supplier?.name || 'N/A'}
+            </Text>
+          </View>
+
+          {/* Items Card */}
+          <View style={styles.reviewCard}>
+            <Text style={styles.reviewSectionTitle}>Items</Text>
+            {bill && bill.length > 0 ? (
+              <>
+                {bill.map((item: any, index: number) => (
+                  <View key={item.id || index} style={styles.reviewItemRow}>
+                    <View style={styles.reviewItemInfo}>
+                      <Text style={styles.reviewItemName} numberOfLines={1}>
+                        {item.name || item.productName || `Item ${index + 1}`}
+                      </Text>
+                      <Text style={styles.reviewItemMeta}>
+                        {item.quantity || 1} x PKR{' '}
+                        {(item.price || item.unitPrice || 0).toLocaleString()}
+                      </Text>
+                    </View>
+                    <Text style={styles.reviewItemTotal}>
+                      PKR{' '}
+                      {(
+                        (item.quantity || 1) * (item.price || item.unitPrice || 0)
+                      ).toLocaleString()}
+                    </Text>
+                  </View>
+                ))}
+                <View style={styles.divider} />
+                <View style={styles.reviewTotalRow}>
+                  <Text style={styles.reviewTotalLabel}>Total</Text>
+                  <Text style={styles.reviewTotalValue}>
+                    PKR {totalAmount?.toLocaleString() || 0}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <View style={styles.reviewTotalRow}>
+                <Text style={styles.reviewTotalLabel}>Direct Total</Text>
+                <Text style={styles.reviewTotalValue}>
+                  PKR {totalAmount?.toLocaleString() || 0}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Payment Details Card */}
+          <View style={styles.reviewCard}>
+            <Text style={styles.reviewSectionTitle}>Payment Details</Text>
+
+            <View style={styles.reviewDetailRow}>
+              <Text style={styles.reviewDetailLabel}>Total Amount</Text>
+              <Text style={styles.reviewDetailValueBold}>
+                PKR {totalAmount?.toLocaleString() || 0}
+              </Text>
+            </View>
+
+            <View style={styles.reviewDetailRow}>
+              <Text style={styles.reviewDetailLabel}>Payment Status</Text>
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: getStatusColor() + '20' },
+                ]}
+              >
+                <Text style={[styles.statusText, { color: getStatusColor() }]}>
+                  {getStatusText()}
+                </Text>
+              </View>
+            </View>
+
+            {paymentMethod && (
+              <View style={styles.reviewDetailRow}>
+                <Text style={styles.reviewDetailLabel}>Payment Method</Text>
+                <Text style={styles.reviewDetailValue}>
+                  {paymentMethod.charAt(0).toUpperCase() +
+                    paymentMethod.slice(1)}
+                </Text>
+              </View>
+            )}
+
+            {paymentStatus === 'partial' && (
+              <>
+                <View style={styles.reviewDetailRow}>
+                  <Text style={styles.reviewDetailLabel}>Paid Amount</Text>
+                  <Text
+                    style={[
+                      styles.reviewDetailValue,
+                      { color: theme.colors.success },
+                    ]}
+                  >
+                    PKR {paidAmount?.toLocaleString() || 0}
+                  </Text>
+                </View>
+                <View style={styles.reviewDetailRow}>
+                  <Text style={styles.reviewDetailLabel}>Remaining</Text>
+                  <Text
+                    style={[
+                      styles.reviewDetailValue,
+                      { color: theme.colors.error },
+                    ]}
+                  >
+                    PKR {remainingAmount?.toLocaleString() || 0}
+                  </Text>
+                </View>
+              </>
+            )}
+
+            {dueDate && paymentStatus !== 'paid' && (
+              <View style={styles.reviewDetailRow}>
+                <Text style={styles.reviewDetailLabel}>Due Date</Text>
+                <Text
+                  style={[
+                    styles.reviewDetailValue,
+                    { color: theme.colors.warning },
+                  ]}
+                >
+                  {formatDate(dueDate)}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Date Card */}
+          <View style={styles.reviewCard}>
+            <Text style={styles.reviewSectionTitle}>Date</Text>
+            <Text style={styles.reviewDetailValue}>
+              {formatDate(new Date().toISOString())}
+            </Text>
+          </View>
+        </ScrollView>
+
+        {/* Review Footer */}
+        <View style={styles.reviewFooter}>
+          <TouchableOpacity
+            style={styles.goBackButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.goBackButtonText}>Go Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={handleConfirmPurchase}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.confirmButtonText}>Confirm Purchase</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ─── Phase 2: Success ───
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView
@@ -496,6 +679,152 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     content: {
       padding: theme.spacing.md,
     },
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing.md,
+    },
+    loadingText: {
+      fontSize: 16,
+      color: theme.colors.text.secondary,
+    },
+
+    // ─── Review Phase ───
+    reviewHeader: {
+      alignItems: 'center',
+      marginBottom: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
+    },
+    reviewTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: theme.colors.text.primary,
+    },
+    reviewSubtitle: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      marginTop: theme.spacing.xs,
+    },
+    reviewCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.lg,
+      padding: theme.spacing.md,
+      marginBottom: theme.spacing.md,
+      ...theme.shadows.sm,
+    },
+    reviewSectionTitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.colors.text.secondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: theme.spacing.sm,
+    },
+    reviewSupplierName: {
+      fontSize: 17,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
+    },
+    reviewItemRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.sm,
+    },
+    reviewItemInfo: {
+      flex: 1,
+      marginRight: theme.spacing.md,
+    },
+    reviewItemName: {
+      fontSize: 15,
+      fontWeight: '500',
+      color: theme.colors.text.primary,
+    },
+    reviewItemMeta: {
+      fontSize: 13,
+      color: theme.colors.text.secondary,
+      marginTop: 2,
+    },
+    reviewItemTotal: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
+    },
+    reviewTotalRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.xs,
+    },
+    reviewTotalLabel: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.colors.text.primary,
+    },
+    reviewTotalValue: {
+      fontSize: 17,
+      fontWeight: 'bold',
+      color: theme.colors.primary,
+    },
+    reviewDetailRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.sm,
+    },
+    reviewDetailLabel: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+    },
+    reviewDetailValue: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: theme.colors.text.primary,
+    },
+    reviewDetailValueBold: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.text.primary,
+    },
+    reviewFooter: {
+      flexDirection: 'row',
+      padding: theme.spacing.md,
+      gap: theme.spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+    },
+    goBackButton: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 14,
+      borderRadius: theme.borderRadius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      backgroundColor: 'transparent',
+    },
+    goBackButtonText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.colors.text.secondary,
+    },
+    confirmButton: {
+      flex: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 14,
+      borderRadius: theme.borderRadius.lg,
+      backgroundColor: theme.colors.primary,
+    },
+    confirmButtonText: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
+
+    // ─── Success Phase ───
     successHeader: {
       alignItems: 'center',
       marginBottom: theme.spacing.lg,
