@@ -6,24 +6,34 @@ import {
   StyleSheet,
   TextInputProps,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
+import { EyeIcon, EyeSlashIcon, WarningCircleIcon } from 'phosphor-react-native';
 import { useTheme } from '../../store/hooks';
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
+  hint?: string;
+  leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   onRightIconPress?: () => void;
   showPasswordToggle?: boolean;
+  disabled?: boolean;
+  required?: boolean;
 }
 
 const InputComponent: React.FC<InputProps> = ({
   label,
   error,
+  hint,
+  leftIcon,
   rightIcon,
   onRightIconPress,
   showPasswordToggle = false,
   secureTextEntry,
+  disabled = false,
+  required = false,
   style,
   ...textInputProps
 }) => {
@@ -43,81 +53,131 @@ const InputComponent: React.FC<InputProps> = ({
     setIsFocused(false);
   }, []);
 
-  const displaySecureTextEntry = showPasswordToggle ? !isPasswordVisible && secureTextEntry : secureTextEntry;
+  const displaySecureTextEntry = showPasswordToggle 
+    ? !isPasswordVisible && secureTextEntry 
+    : secureTextEntry;
 
   const styles = useMemo(() => StyleSheet.create({
     container: {
       marginBottom: theme.spacing.md,
     },
-    label: {
-      ...theme.typography.body,
-      color: theme.colors.text.primary,
-      marginBottom: theme.spacing.xs,
-      fontWeight: '500',
-    },
-    inputContainer: {
+    labelContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.md,
-      backgroundColor: theme.colors.surface,
+      marginBottom: theme.spacing.xs,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: theme.colors.text.primary,
+    },
+    required: {
+      color: theme.colors.error,
+      marginLeft: 4,
+      fontSize: 14,
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1.5,
+      borderColor: error 
+        ? theme.colors.error 
+        : isFocused 
+          ? theme.colors.primary 
+          : theme.colors.border,
+      borderRadius: theme.borderRadius.lg,
+      backgroundColor: disabled 
+        ? theme.colors.divider 
+        : theme.colors.surface,
       paddingHorizontal: theme.spacing.md,
-      minHeight: 48,
+      minHeight: 52,
+      ...(isFocused && !error && {
+        shadowColor: theme.colors.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 2,
+      }),
     },
-    inputContainerFocused: {
-      borderColor: theme.colors.primary,
-      borderWidth: 2,
-    },
-    inputContainerError: {
-      borderColor: theme.colors.error,
+    leftIconContainer: {
+      marginRight: theme.spacing.sm,
     },
     input: {
       flex: 1,
-      ...theme.typography.body,
-      color: theme.colors.text.primary,
+      fontSize: 16,
+      color: disabled ? theme.colors.text.disabled : theme.colors.text.primary,
       paddingVertical: theme.spacing.sm,
+      fontWeight: '400',
     },
     rightIconContainer: {
       marginLeft: theme.spacing.sm,
       padding: theme.spacing.xs,
     },
-    errorText: {
-      ...theme.typography.caption,
-      color: theme.colors.error,
+    passwordToggle: {
+      padding: 8,
+      marginLeft: 4,
+      marginRight: -4,
+    },
+    helperContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
       marginTop: theme.spacing.xs,
+      paddingHorizontal: 4,
     },
-    eyeIcon: {
-      fontSize: 20,
+    errorIcon: {
+      marginRight: 4,
     },
-  }), [theme]);
+    errorText: {
+      fontSize: 12,
+      color: theme.colors.error,
+      flex: 1,
+    },
+    hintText: {
+      fontSize: 12,
+      color: theme.colors.text.secondary,
+    },
+  }), [theme, isFocused, error, disabled]);
 
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
-      <View
-        style={[
-          styles.inputContainer,
-          isFocused && styles.inputContainerFocused,
-          error && styles.inputContainerError,
-        ]}
-      >
+      {label && (
+        <View style={styles.labelContainer}>
+          <Text style={styles.label}>{label}</Text>
+          {required && <Text style={styles.required}>*</Text>}
+        </View>
+      )}
+      
+      <View style={styles.inputWrapper}>
+        {leftIcon && (
+          <View style={styles.leftIconContainer}>
+            {leftIcon}
+          </View>
+        )}
+        
         <TextInput
           style={[styles.input, style]}
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholderTextColor={theme.colors.text.disabled}
           secureTextEntry={displaySecureTextEntry}
+          editable={!disabled}
           {...textInputProps}
         />
+        
         {showPasswordToggle && (
           <TouchableOpacity
             onPress={togglePasswordVisibility}
-            style={styles.rightIconContainer}
+            style={styles.passwordToggle}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text style={styles.eyeIcon}>{isPasswordVisible ? '👁️' : '👁️‍🗨️'}</Text>
+            {isPasswordVisible ? (
+              <EyeIcon size={22} color={theme.colors.text.secondary} weight="regular" />
+            ) : (
+              <EyeSlashIcon size={22} color={theme.colors.text.secondary} weight="regular" />
+            )}
           </TouchableOpacity>
         )}
+        
         {rightIcon && !showPasswordToggle && (
           <TouchableOpacity
             onPress={onRightIconPress}
@@ -128,11 +188,26 @@ const InputComponent: React.FC<InputProps> = ({
           </TouchableOpacity>
         )}
       </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      
+      {(error || hint) && (
+        <View style={styles.helperContainer}>
+          {error ? (
+            <>
+              <WarningCircleIcon 
+                size={14} 
+                color={theme.colors.error} 
+                weight="fill" 
+                style={styles.errorIcon}
+              />
+              <Text style={styles.errorText}>{error}</Text>
+            </>
+          ) : (
+            <Text style={styles.hintText}>{hint}</Text>
+          )}
+        </View>
+      )}
     </View>
   );
 };
 
 export const Input = memo(InputComponent);
-
-

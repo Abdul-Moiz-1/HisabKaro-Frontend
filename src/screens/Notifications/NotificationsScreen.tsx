@@ -1,64 +1,205 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
+import { BellSlashIcon, CheckCircleIcon } from 'phosphor-react-native';
+import Toast from 'react-native-toast-message';
 import { NavigationProps } from '../../types';
 import { Container, HeaderNavigation, NotificationCard } from '../../components/common';
 import { Notification } from '../../components/common/NotificationCard';
-import { theme } from '../../constants/theme';
+import { useTheme } from '../../store/hooks';
+import { notificationsApi, Notification as ApiNotification } from '../../services/api';
 
 const NotificationsScreen: React.FC<NavigationProps<'Notifications'>> = ({ navigation }) => {
-  const notifications: Notification[] = [
-    {
-      id: '1',
-      title: 'New Transaction',
-      description: 'You received a payment of Rs.5,000',
-      timestamp: 'Today | 8:25 AM',
-      icon: '💰',
-      iconColor: theme.colors.warning,
-      isRead: false,
-    },
-    {
-      id: '2',
-      title: 'Bill Reminder',
-      description: "Don't forget to pay your electricity bill by the end of the week",
-      timestamp: 'Today | 14:25 PM',
-      icon: '📅',
-      iconColor: theme.colors.warning,
-      isRead: false,
-    },
-    {
-      id: '3',
-      title: 'Budget Alert',
-      description: "You've exceeded 90% of your monthly budget for 'Groceries'.",
-      timestamp: '1 day ago | 14:25 PM',
-      icon: '📊',
-      iconColor: theme.colors.warning,
-      isRead: true,
-    },
-    {
-      id: '4',
-      title: 'Expense Alert',
-      description: 'Your recent grocery expense was higher than usual. Review your spending.',
-      timestamp: '3 days ago | 14:25 PM',
-      icon: '👁️',
-      iconColor: theme.colors.warning,
-      isRead: true,
-    },
-  ];
+  const theme = useTheme();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const handleMarkAllAsRead = () => {
-    // Implement mark all as read functionality
-    console.log('Mark all as read');
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Map API notification to component notification
+  const mapNotification = (apiNotification: ApiNotification): Notification => {
+    const iconMap: Record<string, string> = {
+      payment: '💰',
+      invoice: '📄',
+      customer: '👤',
+      supplier: '📦',
+      reminder: '📅',
+      system: '🔔',
+    };
+
+    const colorMap: Record<string, string> = {
+      success: theme.colors.success,
+      info: theme.colors.info,
+      warning: theme.colors.warning,
+      error: theme.colors.error,
+    };
+
+    // Format timestamp
+    const date = new Date(apiNotification.createdAt);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    let timestamp = '';
+    if (diffDays === 0) {
+      timestamp = `Today | ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+    } else if (diffDays === 1) {
+      timestamp = `Yesterday | ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+    } else {
+      timestamp = `${diffDays} days ago`;
+    }
+
+    return {
+      id: String(apiNotification.id),
+      title: apiNotification.title,
+      description: apiNotification.message,
+      timestamp,
+      icon: iconMap[apiNotification.category] || '🔔',
+      iconColor: colorMap[apiNotification.type] || theme.colors.text.secondary,
+      isRead: apiNotification.isRead,
+    };
   };
+
+  // Fetch notifications
+  const fetchNotifications = useCallback(async (showRefreshing = false) => {
+    try {
+      if (showRefreshing) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      const response = await notificationsApi.getAll({ limit: 50 });
+      const mappedNotifications = response.data.map(mapNotification);
+      setNotifications(mappedNotifications);
+      setUnreadCount(response.unreadCount);
+    } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error.message || 'Failed to fetch notifications',
+      });
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Handle mark as read
+  const handleNotificationPress = async (notification: Notification) => {
+    if (!notification.isRead) {
+      try {
+        await notificationsApi.markAsRead(Number(notification.id));
+        setNotifications(prev =>
+          prev.map(n =>
+            n.id === notification.id ? { ...n, isRead: true } : n
+          )
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+      }
+    }
+
+    // Handle navigation based on notification type (could be extended)
+    console.log('Notification pressed:', notification.id);
+  };
+
+  // Handle mark all as read
+  const handleMarkAllAsRead = async () => {
+    if (unreadCount === 0) return;
+
+    try {
+      await notificationsApi.markAllAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'All notifications marked as read',
+      });
+    } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error.message || 'Failed to mark notifications as read',
+      });
+    }
+  };
+
+  // Handle delete notification
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      await notificationsApi.delete(Number(id));
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      Toast.show({
+        type: 'success',
+        text1: 'Deleted',
+        text2: 'Notification removed',
+      });
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+    }
+  };
+
+  // Render empty state
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <BellSlashIcon size={64} color={theme.colors.text.disabled} weight="light" />
+      <Text style={styles.emptyTitle}>No Notifications</Text>
+      <Text style={styles.emptySubtitle}>
+        You're all caught up! New notifications will appear here.
+      </Text>
+    </View>
+  );
+
+  // Render loading state
+  if (loading) {
+    return (
+      <Container safeArea edges={['top']}>
+        <HeaderNavigation
+          title="Notifications"
+          onBackPress={() => navigation.goBack()}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading notifications...</Text>
+        </View>
+      </Container>
+    );
+  }
 
   return (
     <Container safeArea edges={['top']}>
       <HeaderNavigation
-        title="Notifications"
+        title={`Notifications${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
         onBackPress={() => navigation.goBack()}
         rightComponent={
-          <TouchableOpacity onPress={handleMarkAllAsRead}>
-            <Text style={styles.markAllText}>Mark all as read</Text>
-          </TouchableOpacity>
+          unreadCount > 0 ? (
+            <TouchableOpacity
+              onPress={handleMarkAllAsRead}
+              style={styles.markAllButton}
+              activeOpacity={0.7}
+            >
+              <CheckCircleIcon size={16} color={theme.colors.primary} />
+              <Text style={styles.markAllText}>Mark all read</Text>
+            </TouchableOpacity>
+          ) : null
         }
       />
 
@@ -68,31 +209,79 @@ const NotificationsScreen: React.FC<NavigationProps<'Notifications'>> = ({ navig
         renderItem={({ item }) => (
           <NotificationCard
             notification={item}
-            onPress={() => {
-              // Navigate to notification details or handle action
-              console.log('Notification pressed', item.id);
-            }}
+            onPress={() => handleNotificationPress(item)}
           />
         )}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          notifications.length === 0 && styles.emptyListContent,
+        ]}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={renderEmptyState}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => fetchNotifications(true)}
+            tintColor={theme.colors.primary}
+            colors={[theme.colors.primary]}
+          />
+        }
       />
     </Container>
   );
 };
 
-const styles = StyleSheet.create({
-  listContent: {
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.xl,
-  },
-  markAllText: {
-    ...theme.typography.caption,
-    color: theme.colors.primary,
-    fontWeight: '600',
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    listContent: {
+      paddingHorizontal: theme.spacing.md,
+      paddingTop: theme.spacing.sm,
+      paddingBottom: theme.spacing.xl,
+    },
+    emptyListContent: {
+      flex: 1,
+    },
+    markAllButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+      backgroundColor: `${theme.colors.primary}15`,
+      borderRadius: theme.borderRadius.md,
+    },
+    markAllText: {
+      fontSize: 13,
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      ...theme.typography.body,
+      color: theme.colors.text.secondary,
+      marginTop: theme.spacing.md,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.xl,
+    },
+    emptyTitle: {
+      ...theme.typography.h3,
+      color: theme.colors.text.primary,
+      marginTop: theme.spacing.lg,
+      marginBottom: theme.spacing.sm,
+    },
+    emptySubtitle: {
+      ...theme.typography.body,
+      color: theme.colors.text.secondary,
+      textAlign: 'center',
+    },
+  });
 
 export default NotificationsScreen;
-

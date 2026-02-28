@@ -23,6 +23,7 @@ export const ROUTES = {
   AI_ASSISTANT: 'AIAssistant',
   AI_CHAT: 'AIChat',
   MENU: 'Menu',
+  DIRECTORY: 'DirectoryTab',
   PROFILE: 'Profile',
   BIOMETRIC_VERIFICATION: 'BiometricVerification',
   STATISTICS: 'Statistics',
@@ -40,6 +41,34 @@ export const ROUTES = {
   EDIT_TRANSACTION_FLOW: 'EditTransactionFlow',
   EDIT_TRANSACTION_SELECT_CATEGORY: 'SelectCategory',
   EDIT_TRANSACTION_SELECT_ITEM: 'SelectItems',
+  // Payments Flow
+  PAYMENTS_FLOW: 'PaymentsFlow',
+  SELECT_CUSTOMER: 'SelectCustomer',
+  SELECT_SUPPLIER: 'SelectSupplier',
+  MAKE_PAYMENT: 'MakePayment',
+  PAYMENT_SUCCESS: 'PaymentSuccess',
+  // Customer Screens
+  CUSTOMERS_LIST: 'CustomersList',
+  CUSTOMER_DETAIL: 'CustomerDetail',
+  CUSTOMER_LEDGER: 'CustomerLedger',
+  ADD_CUSTOMER: 'AddCustomer',
+  EDIT_CUSTOMER: 'EditCustomer',
+  // Supplier Screens
+  SUPPLIERS_LIST: 'SuppliersList',
+  SUPPLIER_DETAIL: 'SupplierDetail',
+  SUPPLIER_LEDGER: 'SupplierLedger',
+  ADD_SUPPLIER: 'AddSupplier',
+  EDIT_SUPPLIER: 'EditSupplier',
+  // Inventory Screens
+  INVENTORY_LIST: 'InventoryList',
+  PRODUCT_DETAIL: 'ProductDetail',
+  ADD_PRODUCT: 'AddProduct',
+  EDIT_PRODUCT: 'EditProduct',
+  // Bank Accounts Screens
+  BANK_ACCOUNTS_LIST: 'BankAccountsList',
+  BANK_ACCOUNT_DETAIL: 'BankAccountDetail',
+  ADD_BANK_ACCOUNT: 'AddBankAccount',
+  EDIT_BANK_ACCOUNT: 'EditBankAccount',
 } as const;
 
 export type RouteName = (typeof ROUTES)[keyof typeof ROUTES];

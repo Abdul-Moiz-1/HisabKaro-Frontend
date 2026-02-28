@@ -1,10 +1,34 @@
-import React, { useRef, useEffect, useMemo } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text, Animated } from 'react-native';
+import React, { useRef, useEffect, useMemo, memo } from 'react';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Platform,
+  Text,
+} from 'react-native';
+import {
+  HouseIcon,
+  ChartBarIcon,
+  PlusIcon,
+  FolderIcon,
+  GearIcon,
+} from 'phosphor-react-native';
 import { useTheme } from '../../store/hooks';
+import {
+  NavigationHelpers,
+  NavigationState,
+  ParamListBase,
+} from '@react-navigation/native';
+import {
+  BottomTabNavigationEventMap,
+  BottomTabNavigationProp,
+} from '@react-navigation/bottom-tabs';
+import { MainTabParamList } from '../../navigation/MainTabNavigator';
+import { ROUTES } from '../../constants/routes';
 
 interface TabItem {
   id: string;
-  icon: string;
   label: string;
   isActive?: boolean;
   onPress: () => void;
@@ -13,6 +37,8 @@ interface TabItem {
 interface BottomTabBarProps {
   activeTab: string;
   onTabPress: (tabId: string) => void;
+  state: NavigationState;
+  navigation: NavigationHelpers<ParamListBase, BottomTabNavigationEventMap>;
 }
 
 interface AnimatedTabIconProps {
@@ -22,7 +48,9 @@ interface AnimatedTabIconProps {
 
 const AnimatedTabIcon: React.FC<AnimatedTabIconProps> = ({ tab, children }) => {
   const scaleAnim = useRef(new Animated.Value(tab.isActive ? 1.1 : 1)).current;
-  const opacityAnim = useRef(new Animated.Value(tab.isActive ? 1 : 0.7)).current;
+  const opacityAnim = useRef(
+    new Animated.Value(tab.isActive ? 1 : 0.7),
+  ).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -38,7 +66,7 @@ const AnimatedTabIcon: React.FC<AnimatedTabIconProps> = ({ tab, children }) => {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [tab.isActive]);
+  }, [tab.isActive, scaleAnim, opacityAnim]);
 
   return (
     <Animated.View
@@ -52,258 +80,239 @@ const AnimatedTabIcon: React.FC<AnimatedTabIconProps> = ({ tab, children }) => {
   );
 };
 
-export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabPress }) => {
+const BottomTabBarComponent: React.FC<BottomTabBarProps> = ({
+  activeTab,
+  onTabPress,
+  navigation,
+  state,
+}) => {
   const theme = useTheme();
-  
-  const tabs: TabItem[] = [
-    {
-      id: 'home',
-      icon: 'Rs',
-      label: 'Home',
-      isActive: activeTab === 'home',
-      onPress: () => onTabPress('home'),
-    },
-    {
-      id: 'analytics',
-      icon: '📊',
-      label: 'Analytics',
-      isActive: activeTab === 'analytics',
-      onPress: () => onTabPress('analytics'),
-    },
-    {
-      id: 'add',
-      icon: '+',
-      label: 'Add',
-      isActive: activeTab === 'add',
-      onPress: () => onTabPress('add'),
-    },
-    {
-      id: 'ai',
-      icon: 'AI',
-      label: 'AI',
-      isActive: activeTab === 'ai',
-      onPress: () => onTabPress('ai'),
-    },
-    {
-      id: 'menu',
-      icon: '⋮⋮',
-      label: 'Menu',
-      isActive: activeTab === 'menu',
-      onPress: () => onTabPress('menu'),
-    },
-  ];
+  const currentRoute = state?.routes[state.index].name;
+
+  const tabs: TabItem[] = useMemo(
+    () => [
+      {
+        id: 'home',
+        label: 'Home',
+        isActive: activeTab === 'home',
+        onPress: () => navigation.navigate('HomeTab'),
+      },
+      {
+        id: 'reports',
+        label: 'Reports',
+        isActive: activeTab === 'reports',
+        // onPress: () => onTabPress('reports'),
+        onPress: () => navigation.navigate('Reports'),
+      },
+      {
+        id: 'add',
+        label: 'AI Assistant',
+        isActive: activeTab === 'add',
+        onPress: () => navigation.navigate(ROUTES.AI_ASSISTANT),
+      },
+      {
+        id: 'directory',
+        label: 'Directory',
+        isActive: activeTab === 'directory',
+        onPress: () => navigation.navigate('DirectoryTab'),
+      },
+      {
+        id: 'settings',
+        label: 'Settings',
+        isActive: activeTab === 'settings',
+        onPress: () => navigation.navigate('Menu'),
+      },
+    ],
+    [activeTab, onTabPress],
+  );
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          backgroundColor: theme.colors.background,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+        },
+        tabBar: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          backgroundColor: theme.colors.surface,
+          paddingVertical: theme.spacing.md,
+          paddingHorizontal: theme.spacing.md,
+          borderTopLeftRadius: theme.borderRadius.xl,
+          borderTopRightRadius: theme.borderRadius.xl,
+          ...theme.shadows.lg,
+        },
+        tab: {
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: 1,
+        },
+        addTab: {
+          marginTop: -20,
+        },
+        iconContainer: {
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        iconContainerActive: {
+          backgroundColor: theme.colors.primary,
+        },
+        iconContainerInactive: {
+          backgroundColor: 'transparent',
+        },
+        addButton: {
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: theme.colors.primary,
+          ...theme.shadows.lg,
+        },
+        addButtonLabel: {
+          marginTop: 4,
+          fontSize: 10,
+          fontWeight: '600',
+          color: theme.colors.text.primary,
+        },
+        addButtonContainer: {
+          alignItems: 'center',
+        },
+      }),
+    [theme],
+  );
 
   const renderTabIcon = (tab: TabItem) => {
-    if (tab.id === 'home') {
-      return (
-        <AnimatedTabIcon tab={tab}>
-          <View style={[
-            styles.homeIcon,
-            { backgroundColor: tab.isActive ? theme.colors.primary : theme.colors.surface }
-          ]}>
-            <Text style={[
-              styles.homeIconText,
-              { color: tab.isActive ? theme.colors.text.inverse : theme.colors.text.primary }
-            ]}>
-              Rs
-            </Text>
-          </View>
-        </AnimatedTabIcon>
-      );
-    }
+    const iconSize = 24;
+    const activeColor = theme.colors.text.inverse;
+    const inactiveColor = theme.colors.text.secondary;
 
-    if (tab.id === 'add') {
-      return (
-        <AnimatedTabIcon tab={tab}>
-          <View style={[
-            styles.addButton,
-            { backgroundColor: theme.colors.primary }
-          ]}>
-            <View style={styles.addIcon}>
-              <View style={styles.addIconHorizontal} />
-              <View style={styles.addIconVertical} />
+    switch (tab.id) {
+      case 'home':
+        return (
+          <AnimatedTabIcon tab={tab}>
+            <View
+              style={[
+                styles.iconContainer,
+                tab.isActive
+                  ? styles.iconContainerActive
+                  : styles.iconContainerInactive,
+              ]}
+            >
+              {tab.isActive ? (
+                <HouseIcon size={iconSize} color={activeColor} weight="fill" />
+              ) : (
+                <HouseIcon
+                  size={iconSize}
+                  color={inactiveColor}
+                  weight="regular"
+                />
+              )}
             </View>
-          </View>
-        </AnimatedTabIcon>
-      );
-    }
+          </AnimatedTabIcon>
+        );
 
-    if (tab.id === 'analytics') {
-      return (
-        <AnimatedTabIcon tab={tab}>
-          <View style={[
-            styles.regularIcon,
-            { 
-              backgroundColor: tab.isActive ? theme.colors.primary : 'transparent',
-              borderWidth: tab.isActive ? 0 : 1,
-              borderColor: theme.colors.text.secondary,
-            }
-          ]}>
-            <Text style={[
-              styles.regularIconText,
-              { color: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }
-            ]}>
-              📈
-            </Text>
-          </View>
-        </AnimatedTabIcon>
-      );
-    }
-
-    if (tab.id === 'ai') {
-      return (
-        <AnimatedTabIcon tab={tab}>
-          <View style={[
-            styles.aiIcon,
-            { 
-              backgroundColor: tab.isActive ? theme.colors.primary : 'transparent',
-              borderWidth: tab.isActive ? 0 : 1,
-              borderColor: theme.colors.text.secondary,
-            }
-          ]}>
-            <Text style={[
-              styles.aiIconText,
-              { color: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }
-            ]}>
-              AI
-            </Text>
-          </View>
-        </AnimatedTabIcon>
-      );
-    }
-
-    if (tab.id === 'menu') {
-      return (
-        <AnimatedTabIcon tab={tab}>
-          <View style={[
-            styles.menuIcon,
-            { 
-              backgroundColor: tab.isActive ? theme.colors.primary : 'transparent',
-              borderRadius: 8,
-              borderWidth: tab.isActive ? 0 : 1,
-              borderColor: theme.colors.text.secondary,
-              padding: 8,
-            }
-          ]}>
-            <View style={styles.menuGrid}>
-              <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }]} />
-              <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }]} />
-              <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }]} />
-              <View style={[styles.menuDot, { backgroundColor: tab.isActive ? theme.colors.text.inverse : theme.colors.text.secondary }]} />
+      case 'reports':
+        return (
+          <AnimatedTabIcon tab={tab}>
+            <View
+              style={[
+                styles.iconContainer,
+                tab.isActive
+                  ? styles.iconContainerActive
+                  : styles.iconContainerInactive,
+              ]}
+            >
+              {tab.isActive ? (
+                <ChartBarIcon
+                  size={iconSize}
+                  color={activeColor}
+                  weight="fill"
+                />
+              ) : (
+                <ChartBarIcon
+                  size={iconSize}
+                  color={inactiveColor}
+                  weight="regular"
+                />
+              )}
             </View>
-          </View>
-        </AnimatedTabIcon>
-      );
-    }
+          </AnimatedTabIcon>
+        );
 
-    return null;
+      case 'add':
+        return (
+          <AnimatedTabIcon tab={tab}>
+            <View style={styles.addButtonContainer}>
+              <View style={styles.addButton}>
+                <PlusIcon
+                  size={28}
+                  color={theme.colors.text.inverse}
+                  weight="bold"
+                />
+              </View>
+              <Text style={styles.addButtonLabel}>{tab.label}</Text>
+            </View>
+          </AnimatedTabIcon>
+        );
+
+      case 'directory':
+        return (
+          <AnimatedTabIcon tab={tab}>
+            <View
+              style={[
+                styles.iconContainer,
+                tab.isActive
+                  ? styles.iconContainerActive
+                  : styles.iconContainerInactive,
+              ]}
+            >
+              {tab.isActive ? (
+                <FolderIcon size={iconSize} color={activeColor} weight="fill" />
+              ) : (
+                <FolderIcon
+                  size={iconSize}
+                  color={inactiveColor}
+                  weight="regular"
+                />
+              )}
+            </View>
+          </AnimatedTabIcon>
+        );
+
+      case 'settings':
+        return (
+          <AnimatedTabIcon tab={tab}>
+            <View
+              style={[
+                styles.iconContainer,
+                tab.isActive
+                  ? styles.iconContainerActive
+                  : styles.iconContainerInactive,
+              ]}
+            >
+              {tab.isActive ? (
+                <GearIcon size={iconSize} color={activeColor} weight="fill" />
+              ) : (
+                <GearIcon
+                  size={iconSize}
+                  color={inactiveColor}
+                  weight="regular"
+                />
+              )}
+            </View>
+          </AnimatedTabIcon>
+        );
+
+      default:
+        return null;
+    }
   };
-
-  const styles = useMemo(() => StyleSheet.create({
-    container: {
-      backgroundColor: theme.colors.background,
-      paddingBottom: 20, // Safe area padding
-    },
-    tabBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-around',
-      backgroundColor: theme.colors.surface,
-      paddingVertical: theme.spacing.md,
-      paddingHorizontal: theme.spacing.md,
-      borderTopLeftRadius: theme.borderRadius.xl,
-      borderTopRightRadius: theme.borderRadius.xl,
-      ...theme.shadows.lg,
-    },
-    tab: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      flex: 1,
-    },
-    addTab: {
-      marginTop: -20, // Elevate the add button
-    },
-    homeIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    homeIconText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-    },
-    regularIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    regularIconText: {
-      fontSize: 16,
-    },
-    aiIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    aiIconText: {
-      fontSize: 14,
-      fontWeight: 'bold',
-    },
-    addButton: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      alignItems: 'center',
-      justifyContent: 'center',
-      ...theme.shadows.lg,
-    },
-    addIcon: {
-      width: 24,
-      height: 24,
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-    },
-    addIconHorizontal: {
-      position: 'absolute',
-      width: 16,
-      height: 3,
-      backgroundColor: theme.colors.text.inverse,
-      borderRadius: 1.5,
-    },
-    addIconVertical: {
-      position: 'absolute',
-      width: 3,
-      height: 16,
-      backgroundColor: theme.colors.text.inverse,
-      borderRadius: 1.5,
-    },
-    menuIcon: {
-      width: 40,
-      height: 40,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    menuGrid: {
-      width: 24,
-      height: 24,
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-      alignContent: 'space-between',
-    },
-    menuDot: {
-      width: 8,
-      height: 8,
-      borderRadius: 2,
-    },
-  }), [theme]);
 
   const TabButton: React.FC<{ tab: TabItem }> = ({ tab }) => {
     const pressAnim = useRef(new Animated.Value(1)).current;
@@ -350,7 +359,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabPres
   return (
     <View style={styles.container}>
       <View style={styles.tabBar}>
-        {tabs.map((tab) => (
+        {tabs.map(tab => (
           <TabButton key={tab.id} tab={tab} />
         ))}
       </View>
@@ -358,4 +367,4 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({ activeTab, onTabPres
   );
 };
 
-// Styles are now created dynamically in the component
+export const BottomTabBar = memo(BottomTabBarComponent);

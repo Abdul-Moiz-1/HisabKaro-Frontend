@@ -17,7 +17,8 @@ export const SavingsProgressCard: React.FC<SavingsProgressCardProps> = ({
 }) => {
   const progressPercentage = (savedAmount / targetAmount) * 100;
   const circumference = 2 * Math.PI * 35; // radius = 35
-  const strokeDashoffset = circumference - (progressPercentage / 100) * circumference;
+  const strokeDashoffset =
+    circumference - (progressPercentage / 100) * circumference;
 
   return (
     <View style={styles.container}>
@@ -29,22 +30,24 @@ export const SavingsProgressCard: React.FC<SavingsProgressCardProps> = ({
             <Text style={styles.viewDetails}>View Details</Text>
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.progressSection}>
           <View style={styles.progressContainer}>
             {/* Circular Progress Ring */}
             <View style={styles.progressRing}>
               <View style={styles.progressBackground} />
-              <View 
+              <View
                 style={[
                   styles.progressForeground,
                   {
-                    transform: [{ rotate: `${(progressPercentage / 100) * 360}deg` }]
-                  }
-                ]} 
+                    transform: [
+                      { rotate: `${(progressPercentage / 100) * 360}deg` },
+                    ],
+                  },
+                ]}
               />
               <View style={styles.progressCenter}>
-                <Text style={styles.progressAmount}>${savedAmount}</Text>
+                <Text style={styles.progressAmount}>Rs.{savedAmount}K</Text>
                 <Text style={styles.progressLabel}>Saved</Text>
               </View>
             </View>
@@ -129,7 +132,7 @@ const styles = StyleSheet.create({
     ...theme.typography.body,
     color: theme.colors.text.primary,
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 12,
   },
   progressLabel: {
     ...theme.typography.caption,

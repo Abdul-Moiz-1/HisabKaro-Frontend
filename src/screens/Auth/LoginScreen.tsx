@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,58 +6,90 @@ import {
   TouchableOpacity,
   Keyboard,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import LinearGradient from 'react-native-linear-gradient';
+import {
+  EnvelopeIcon,
+  LockIcon,
+  FingerprintIcon,
+  SunIcon,
+  MoonIcon,
+  CaretRightIcon,
+  ShieldCheckIcon,
+} from 'phosphor-react-native';
+import Toast from 'react-native-toast-message';
+
 import { NavigationProps } from '../../types';
 import { ROUTES } from '../../constants/routes';
-import { useTheme } from '../../store/hooks';
-import {
-  Container,
-  Button,
-  Logo,
-  Checkbox,
-  Divider,
-  SocialLoginButton,
-} from '../../components/common';
+import { useTheme, useAppDispatch, useAppSelector } from '../../store/hooks';
+import { Container, Button, Logo, Checkbox } from '../../components/common';
 import { Input } from '../../components/forms';
-import { extractUserFromToken, isValidEmail } from '../../utils';
+import { toggleTheme } from '../../store/slices/themeSlice';
+import { loginUser, clearError } from '../../store/slices/userSlice';
+import { loginSchema } from './schemas/authSchemas';
+
+// Define form values inline to avoid schema type mismatch
+interface LoginFormValues {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
 import {
   getBiometricAvailability,
   getStoredBiometricProfile,
   signWithBiometrics,
 } from '../../utils/biometrics';
-import { useAppDispatch } from '../../store/hooks';
+import { biometricService } from '../../services/biometricService';
 import {
   setUser,
   setToken,
-  setLoading,
   setRefreshToken,
 } from '../../store/slices/userSlice';
-import { toggleTheme } from '../../store/slices/themeSlice';
-import Toast from 'react-native-toast-message';
-import { authService, AuthServiceError } from '../../services/authService';
-import { biometricService } from '../../services/biometricService';
+import { extractUserFromToken } from '../../utils';
 
 const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(true);
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [loading, setLocalLoading] = useState(false);
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
-  const [biometricLoading, setBiometricLoading] = useState(false);
+  const { isLoading, error, loginAttempts } = useAppSelector(
+    state => state.user,
+  );
+
+  const [biometricAvailable, setBiometricAvailable] = React.useState(false);
+  const [biometricLoading, setBiometricLoading] = React.useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema) as any,
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: true,
+    },
+    mode: 'onChange',
+  });
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  // Clear errors when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
+
+  // Check biometric availability
   const refreshBiometricAvailability = useCallback(async () => {
     const [profile, availability] = await Promise.all([
       getStoredBiometricProfile(),
       getBiometricAvailability(),
     ]);
-
     setBiometricAvailable(Boolean(profile) && availability.available);
   }, []);
 
@@ -67,241 +99,71 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
     }, [refreshBiometricAvailability]),
   );
 
-  const validateForm = (): boolean => {
-    let isValid = true;
+  // Handle login submission
+  const onSubmit = useCallback(
+    async (data: LoginFormValues) => {
+      Keyboard.dismiss();
 
-    if (!email.trim()) {
-      setEmailError('Email is required');
-      isValid = false;
-    } else if (!isValidEmail(email)) {
-      setEmailError('Please enter a valid email');
-      isValid = false;
-    } else {
-      setEmailError('');
-    }
+      try {
+        const result = await dispatch(
+          loginUser({
+            username: data.email.trim().toLowerCase(),
+            password: data.password,
+          }),
+        ).unwrap();
 
-    if (!password.trim()) {
-      setPasswordError('Password is required');
-      isValid = false;
-    } else if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
-      isValid = false;
-    } else {
-      setPasswordError('');
-    }
+        Toast.show({
+          type: 'success',
+          text1: 'Welcome back! 👋',
+          text2: `Signed in as ${result.user.name || result.user.email}`,
+        });
 
-    return isValid;
-  };
+        navigation.replace(ROUTES.HOME);
+      } catch (err: any) {
+        console.log(err);
+        Toast.show({
+          type: 'error',
+          text1: 'Login Failed',
+          text2: err || 'Please check your credentials and try again.',
+        });
+      }
+    },
+    [dispatch, navigation],
+  );
 
-  const handleLogin = async () => {
-  Keyboard.dismiss();
+  useEffect(() => {
+    const data: LoginFormValues = {
+      email: 'kashif2@yopmail.com',
+      password: 'admin',
+      rememberMe: false,
+    };
+    onSubmit(data);
+  }, []);
 
-  if (!validateForm()) {
-    Toast.show({
-      type: 'error',
-      text1: 'Validation Error',
-      text2: 'Please check your email and password',
-    });
-    return;
-  }
-
-  setLocalLoading(true);
-  dispatch(setLoading(true));
-
-  try {
-    // ✅ MOCK LOGIN (DEMO MODE)
-    if (email.trim() === 'test@example.com' && password === '12345678') {
-      const mockAccessToken = 'mock_access_token_123';
-      const mockRefreshToken = 'mock_refresh_token_123';
-
-      const mockUser = {
-        id: 'mock_user_001',
-        email: 'test@example.com',
-        name: 'Test User',
-      };
-
-      dispatch(setToken(mockAccessToken));
-      dispatch(setRefreshToken(mockRefreshToken));
-      dispatch(setUser(mockUser));
-
-      Toast.show({
-        type: 'success',
-        text1: 'Login Successful',
-        text2: 'Welcome back!',
-      });
-
-      navigation.replace(ROUTES.HOME);
-      return; // ⛔ stop here, don’t hit API
-    }
-
-    // 🔐 REAL API LOGIN (will run when API is available)
-    const response = await authService.login({
-      username: email.trim(),
-      password,
-    });
-
-    const tokens = response.data;
-
-    dispatch(setToken(tokens.access_token));
-    dispatch(setRefreshToken(tokens.refresh_token));
-
-    const parsedUser = extractUserFromToken(tokens.access_token);
-
-    if (parsedUser && parsedUser.id) {
-      dispatch(setUser(parsedUser));
-    } else {
-      dispatch(
-        setUser({
-          id: `user_${Date.now()}`,
-          email,
-          name: email,
-        })
-      );
-    }
-
-    Toast.show({
-      type: 'success',
-      text1: 'Login Successful',
-      text2: 'Welcome back!',
-    });
-
-    navigation.replace(ROUTES.HOME);
-  } catch (error) {
-    const apiError = error as AuthServiceError;
-    Toast.show({
-      type: 'error',
-      text1: 'Login Failed',
-      text2: apiError.message,
-    });
-  } finally {
-    setLocalLoading(false);
-    dispatch(setLoading(false));
-  }
-};
-
-
-  // const handleLogin = async () => {
-  //   Keyboard.dismiss();
-
-  //   if (!validateForm()) {
-  //     Toast.show({
-  //       type: 'error',
-  //       text1: 'Validation Error',
-  //       text2: 'Please check your email and password',
-  //     });
-  //     return;
-  //   }
-
-  //   setLocalLoading(true);
-  //   dispatch(setLoading(true));
-
-  //   try {
-  //     const response = await authService.login({
-  //       username: email.trim(),
-  //       password,
-  //     });
-
-  //     const tokens = response.data;
-
-  //     dispatch(setToken(tokens.access_token));
-  //     dispatch(setRefreshToken(tokens.refresh_token));
-
-  //     const parsedUser = extractUserFromToken(tokens.access_token);
-  //     console.log('=== Login - User Extraction ===');
-  //     console.log('Parsed user from token:', parsedUser);
-  //     console.log('User ID (sub):', parsedUser?.id);
-
-  //     if (parsedUser && parsedUser.id) {
-  //       dispatch(setUser(parsedUser));
-  //       console.log('✅ User set in Redux with ID from token sub claim');
-  //     } else {
-  //       console.warn('⚠️ Token missing sub claim, using fallback ID');
-  //       // If token doesn't have user info, create a fallback user with a generated ID
-  //       const fallbackUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  //       dispatch(
-  //         setUser({
-  //           id: fallbackUserId,
-  //           email,
-  //           name: email,
-  //         })
-  //       );
-  //     }
-
-  //     Toast.show({
-  //       type: 'success',
-  //       text1: 'Login Successful',
-  //       text2: 'Welcome back!',
-  //     });
-
-  //     navigation.replace(ROUTES.HOME);
-  //   } catch (error) {
-  //     const apiError = error as AuthServiceError;
-  //     Toast.show({
-  //       type: 'error',
-  //       text1: 'Login Failed',
-  //       text2: apiError.message,
-  //     });
-  //   } finally {
-  //     setLocalLoading(false);
-  //     dispatch(setLoading(false));
-  //   }
-  // };
-
-  const handleSocialLogin = (provider: 'facebook' | 'google' | 'linkedin') => {
-    Toast.show({
-      type: 'info',
-      text1: 'Social Login',
-      text2: `${provider.charAt(0).toUpperCase() + provider.slice(1)
-        } login coming soon`,
-    });
-  };
-
-  const navigateToSignup = () => {
-    navigation.navigate(ROUTES.SIGNUP);
-  };
-
+  // Handle biometric login
   const handleBiometricLogin = async () => {
     setBiometricLoading(true);
 
     try {
       const profile = await getStoredBiometricProfile();
-      console.log('=== Biometric Login Flow ===');
-      console.log('Stored profile:', profile);
 
       if (!profile) {
         throw new Error('Biometric login is not configured for this device.');
       }
 
-      console.log('Step 1: Requesting challenge from backend...');
-      console.log('Payload:', { userId: profile.userId });
-
       const challengeResponse = await biometricService.generateChallenge({
         userId: profile.userId,
       });
-
-      console.log('Challenge response:', challengeResponse);
 
       const challenge = challengeResponse.data?.challenge;
       if (!challenge) {
         throw new Error('Unable to start biometric authentication.');
       }
 
-      console.log('Step 2: Challenge received:', challenge);
-      console.log('Step 3: Prompting biometric authentication...');
-
       const signature = await signWithBiometrics(
         challenge,
         'Login with fingerprint',
       );
-
-      console.log('Step 4: Signature generated, length:', signature.length);
-      console.log('Step 5: Authenticating with backend...');
-      console.log('Payload:', {
-        userId: profile.userId,
-        deviceId: profile.deviceId,
-        challenge: challenge,
-        signature: signature,
-      });
 
       const authResponse = await biometricService.authenticate({
         userId: profile.userId,
@@ -310,8 +172,6 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
         signature,
       });
 
-      console.log('Step 6: Authentication response:', authResponse);
-
       const payload = authResponse.data;
 
       if (payload?.access_token) {
@@ -319,22 +179,20 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
         dispatch(setRefreshToken(payload.refresh_token ?? null));
 
         const parsedUser = extractUserFromToken(payload.access_token);
-        console.log('=== Biometric Login - User Extraction ===');
-        console.log('Parsed user from token:', parsedUser);
-        console.log('User ID (sub):', parsedUser?.id);
 
         if (parsedUser && parsedUser.id) {
-          dispatch(setUser(parsedUser));
-          console.log('✅ User set in Redux with ID from token sub claim');
-        } else {
-          console.warn(
-            '⚠️ Token missing sub claim, using stored profile userId as fallback',
+          dispatch(
+            setUser({
+              id: parsedUser.id,
+              email: parsedUser.email,
+              name: parsedUser.name || parsedUser.email || 'User',
+            }),
           );
-          // Use the stored profile userId as fallback
+        } else {
           dispatch(
             setUser({
               id: profile.userId,
-              email: profile.email ?? email,
+              email: profile.email ?? '',
               name: profile.email ?? 'User',
             }),
           );
@@ -342,33 +200,19 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
 
         Toast.show({
           type: 'success',
-          text1: 'Welcome back!',
+          text1: 'Welcome back! 🔐',
           text2: 'Signed in with biometrics',
         });
 
         navigation.replace(ROUTES.HOME);
-      } else if (payload?.success) {
-        Toast.show({
-          type: 'success',
-          text1: 'Fingerprint verified',
-          text2: 'Please enter your password to finish login',
-        });
       } else {
         throw new Error('Biometric authentication failed. Please try again.');
       }
-    } catch (error) {
-      console.error('=== Biometric Login Error ===');
-      console.error('Error object:', error);
-      console.error('Error details:', (error as AuthServiceError)?.details);
-      console.error('Error status:', (error as AuthServiceError)?.status);
-
-      const message =
-        (error as AuthServiceError)?.message ??
-        (error instanceof Error ? error.message : 'Biometric login failed');
+    } catch (err: any) {
       Toast.show({
         type: 'error',
-        text1: 'Biometric login',
-        text2: message,
+        text1: 'Biometric Login Failed',
+        text2: err.message || 'Please try again or use email/password.',
       });
       await refreshBiometricAvailability();
     } finally {
@@ -376,162 +220,277 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
     }
   };
 
+  const navigateToSignup = () => {
+    navigation.navigate(ROUTES.SIGNUP);
+  };
+
+  const navigateToForgotPassword = () => {
+    navigation.navigate(ROUTES.FORGOT_PASSWORD);
+  };
+
   return (
     <Container scrollable safeArea style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.headerRow}>
-          <View style={styles.logoContainer}>
-            <Logo size="large" />
-          </View>
-          <TouchableOpacity
-            style={styles.themeToggleButton}
-            onPress={() => dispatch(toggleTheme())}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.themeIcon}>
-              {theme.mode === 'dark' ? '🌙' : '☀️'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+      <StatusBar
+        barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.background}
+      />
 
-        <Text style={styles.welcomeText}>Welcome back!</Text>
-
-        <View style={styles.form}>
-          <Input
-            label="Email"
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={text => {
-              setEmail(text);
-              if (emailError) setEmailError('');
-            }}
-            error={emailError}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-          />
-
-          <Input
-            label="Password"
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={text => {
-              setPassword(text);
-              if (passwordError) setPasswordError('');
-            }}
-            error={passwordError}
-            secureTextEntry
-            showPasswordToggle
-            autoCapitalize="none"
-            autoComplete="password"
-          />
-
-          <View style={styles.optionsRow}>
-            <Checkbox
-              checked={rememberMe}
-              onPress={() => setRememberMe(!rememberMe)}
-              label="Remember Me"
-            />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <View style={styles.content}>
+          {/* Header with Theme Toggle */}
+          <View style={styles.header}>
+            <View style={styles.logoSection}>
+              <Logo size="large" />
+            </View>
             <TouchableOpacity
-              onPress={() => navigation.navigate(ROUTES.FORGOT_PASSWORD)}
+              style={styles.themeToggle}
+              onPress={() => dispatch(toggleTheme())}
+              activeOpacity={0.7}
             >
-              <Text style={styles.forgotPassword}>Forgot Password?</Text>
+              {theme.mode === 'dark' ? (
+                <MoonIcon
+                  size={22}
+                  color={theme.colors.primary}
+                  weight="fill"
+                />
+              ) : (
+                <SunIcon size={22} color={theme.colors.primary} weight="fill" />
+              )}
             </TouchableOpacity>
           </View>
 
-          <Button
-            title="Sign in"
-            onPress={handleLogin}
-            variant="primary"
-            size="large"
-            loading={loading}
-            style={styles.button}
-          />
+          {/* Welcome Section */}
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeTitle}>Welcome back!</Text>
+            <Text style={styles.welcomeSubtitle}>
+              Sign in to manage your business finances
+            </Text>
+          </View>
 
-          {biometricAvailable && (
-            <View style={styles.biometricContainer}>
-              <Text style={styles.biometricLabel}>or quick sign in</Text>
-              <TouchableOpacity
-                style={styles.biometricButton}
-                onPress={handleBiometricLogin}
-                disabled={biometricLoading}
-              >
-                {biometricLoading ? (
-                  <ActivityIndicator color={theme.colors.text.inverse} />
-                ) : (
-                  <Text style={styles.biometricIcon}>🔓</Text>
+          {/* Login Form */}
+          <View style={styles.form}>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Email Address"
+                  placeholder="Enter your email"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  error={errors.email?.message}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  required
+                  leftIcon={
+                    <EnvelopeIcon
+                      size={20}
+                      color={
+                        errors.email
+                          ? theme.colors.error
+                          : theme.colors.text.secondary
+                      }
+                      weight="regular"
+                    />
+                  }
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Password"
+                  placeholder="Enter your password"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  error={errors.password?.message}
+                  secureTextEntry
+                  showPasswordToggle
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  required
+                  leftIcon={
+                    <LockIcon
+                      size={20}
+                      color={
+                        errors.password
+                          ? theme.colors.error
+                          : theme.colors.text.secondary
+                      }
+                      weight="regular"
+                    />
+                  }
+                />
+              )}
+            />
+
+            {/* Options Row */}
+            <View style={styles.optionsRow}>
+              <Controller
+                control={control}
+                name="rememberMe"
+                render={({ field: { onChange, value } }) => (
+                  <Checkbox
+                    checked={value || false}
+                    onPress={() => onChange(!value)}
+                    label="Remember me"
+                  />
                 )}
+              />
+              <TouchableOpacity onPress={navigateToForgotPassword}>
+                <Text style={styles.forgotPassword}>Forgot Password?</Text>
               </TouchableOpacity>
             </View>
-          )}
 
-          {/* <Divider text="or continue with" /> */}
+            {/* Login Button */}
+            <Button
+              title="Sign In"
+              onPress={handleSubmit(onSubmit)}
+              variant="primary"
+              size="large"
+              loading={isLoading}
+              disabled={isLoading}
+              style={styles.loginButton}
+            />
 
-          {/* <View style={styles.socialContainer}>
-            <SocialLoginButton
-              provider="facebook"
-              onPress={() => handleSocialLogin('facebook')}
-            />
-            <SocialLoginButton
-              provider="google"
-              onPress={() => handleSocialLogin('google')}
-            />
-            <SocialLoginButton
-              provider="linkedin"
-              onPress={() => handleSocialLogin('linkedin')}
-            />
-          </View> */}
+            {/* Rate Limiting Warning */}
+            {loginAttempts > 2 && (
+              <View style={styles.warningContainer}>
+                <ShieldCheckIcon
+                  size={16}
+                  color={theme.colors.warning}
+                  weight="fill"
+                />
+                <Text style={styles.warningText}>
+                  {5 - loginAttempts} attempts remaining before temporary
+                  lockout
+                </Text>
+              </View>
+            )}
 
-          <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>If you are not registered, </Text>
-            <TouchableOpacity onPress={navigateToSignup}>
-              <Text style={styles.signupLink}>Create an account</Text>
+            {/* Biometric Login */}
+            {biometricAvailable && (
+              <View style={styles.biometricSection}>
+                <View style={styles.dividerContainer}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or sign in with</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <TouchableOpacity
+                  style={styles.biometricButton}
+                  onPress={handleBiometricLogin}
+                  disabled={biometricLoading}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={[theme.colors.primary, '#00A86B']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.biometricGradient}
+                  >
+                    {biometricLoading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <>
+                        <FingerprintIcon
+                          size={24}
+                          color="#FFFFFF"
+                          weight="regular"
+                        />
+                        <Text style={styles.biometricText}>
+                          Use Fingerprint
+                        </Text>
+                      </>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          {/* Sign Up Section */}
+          <View style={styles.signupSection}>
+            <Text style={styles.signupText}>Don't have an account? </Text>
+            <TouchableOpacity
+              onPress={navigateToSignup}
+              style={styles.signupLink}
+            >
+              <Text style={styles.signupLinkText}>Create Account</Text>
+              <CaretRightIcon
+                size={16}
+                color={theme.colors.primary}
+                weight="bold"
+              />
             </TouchableOpacity>
           </View>
+
+          {/* Demo Mode Hint */}
+          <View style={styles.demoHint}>
+            <Text style={styles.demoHintText}>
+              Demo: test@example.com / 12345678
+            </Text>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Container>
   );
 };
 
-// Helper function to create styles with theme
 const createStyles = (theme: ReturnType<typeof useTheme>) =>
   StyleSheet.create({
     container: {
       backgroundColor: theme.colors.background,
     },
+    keyboardView: {
+      flex: 1,
+    },
     content: {
       flex: 1,
       paddingHorizontal: theme.spacing.xl,
-      paddingTop: theme.spacing.xl,
+      paddingTop: theme.spacing.lg,
+      paddingBottom: theme.spacing.xl,
     },
-    headerRow: {
+    header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       marginBottom: theme.spacing.xl,
     },
-    logoContainer: {
-      alignItems: 'center',
+    logoSection: {
       flex: 1,
     },
-    themeToggleButton: {
+    themeToggle: {
       width: 44,
       height: 44,
       borderRadius: 22,
       backgroundColor: theme.colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: theme.spacing.sm,
+      ...theme.shadows.sm,
     },
-    themeIcon: {
-      fontSize: 20,
+    welcomeSection: {
+      marginBottom: theme.spacing.xl,
     },
-    welcomeText: {
-      ...theme.typography.h2,
+    welcomeTitle: {
+      fontSize: 28,
+      fontWeight: 'bold',
       color: theme.colors.text.primary,
-      textAlign: 'center',
-      marginBottom: theme.spacing.xxl,
+      marginBottom: theme.spacing.xs,
+    },
+    welcomeSubtitle: {
+      fontSize: 16,
+      color: theme.colors.text.secondary,
+      lineHeight: 24,
     },
     form: {
       width: '100%',
@@ -541,60 +500,98 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: theme.spacing.lg,
+      marginTop: theme.spacing.xs,
     },
     forgotPassword: {
-      ...theme.typography.body,
-      color: theme.colors.primary,
-      fontWeight: '500',
-    },
-    button: {
-      marginBottom: theme.spacing.lg,
-    },
-    biometricContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: theme.spacing.lg,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.lg,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
-    },
-    biometricLabel: {
-      ...theme.typography.body,
-      color: theme.colors.text.secondary,
-      flex: 1,
-    },
-    biometricButton: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      backgroundColor: theme.colors.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    biometricIcon: {
-      fontSize: 20,
-    },
-    // socialContainer: {
-    //   flexDirection: 'row',
-    //   justifyContent: 'center',
-    //   gap: theme.spacing.md,
-    // },
-    signupContainer: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: theme.spacing.xl,
-    },
-    signupText: {
-      ...theme.typography.body,
-      color: theme.colors.text.primary,
-    },
-    signupLink: {
-      ...theme.typography.body,
+      fontSize: 14,
       color: theme.colors.primary,
       fontWeight: '600',
+    },
+    loginButton: {
+      marginBottom: theme.spacing.md,
+    },
+    warningContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: `${theme.colors.warning}15`,
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      borderRadius: theme.borderRadius.md,
+      marginBottom: theme.spacing.md,
+    },
+    warningText: {
+      fontSize: 12,
+      color: theme.colors.warning,
+      marginLeft: theme.spacing.xs,
+      fontWeight: '500',
+    },
+    biometricSection: {
+      marginTop: theme.spacing.md,
+    },
+    dividerContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: theme.spacing.lg,
+    },
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: theme.colors.border,
+    },
+    dividerText: {
+      fontSize: 13,
+      color: theme.colors.text.secondary,
+      marginHorizontal: theme.spacing.md,
+    },
+    biometricButton: {
+      borderRadius: theme.borderRadius.lg,
+      overflow: 'hidden',
+      ...theme.shadows.sm,
+    },
+    biometricGradient: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: theme.spacing.md,
+      gap: theme.spacing.sm,
+    },
+    biometricText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#FFFFFF',
+    },
+    signupSection: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 'auto',
+      paddingTop: theme.spacing.xl,
+    },
+    signupText: {
+      fontSize: 15,
+      color: theme.colors.text.secondary,
+    },
+    signupLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    signupLinkText: {
+      fontSize: 15,
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    demoHint: {
+      alignItems: 'center',
+      marginTop: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.divider,
+    },
+    demoHintText: {
+      fontSize: 12,
+      color: theme.colors.text.disabled,
+      fontStyle: 'italic',
     },
   });
 

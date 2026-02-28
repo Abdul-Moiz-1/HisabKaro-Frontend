@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Switch, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
+import { FingerprintIcon, LockIcon, ShieldCheckIcon } from 'phosphor-react-native';
 import Toast from 'react-native-toast-message';
 import { jwtDecode } from 'jwt-decode';
 import { NavigationProps } from '../../types';
-import { Container, HeaderNavigation } from '../../components/common';
-import { theme } from '../../constants/theme';
-import { useAppSelector } from '../../store/hooks';
+import { Container, Button } from '../../components/common';
+import { useTheme, useAppSelector } from '../../store/hooks';
 import { biometricService } from '../../services/biometricService';
 import { AuthServiceError } from '../../services/authService';
 import {
@@ -19,49 +26,74 @@ import {
   saveBiometricProfile,
 } from '../../utils/biometrics';
 
-const BiometricVerificationScreen: React.FC<NavigationProps<'BiometricVerification'>> = ({ navigation }) => {
-  const { user, isAuthenticated, token } = useAppSelector((state) => state.user);
+const BiometricVerificationScreen: React.FC<NavigationProps<'BiometricVerification'>> = ({
+  navigation,
+}) => {
+  const theme = useTheme();
+  const { user, isAuthenticated, token } = useAppSelector(state => state.user);
   const [biometricToggleLoading, setBiometricToggleLoading] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
 
-  // Debug: Log Redux state on mount
+  // Animation values
+  const pulseAnim = new Animated.Value(1);
+  const ringAnim1 = new Animated.Value(0.6);
+  const ringAnim2 = new Animated.Value(0.4);
+
   useEffect(() => {
-    console.log('=== BiometricVerificationScreen Redux State ===');
-    console.log('isAuthenticated:', isAuthenticated);
-    console.log('user:', user);
-    console.log('token exists:', !!token);
-    console.log('token type:', typeof token);
-    if (token) {
-      console.log('token length:', token.length);
-    }
+    // Pulse animation for fingerprint icon
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Ring animations
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(ringAnim1, {
+          toValue: 0.8,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(ringAnim1, {
+          toValue: 0.6,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(ringAnim2, {
+          toValue: 0.6,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(ringAnim2, {
+          toValue: 0.4,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
   }, []);
 
-  // // Extract userId from JWT token's sub claim
-  // const getUserIdFromToken = (): string | null => {
-  //   if (!token) return null;
-  //   try {
-  //     const decoded = jwtDecode<JwtPayload>(token);
-  //     return decoded.sub ?? null;
-  //   } catch {
-  //     return null;
-  //   }
-    
-  // };
-
   const getUserIdFromToken = (): string | null => {
-    if (!token) {
-      console.log('❌ No token available in Redux state');
-      return null;
-    }
+    if (!token) return null;
     try {
-      console.log('Token exists, attempting to decode...');
-      console.log('Token (first 50 chars):', token.substring(0, 50));
       const decoded: any = jwtDecode(token);
-      console.log('Decoded token:', JSON.stringify(decoded, null, 2));
-      console.log('Sub claim:', decoded.sub);
       return decoded.sub || null;
     } catch (error) {
-      console.error('Error decoding token:', error);
       return null;
     }
   };
@@ -83,20 +115,9 @@ const BiometricVerificationScreen: React.FC<NavigationProps<'BiometricVerificati
   }, [token]);
 
   const enableBiometricLogin = async () => {
-    // Extract userId from JWT token
     const userId = getUserIdFromToken();
-    
-    // Debug logging
-    console.log('=== Biometric Enable Debug ===');
-    console.log('isAuthenticated:', isAuthenticated);
-    console.log('token exists:', !!token);
-    console.log('userId from token (sub):', userId);
-    console.log('userId type:', typeof userId);
-    console.log('userId length:', userId?.length);
-    
-    // Check if user is authenticated and has a valid token with userId
+
     if (!isAuthenticated || !token || !userId || userId.trim() === '') {
-      console.log('❌ User validation failed - no valid userId in token');
       Toast.show({
         type: 'error',
         text1: 'Sign in required',
@@ -105,12 +126,10 @@ const BiometricVerificationScreen: React.FC<NavigationProps<'BiometricVerificati
       return;
     }
 
-    console.log('✅ User validation passed, proceeding with biometric setup');
     setBiometricToggleLoading(true);
     try {
       const availability = await getBiometricAvailability();
-      console.log('Biometric availability:', availability);
-      
+
       if (!availability.available) {
         Toast.show({
           type: 'error',
@@ -121,29 +140,19 @@ const BiometricVerificationScreen: React.FC<NavigationProps<'BiometricVerificati
       }
 
       const keysExist = await biometricKeysExist();
-      console.log('Keys exist:', keysExist);
-      
       if (keysExist) {
         await deleteBiometricKeys();
-        console.log('Old keys deleted');
       }
 
-      console.log('Generating biometric keys...');
       const generatedPublicKey = await createBiometricKeys();
-      console.log('New keys generated, public key length:', generatedPublicKey.length);
-      
       const deviceMeta = await getDeviceMetadata();
-      console.log('Device metadata:', deviceMeta);
 
-      console.log('Registering device with backend...');
-      // Backend extracts userId from JWT token (Authorization header)
       await biometricService.registerDevice({
         deviceId: deviceMeta.deviceId,
         publicKey: generatedPublicKey,
         deviceName: deviceMeta.deviceName,
         deviceOs: deviceMeta.deviceOs,
       });
-      console.log('Device registered with backend');
 
       await saveBiometricProfile({
         userId: userId,
@@ -151,7 +160,6 @@ const BiometricVerificationScreen: React.FC<NavigationProps<'BiometricVerificati
         deviceId: deviceMeta.deviceId,
         biometryType: availability.biometryType,
       });
-      console.log('Biometric profile saved locally');
 
       setBiometricEnabled(true);
       Toast.show({
@@ -160,7 +168,6 @@ const BiometricVerificationScreen: React.FC<NavigationProps<'BiometricVerificati
         text2: 'You can now sign in with your fingerprint',
       });
     } catch (error) {
-      console.error('Biometric setup error:', error);
       const apiError = error as AuthServiceError;
       Toast.show({
         type: 'error',
@@ -172,111 +179,218 @@ const BiometricVerificationScreen: React.FC<NavigationProps<'BiometricVerificati
     }
   };
 
-  const disableBiometricLogin = async () => {
-    setBiometricToggleLoading(true);
-    try {
-      const profile = await getStoredBiometricProfile();
-      if (profile?.deviceId) {
-        await biometricService.removeDevice(profile.deviceId);
-      }
-      await deleteBiometricKeys();
-      await clearBiometricProfile();
-      setBiometricEnabled(false);
-      Toast.show({
-        type: 'success',
-        text1: 'Fingerprint disabled',
-      });
-    } catch (error) {
-      const apiError = error as AuthServiceError;
-      Toast.show({
-        type: 'error',
-        text1: 'Unable to disable',
-        text2: apiError.message ?? 'Please try again',
-      });
-    } finally {
-      setBiometricToggleLoading(false);
-    }
+  const handleSkip = () => {
+    navigation.goBack();
   };
 
-  const handleBiometricToggle = (value: boolean) => {
-    if (value) {
-      enableBiometricLogin();
-    } else {
-      disableBiometricLogin();
-    }
-  };
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: theme.colors.background,
+        },
+        stepIndicator: {
+          alignSelf: 'center',
+          backgroundColor: theme.colors.surface,
+          paddingHorizontal: theme.spacing.lg,
+          paddingVertical: theme.spacing.sm,
+          borderRadius: theme.borderRadius.full,
+          marginTop: theme.spacing.xl,
+          ...theme.shadows.sm,
+        },
+        stepText: {
+          ...theme.typography.caption,
+          color: theme.colors.text.secondary,
+          fontWeight: '600',
+          letterSpacing: 1,
+        },
+        content: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: theme.spacing.xl,
+        },
+        iconContainer: {
+          position: 'relative',
+          width: 200,
+          height: 200,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: theme.spacing.xl,
+        },
+        ringOuter: {
+          position: 'absolute',
+          width: 200,
+          height: 200,
+          borderRadius: 100,
+          backgroundColor: theme.colors.palette?.green50 || '#E8F5E9',
+        },
+        ringInner: {
+          position: 'absolute',
+          width: 160,
+          height: 160,
+          borderRadius: 80,
+          backgroundColor: theme.colors.palette?.green100 || '#C8E6C9',
+        },
+        fingerprintCircle: {
+          width: 120,
+          height: 120,
+          borderRadius: 60,
+          backgroundColor: '#FFFFFF',
+          alignItems: 'center',
+          justifyContent: 'center',
+          ...theme.shadows.md,
+        },
+        lockBadge: {
+          position: 'absolute',
+          top: 30,
+          right: 30,
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: '#FFFFFF',
+          alignItems: 'center',
+          justifyContent: 'center',
+          ...theme.shadows.sm,
+        },
+        title: {
+          ...theme.typography.h1,
+          color: theme.colors.text.primary,
+          textAlign: 'center',
+          marginBottom: theme.spacing.sm,
+        },
+        urduSubtitle: {
+          ...theme.typography.body,
+          color: theme.colors.primary,
+          textAlign: 'center',
+          fontWeight: '600',
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+          marginBottom: theme.spacing.md,
+        },
+        description: {
+          ...theme.typography.body,
+          color: theme.colors.text.secondary,
+          textAlign: 'center',
+          lineHeight: 24,
+          marginBottom: theme.spacing.xl,
+        },
+        securityNote: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: theme.colors.surface,
+          paddingHorizontal: theme.spacing.md,
+          paddingVertical: theme.spacing.sm,
+          borderRadius: theme.borderRadius.full,
+          ...theme.shadows.xs,
+        },
+        securityNoteText: {
+          ...theme.typography.caption,
+          color: theme.colors.text.secondary,
+          marginLeft: theme.spacing.sm,
+        },
+        bottomContainer: {
+          paddingHorizontal: theme.spacing.lg,
+          paddingBottom: theme.spacing.xl,
+        },
+        enableButton: {
+          backgroundColor: theme.colors.primary,
+          borderRadius: theme.borderRadius.full,
+          paddingVertical: theme.spacing.md,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: theme.spacing.md,
+        },
+        enableButtonText: {
+          ...theme.typography.button,
+          color: '#FFFFFF',
+          marginLeft: theme.spacing.sm,
+        },
+        skipButton: {
+          alignItems: 'center',
+          paddingVertical: theme.spacing.sm,
+        },
+        skipText: {
+          ...theme.typography.body,
+          color: theme.colors.text.secondary,
+        },
+      }),
+    [theme]
+  );
 
   return (
-    <Container scrollable>
-      <HeaderNavigation title="Biometric Security" onBackPress={() => navigation.goBack()} />
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Fingerprint login</Text>
-        <Text style={styles.bodyText}>
-          Keep this toggle on to unlock the app with your fingerprint instead of typing your password every time.
-        </Text>
-        <View style={styles.toggleRow}>
-          <Text style={styles.toggleLabel}>{biometricEnabled ? 'Enabled' : 'Disabled'}</Text>
-          {biometricToggleLoading ? (
-            <ActivityIndicator color={theme.colors.primary} />
-          ) : (
-            <Switch
-              value={biometricEnabled}
-              onValueChange={handleBiometricToggle}
-              thumbColor={biometricEnabled ? theme.colors.primary : theme.colors.surface}
-              trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
-            />
-          )}
+    <Container safeArea style={styles.container}>
+      {/* Step Indicator */}
+      <View style={styles.stepIndicator}>
+        <Text style={styles.stepText}>STEP 1 OF 3</Text>
+      </View>
+
+      {/* Content */}
+      <View style={styles.content}>
+        {/* Animated Fingerprint Icon */}
+        <View style={styles.iconContainer}>
+          <Animated.View
+            style={[styles.ringOuter, { opacity: ringAnim2 }]}
+          />
+          <Animated.View
+            style={[styles.ringInner, { opacity: ringAnim1 }]}
+          />
+          <Animated.View
+            style={[
+              styles.fingerprintCircle,
+              { transform: [{ scale: pulseAnim }] },
+            ]}
+          >
+            <FingerprintIcon size={56} color={theme.colors.primary} weight="regular" />
+          </Animated.View>
+          <View style={styles.lockBadge}>
+            <LockIcon size={18} color={theme.colors.primary} weight="fill" />
+          </View>
         </View>
-        <View style={styles.noteCard}>
-          <Text style={styles.note}>
-            Make sure your device fingerprint is set up in system settings. We never store your fingerprint—we only keep a secure key on this device.
+
+        {/* Title and Description */}
+        <Text style={styles.title}>Secure Your Account</Text>
+        <Text style={styles.urduSubtitle}>APNA ACCOUNT MEHFOOZ KAREIN</Text>
+        <Text style={styles.description}>
+          Log in quickly and securely with just a tap. Your biometric data is
+          encrypted and stored locally on your device.
+        </Text>
+
+        {/* Security Note */}
+        <View style={styles.securityNote}>
+          <ShieldCheckIcon size={18} color={theme.colors.text.secondary} weight="fill" />
+          <Text style={styles.securityNoteText}>
+            Your data is encrypted and never shared
           </Text>
         </View>
+      </View>
+
+      {/* Bottom Actions */}
+      <View style={styles.bottomContainer}>
+        <TouchableOpacity
+          style={styles.enableButton}
+          onPress={enableBiometricLogin}
+          disabled={biometricToggleLoading}
+          activeOpacity={0.8}
+        >
+          {biometricToggleLoading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <>
+              <FingerprintIcon size={22} color="#FFFFFF" weight="fill" />
+              <Text style={styles.enableButtonText}>Enable Fingerprint</Text>
+            </>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+          <Text style={styles.skipText}>Skip for now</Text>
+        </TouchableOpacity>
       </View>
     </Container>
   );
 };
 
-const styles = StyleSheet.create({
-  section: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
-  sectionTitle: {
-    ...theme.typography.h3,
-    color: theme.colors.text.primary,
-  },
-  bodyText: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  toggleLabel: {
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-    fontWeight: '600',
-  },
-  noteCard: {
-    marginTop: theme.spacing.lg,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.divider,
-  },
-  note: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    lineHeight: 20,
-  },
-});
-
 export default BiometricVerificationScreen;
-
-

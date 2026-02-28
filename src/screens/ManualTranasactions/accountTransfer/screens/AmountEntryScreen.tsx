@@ -1,13 +1,13 @@
 // flows/accountTransfer/screens/AmountEntryScreen.tsx
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
 
 import { useThemedStyles } from '../../../../theme';
 import { useFlowNavigation } from '../../../../hooks/useFlowNavigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AmountInputField } from '../../../../components/DynamicForm';
+import { AmountInputField, DateField } from '../../../../components/DynamicForm';
 import { FieldType } from '../../../../types/forms';
 import ActionButton from '../../../../components/common/ActionButton';
 import { Theme } from '../../../../constants/theme';
@@ -21,9 +21,10 @@ const AmountEntryScreen: React.FC = () => {
   // @ts-ignore
   const { sourceAccount } = route.params?.flowData || {};
   const [amount, setAmount] = useState(0);
+  const [date, setDate] = useState(new Date());
 
   const handleContinue = () => {
-    navigateToScreen('DestinationAccountSelection', { amount });
+    navigateToScreen('DestinationAccountSelection', { amount, transferDate: date.toISOString() });
   };
 
   const quickAmounts = [
@@ -122,6 +123,35 @@ const AmountEntryScreen: React.FC = () => {
             </View>
           </View>
         )}
+
+        {/* Date Section */}
+        <Text style={styles.sectionTitle}>Transfer Date</Text>
+        <View style={styles.quickDates}>
+          <TouchableOpacity
+            style={styles.quickDateButton}
+            onPress={() => setDate(new Date())}
+          >
+            <Text style={styles.quickDateText}>Today</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickDateButton}
+            onPress={() => setDate(new Date(Date.now() - 24 * 60 * 60 * 1000))}
+          >
+            <Text style={styles.quickDateText}>Yesterday</Text>
+          </TouchableOpacity>
+        </View>
+
+        <DateField
+          field={{
+            id: 'transferDate',
+            name: 'transferDate',
+            label: '',
+            type: FieldType.DATE,
+          }}
+          value={date.toISOString()}
+          onChange={(value: string) => setDate(new Date(value))}
+          onBlur={() => {}}
+        />
       </ScrollView>
 
       <View style={styles.footer}>
@@ -246,6 +276,32 @@ const createStyles = (theme: Theme) => ({
     ...theme.typography.body,
     color: theme.colors.text.primary,
     fontWeight: '700' as const,
+  },
+  sectionTitle: {
+    ...theme.typography.body,
+    color: theme.colors.text.primary,
+    fontWeight: '600' as const,
+    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.lg,
+  },
+  quickDates: {
+    flexDirection: 'row' as const,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  quickDateButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center' as const,
+  },
+  quickDateText: {
+    ...theme.typography.caption,
+    color: theme.colors.text.primary,
+    fontWeight: '600' as const,
   },
   footer: {
     padding: theme.spacing.md,

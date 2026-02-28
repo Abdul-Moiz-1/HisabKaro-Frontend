@@ -1,20 +1,31 @@
 // flows/sales/SalesFlowNavigator.tsx
+// Sales Flow using Redux for state management (NO Context Provider needed)
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import CustomerSelectionScreen from './CustomerSelectionScreen';
-import AddCustomerScreen from '../../receipt/screens/AddCustomerScreen';
-import ProductSelectionScreen from './ProductSelectionScreen';
-import AddProductScreen from './AddProductScreen';
+
+// Import sales-specific screens
 import ProductQuantityPriceScreen from './ProductQuantityPriceScreen';
-import ShoppingCartScreen from './ShoppingCartScreen';
 import DirectTotalScreen from './DirectTotalScreen';
 import CreditTermsScreen from './CreditTermsScreen';
 import ConfirmationScreen from './ConfirmationScreen';
-import { SalesFlowProvider } from '../context/SalesFlowContext';
+
+// Import shared reusable screens
+import {
+  CustomerSelectionScreen,
+  ProductSelectionScreen,
+  BankSelectionScreen,
+  PaymentMethodScreen,
+  ShoppingCartScreen,
+} from '../../shared';
 
 const Stack = createStackNavigator();
 
-const SalesFlowStack: React.FC = () => {
+// Wrapper components to use shared screens with sales flowType
+const SalesCustomerSelection = () => <CustomerSelectionScreen />;
+const SalesPaymentMethod = () => <PaymentMethodScreen />;
+const SalesBankSelection = () => <BankSelectionScreen />;
+
+const SalesFlowNavigator: React.FC = () => {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -30,13 +41,9 @@ const SalesFlowStack: React.FC = () => {
     >
       <Stack.Screen
         name="CustomerSelection"
-        component={CustomerSelectionScreen}
+        component={SalesCustomerSelection}
         options={{ title: 'Sold something' }}
-      />
-      <Stack.Screen
-        name="AddCustomer"
-        component={AddCustomerScreen}
-        options={{ title: 'Add Customer' }}
+        initialParams={{ flowType: 'sales' }}
       />
       <Stack.Screen
         name="ProductSelection"
@@ -44,9 +51,16 @@ const SalesFlowStack: React.FC = () => {
         options={{ title: 'What did you sell?' }}
       />
       <Stack.Screen
-        name="AddProduct"
-        component={AddProductScreen}
-        options={{ title: 'Add Product' }}
+        name="PaymentMethod"
+        component={SalesPaymentMethod}
+        options={{ title: 'Payment Method' }}
+        initialParams={{ flowType: 'sales' }}
+      />
+      <Stack.Screen
+        name="BankSelection"
+        component={SalesBankSelection}
+        options={{ title: 'Select Bank Account' }}
+        initialParams={{ flowType: 'sales' }}
       />
       <Stack.Screen
         name="ProductQuantityPrice"
@@ -57,6 +71,7 @@ const SalesFlowStack: React.FC = () => {
         name="ShoppingCart"
         component={ShoppingCartScreen}
         options={{ title: 'Shopping Cart' }}
+        initialParams={{ flowType: 'sales' }}
       />
       <Stack.Screen
         name="DirectTotal"
@@ -74,15 +89,6 @@ const SalesFlowStack: React.FC = () => {
         options={{ title: 'Sale Recorded' }}
       />
     </Stack.Navigator>
-  );
-};
-
-// Wrap the navigator with the SalesFlowProvider
-const SalesFlowNavigator: React.FC = () => {
-  return (
-    <SalesFlowProvider>
-      <SalesFlowStack />
-    </SalesFlowProvider>
   );
 };
 

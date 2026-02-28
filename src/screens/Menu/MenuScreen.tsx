@@ -35,12 +35,6 @@ interface MenuItem {
 const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
   const user = useAppSelector(state => state.user.user);
   const theme = useTheme();
-  const [activeTab, setActiveTab] = useState<string>('menu');
-
-  // Set active tab when component mounts
-  useEffect(() => {
-    setActiveTab('menu');
-  }, []);
 
   // Create smooth layout animation
   const createLayoutAnimation = () => {
@@ -56,34 +50,6 @@ const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
       },
     });
   };
-
-  const handleTabPress = useCallback(
-    (tabId: string) => {
-      createLayoutAnimation();
-      setActiveTab(tabId);
-
-      switch (tabId) {
-        case 'home':
-          navigation.navigate(ROUTES.HOME);
-          break;
-        case 'analytics':
-          navigation.navigate(ROUTES.ANALYTICS);
-          break;
-        case 'add':
-          navigation.navigate(ROUTES.TRANSCATIONS);
-          break;
-        case 'ai':
-          navigation.navigate(ROUTES.AI_ASSISTANT);
-          break;
-        case 'menu':
-          // Already on menu screen
-          break;
-        default:
-          break;
-      }
-    },
-    [navigation],
-  );
 
   const handleMenuCardPress = useCallback(
     (item: MenuItem) => {
@@ -369,9 +335,6 @@ const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
           ))}
         </View>
       </ScrollView>
-
-      {/* Bottom Navigation */}
-      <BottomTabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </Container>
   );
 };

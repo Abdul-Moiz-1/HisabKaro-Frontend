@@ -1,13 +1,11 @@
 import React from 'react';
-import {
-  DarkTheme,
-  DefaultTheme,
-  NavigationContainer,
-} from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import { ROUTES } from '../constants/routes';
 import { useTheme } from '../store/hooks';
+
+// Auth & Onboarding Screens
 import SplashScreen from '../screens/Splash/SplashScreen';
 import Splash2Screen from '../screens/Splash/Splash2Screen';
 import Splash3Screen from '../screens/Splash/Splash3Screen';
@@ -15,12 +13,14 @@ import LoginScreen from '../screens/Auth/LoginScreen';
 import SignupScreen from '../screens/Auth/SignupScreen';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
 import BiometricVerificationScreen from '../screens/Auth/BiometricVerificationScreen';
-import HomeScreen from '../screens/Home/HomeScreen';
-import AnalyticsScreen from '../screens/Analytics/AnalyticsScreen';
+
+// Main Tab Navigator
+import MainTabNavigator from './MainTabNavigator';
+
+// Feature Screens
 import AddTransactionScreen from '../screens/AddTransaction/AddTransactionScreen';
 import AIAssistantScreen from '../screens/AIAssistant/AIAssistantScreen';
 import AIChatScreen from '../screens/AIAssistant/AIChatScreen';
-import MenuScreen from '../screens/Menu/MenuScreen';
 import ProfileManagementScreen from '../screens/Profile/ProfileManagementScreen';
 import StatisticsScreen from '../screens/Statistics/StatisticsScreen';
 import BalanceAccountsScreen from '../screens/Balance/BalanceAccountsScreen';
@@ -30,7 +30,8 @@ import ExpensesScreen from '../screens/Expenses/ExpensesScreen';
 import ScheduledPaymentsScreen from '../screens/ScheduledPayments/ScheduledPaymentsScreen';
 import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
 import BankAccountDetailsScreen from '../screens/BankAccountDetails/BankAccountDetailsScreen';
-import TransactionManualEntryScreen from '../screens/TransactionManualEntry/TransactionManualEntry';
+
+// Transaction Flow Navigators
 import ReceiptFlowNavigator from '../screens/ManualTranasactions/receipt/ReceiptFlowNavigator';
 import SalesFlowNavigator from '../screens/ManualTranasactions/sales/screens/SalesFlowNavigator';
 import PurchaseFlowNavigator from '../screens/ManualTranasactions/purchases/PurchaseFlowNavigator';
@@ -38,15 +39,51 @@ import ExpenseFlowNavigator from '../screens/ManualTranasactions/expense/Expense
 import BankTransferFlowNavigator from '../screens/ManualTranasactions/bankTransfer/BankTransferFlowNavigator';
 import SupplierPaymentFlowNavigator from '../screens/ManualTranasactions/supplierPayment/SupplierPaymentFlowNavigator';
 import AccountTransferFlowNavigator from '../screens/ManualTranasactions/accountTransfer/AccountTransferFlowNavigator';
+
+// Transaction Management Screens
 import TransactionListScreen from '../screens/TransactionManagement/TransactionListScreen';
 import TransactionDetailScreen from '../screens/TransactionManagement/TransactionDetailScreen';
 import TransactionFilterScreen from '../screens/TransactionManagement/TransactionFilterScreen';
 import TransactionSearchScreen from '../screens/TransactionManagement/TransactionSearchScreen';
 import TransactionStatsScreen from '../screens/TransactionManagement/TransactionStatsScreen';
-import EditTransactionScreen from '../screens/EditTransaction/screens/EditTransactionScreen';
-import EditConfirmationScreen from '../screens/EditTransaction/screens/EditConfirmationScreen';
-import EditHistoryScreen from '../screens/EditTransaction/screens/EditHistoryScreen';
 import EditTransactionFlowNavigator from '../screens/EditTransaction/EditTransactionFlowNavigator';
+
+// Customer Screens
+import {
+  CustomersListScreen,
+  CustomerDetailScreen,
+  CustomerLedgerScreen,
+  AddCustomerScreen,
+  EditCustomerScreen,
+} from '../screens/Customers';
+
+// Supplier Screens
+import {
+  SuppliersListScreen,
+  SupplierDetailScreen,
+  SupplierLedgerScreen,
+  AddSupplierScreen,
+  EditSupplierScreen,
+} from '../screens/Suppliers';
+
+// Bank Account Screens
+import {
+  BankAccountsListScreen,
+  BankAccountDetailScreen,
+  AddBankAccountScreen,
+  EditBankAccountScreen,
+} from '../screens/BankAccounts';
+
+// Inventory/Product Screens
+import {
+  ProductsListScreen,
+  ProductDetailScreen,
+  AddProductScreen,
+  EditProductScreen,
+} from '../screens/Inventory';
+
+// Directory Screen
+import DirectoryScreen from '../screens/Directory/DirectoryScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -62,6 +99,7 @@ export const RootNavigator: React.FC = () => {
           cardStyle: { backgroundColor: theme.colors.background },
         }}
       >
+        {/* Onboarding & Auth */}
         <Stack.Screen name={ROUTES.SPLASH} component={SplashScreen} />
         <Stack.Screen name={ROUTES.SPLASH2} component={Splash2Screen} />
         <Stack.Screen name={ROUTES.SPLASH3} component={Splash3Screen} />
@@ -71,9 +109,26 @@ export const RootNavigator: React.FC = () => {
           name={ROUTES.FORGOT_PASSWORD}
           component={ForgotPasswordScreen}
         />
-        <Stack.Screen name={ROUTES.HOME} component={HomeScreen} />
-        <Stack.Screen name={ROUTES.ANALYTICS} component={AnalyticsScreen} />
+        <Stack.Screen
+          name={ROUTES.BIOMETRIC_VERIFICATION}
+          component={BiometricVerificationScreen}
+        />
 
+        {/* Main App with Tab Navigation */}
+        <Stack.Screen
+          name={ROUTES.HOME}
+          component={MainTabNavigator}
+          options={{ gestureEnabled: false }}
+        />
+
+        {/* Directory */}
+        <Stack.Screen
+          name={ROUTES.DIRECTORY}
+          component={DirectoryScreen}
+          options={{ title: 'Directory' }}
+        />
+
+        {/* Transaction Entry */}
         <Stack.Screen
           name={ROUTES.TRANSCATIONS}
           component={AddTransactionScreen}
@@ -106,20 +161,21 @@ export const RootNavigator: React.FC = () => {
           name={ROUTES.ADD_TRANSACTION_ACCOUNT_TRANSFER}
           component={AccountTransferFlowNavigator}
         />
+
+        {/* AI Features */}
         <Stack.Screen
           name={ROUTES.AI_ASSISTANT}
           component={AIAssistantScreen}
         />
         <Stack.Screen name={ROUTES.AI_CHAT} component={AIChatScreen} />
-        <Stack.Screen name={ROUTES.MENU} component={MenuScreen} />
+
+        {/* Profile & Settings */}
         <Stack.Screen
           name={ROUTES.PROFILE}
           component={ProfileManagementScreen}
         />
-        <Stack.Screen
-          name={ROUTES.BIOMETRIC_VERIFICATION}
-          component={BiometricVerificationScreen}
-        />
+
+        {/* Financial Features */}
         <Stack.Screen name={ROUTES.STATISTICS} component={StatisticsScreen} />
         <Stack.Screen
           name={ROUTES.BALANCE_ACCOUNTS}
@@ -140,12 +196,14 @@ export const RootNavigator: React.FC = () => {
           component={NotificationsScreen}
         />
         <Stack.Screen
-          name={ROUTES.TRANSACTION_LIST}
-          component={TransactionListScreen}
-        />
-        <Stack.Screen
           name={ROUTES.BANK_ACCOUNT_DETAILS}
           component={BankAccountDetailsScreen}
+        />
+
+        {/* Transaction Management */}
+        <Stack.Screen
+          name={ROUTES.TRANSACTION_LIST}
+          component={TransactionListScreen}
         />
         <Stack.Screen
           name={ROUTES.TRANSCATION_DETAIL}
@@ -167,6 +225,87 @@ export const RootNavigator: React.FC = () => {
           name={ROUTES.EDIT_TRANSACTION_FLOW}
           component={EditTransactionFlowNavigator}
           options={{ presentation: 'modal' }}
+        />
+
+        {/* Customer Screens */}
+        <Stack.Screen
+          name={ROUTES.CUSTOMERS_LIST}
+          component={CustomersListScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.CUSTOMER_DETAIL}
+          component={CustomerDetailScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.CUSTOMER_LEDGER}
+          component={CustomerLedgerScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_CUSTOMER}
+          component={AddCustomerScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.EDIT_CUSTOMER}
+          component={EditCustomerScreen}
+          options={{ title: 'Edit Customer' }}
+        />
+
+        {/* Supplier Screens */}
+        <Stack.Screen
+          name={ROUTES.SUPPLIERS_LIST}
+          component={SuppliersListScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.SUPPLIER_DETAIL}
+          component={SupplierDetailScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.SUPPLIER_LEDGER}
+          component={SupplierLedgerScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_SUPPLIER}
+          component={AddSupplierScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.EDIT_SUPPLIER}
+          component={EditSupplierScreen}
+        />
+
+        {/* Bank Account Screens */}
+        <Stack.Screen
+          name={ROUTES.BANK_ACCOUNTS_LIST}
+          component={BankAccountsListScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.BANK_ACCOUNT_DETAIL}
+          component={BankAccountDetailScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_BANK_ACCOUNT}
+          component={AddBankAccountScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.EDIT_BANK_ACCOUNT}
+          component={EditBankAccountScreen}
+        />
+
+        {/* Inventory/Product Screens */}
+        <Stack.Screen
+          name={ROUTES.INVENTORY_LIST}
+          component={ProductsListScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.PRODUCT_DETAIL}
+          component={ProductDetailScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.ADD_PRODUCT}
+          component={AddProductScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.EDIT_PRODUCT}
+          component={EditProductScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

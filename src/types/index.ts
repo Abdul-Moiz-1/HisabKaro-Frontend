@@ -68,6 +68,30 @@ export type RootStackParamList = {
   EditTransactionFlow: NavigatorScreenParams<EditTransactionFlowParamList>;
   // EditConfirmation: { transaction: any; changes: any };
   // EditHistory: { transaction: any };
+  // Customer Screens
+  CustomersList: undefined;
+  CustomerDetail: { customerId: string };
+  CustomerLedger: { customerId: string; customerName: string };
+  AddCustomer: { fromFlow?: boolean } | undefined;
+  EditCustomer: { customerId: string };
+  // Supplier Screens
+  SuppliersList: undefined;
+  SupplierDetail: { supplierId: string };
+  SupplierLedger: { supplierId: string; supplierName: string };
+  AddSupplier: undefined;
+  EditSupplier: { supplierId: string };
+  // Bank Account Screens
+  BankAccountsList: undefined;
+  BankAccountDetail: { accountId: string };
+  AddBankAccount: undefined;
+  EditBankAccount: { accountId: string };
+  // Inventory/Product Screens
+  InventoryList: undefined;
+  ProductsList: undefined;
+  ProductDetail: { productId: string };
+  AddProduct: { fromFlow?: boolean } | undefined;
+  EditProduct: { productId: string };
+  DirectoryTab: undefined;
 };
 
 declare global {
