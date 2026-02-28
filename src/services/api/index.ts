@@ -148,6 +148,7 @@ export type {
   AgedPayables,
   CreateAccountPayload,
   CreateJournalEntryPayload,
+  RecurringOptions,
   AccountFilters,
   GLReportFilters,
 } from './accounting';

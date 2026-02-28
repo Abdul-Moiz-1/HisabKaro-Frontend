@@ -4,6 +4,7 @@ import {
   Account,
   JournalEntry,
   CreateJournalEntryPayload,
+  RecurringOptions,
 } from '../../services/api/accounting';
 import { RootState } from '../index';
 
@@ -28,16 +29,14 @@ interface JournalEntryState {
       account?: Account;
       debit: number;
       credit: number;
+      partyType?: 'Customer' | 'Supplier';
+      partyId?: number;
       remarks?: string;
     }[];
+    referenceNumber?: string;
     narration?: string;
-    isRecurring: boolean;
-    recurringSettings?: {
-      frequency: 'weekly' | 'monthly' | 'quarterly';
-      endDate?: string;
-      occurrences?: number;
-      executionMode: 'remind' | 'auto';
-    };
+    makeRecurring: boolean;
+    recurringOptions?: RecurringOptions;
   };
 
   // Submission state
@@ -67,8 +66,10 @@ const initialState: JournalEntryState = {
       { accountId: 0, debit: 0, credit: 0 },
       { accountId: 0, debit: 0, credit: 0 },
     ],
+    referenceNumber: '',
     narration: '',
-    isRecurring: false,
+    makeRecurring: false,
+    recurringOptions: undefined,
   },
 
   isSubmitting: false,
@@ -236,25 +237,65 @@ const journalEntrySlice = createSlice({
       state.currentEntry.narration = action.payload;
     },
 
-    // Set recurring settings
-    setRecurringSettings: (
+    // Set reference number
+    setReferenceNumber: (state, action: PayloadAction<string>) => {
+      state.currentEntry.referenceNumber = action.payload;
+    },
+
+    // Set make recurring flag
+    setMakeRecurring: (state, action: PayloadAction<boolean>) => {
+      state.currentEntry.makeRecurring = action.payload;
+      if (!action.payload) {
+        state.currentEntry.recurringOptions = undefined;
+      }
+    },
+
+    // Set recurring options
+    setRecurringOptions: (
       state,
-      action: PayloadAction<{
-        isRecurring: boolean;
-        settings?: JournalEntryState['currentEntry']['recurringSettings'];
-      }>,
+      action: PayloadAction<RecurringOptions | undefined>,
     ) => {
-      state.currentEntry.isRecurring = action.payload.isRecurring;
-      state.currentEntry.recurringSettings = action.payload.settings;
+      state.currentEntry.recurringOptions = action.payload;
+      if (action.payload) {
+        state.currentEntry.makeRecurring = true;
+      }
+    },
+
+    // Update full current entry (for syncing from form)
+    updateCurrentEntry: (
+      state,
+      action: PayloadAction<Partial<JournalEntryState['currentEntry']>>,
+    ) => {
+      state.currentEntry = { ...state.currentEntry, ...action.payload };
+      state.totalDebit = state.currentEntry.lineItems.reduce(
+        (sum, item) => sum + (item.debit || 0),
+        0,
+      );
+      state.totalCredit = state.currentEntry.lineItems.reduce(
+        (sum, item) => sum + (item.credit || 0),
+        0,
+      );
+      state.isBalanced = state.totalDebit === state.totalCredit;
     },
 
     // Reset current entry
     resetCurrentEntry: state => {
-      state.currentEntry = initialState.currentEntry;
+      state.currentEntry = {
+        postingDate: new Date().toISOString().split('T')[0],
+        lineItems: [
+          { accountId: 0, debit: 0, credit: 0 },
+          { accountId: 0, debit: 0, credit: 0 },
+        ],
+        referenceNumber: '',
+        narration: '',
+        makeRecurring: false,
+        recurringOptions: undefined,
+      };
       state.totalDebit = 0;
       state.totalCredit = 0;
       state.isBalanced = true;
       state.submitError = null;
+      state.lastSubmittedEntry = null;
     },
 
     // Clear error
@@ -343,7 +384,10 @@ export const {
   updateLineItem,
   setLineItemAccount,
   setNarration,
-  setRecurringSettings,
+  setReferenceNumber,
+  setMakeRecurring,
+  setRecurringOptions,
+  updateCurrentEntry,
   resetCurrentEntry,
   clearError,
   recalculateTotals,
@@ -373,5 +417,11 @@ export const selectSubmitError = (state: RootState) =>
   state.journalEntry.submitError;
 export const selectLastSubmittedEntry = (state: RootState) =>
   state.journalEntry.lastSubmittedEntry;
+export const selectMakeRecurring = (state: RootState) =>
+  state.journalEntry.currentEntry.makeRecurring;
+export const selectRecurringOptions = (state: RootState) =>
+  state.journalEntry.currentEntry.recurringOptions;
+export const selectReferenceNumber = (state: RootState) =>
+  state.journalEntry.currentEntry.referenceNumber;
 
 export default journalEntrySlice.reducer;

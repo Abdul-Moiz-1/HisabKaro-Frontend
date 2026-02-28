@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect, useState } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,6 @@ import {
   WarningCircleIcon,
   CaretRightIcon,
   RepeatIcon,
-  MicrophoneIcon,
 } from 'phosphor-react-native';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,7 +38,6 @@ import {
 } from '../schema';
 
 import EntryRow from './components/EntryRow';
-import VoiceEntryBanner from './components/VoiceEntryBanner';
 import RecurringEntryModal from './components/RecurringEntryModal';
 
 import {
@@ -47,11 +45,11 @@ import {
   selectAccounts,
   selectFlatAccounts,
   selectAccountsLoading,
-  submitJournalEntry,
-  selectIsSubmitting,
-  resetCurrentEntry,
+  updateCurrentEntry,
+  selectMakeRecurring,
+  selectRecurringOptions,
 } from '../../../../store/slices/journalEntrySlice';
-import { CreateJournalEntryPayload } from '../../../../services/api';
+import { RecurringOptionsFormValues } from '../schema';
 
 const JournalEntryScreen: React.FC = () => {
   const theme = useTheme();
@@ -67,7 +65,8 @@ const JournalEntryScreen: React.FC = () => {
   const accounts = useAppSelector(selectAccounts);
   const flatAccounts = useAppSelector(selectFlatAccounts);
   const accountsLoading = useAppSelector(selectAccountsLoading);
-  const isSubmitting = useAppSelector(selectIsSubmitting);
+  const makeRecurring = useAppSelector(selectMakeRecurring);
+  const recurringOptions = useAppSelector(selectRecurringOptions);
 
   // Form setup
   const {
@@ -135,55 +134,39 @@ const JournalEntryScreen: React.FC = () => {
     append({ accountId: 0, debit: 0, credit: 0 });
   }, [append]);
 
-  // Handle voice entry
-  const handleVoiceEntry = useCallback(() => {
-    // TODO: Implement voice entry functionality
-    Alert.alert(
-      'Voice Entry',
-      'Voice entry feature coming soon! You can speak commands like "Paid 500 for office rent"',
-    );
-  }, []);
-
   // Handle recurring setup
   const handleRecurringSetup = useCallback(
-    (settings: any) => {
-      setValue('recurring', settings);
+    (settings: RecurringOptionsFormValues) => {
+      setValue('makeRecurring', true);
+      setValue('recurringOptions', settings);
       setShowRecurringModal(false);
     },
     [setValue],
   );
 
-  // Handle submit
-  const onSubmit = useCallback(
-    async (data: JournalEntryFormValues) => {
-      try {
-        const payload: CreateJournalEntryPayload = {
+  // Handle continue to review
+  const handleContinueToReview = useCallback(
+    (data: JournalEntryFormValues) => {
+      dispatch(
+        updateCurrentEntry({
           postingDate: data.postingDate,
-          remarks: data.narration,
-          entries: data.lineItems
-            .filter(
-              item => item.accountId > 0 && (item.debit > 0 || item.credit > 0),
-            )
-            .map(item => ({
-              accountId: item.accountId,
-              debit: item.debit || 0,
-              credit: item.credit || 0,
-              remarks: item.remarks,
-            })),
-        };
-        await dispatch(submitJournalEntry(payload)).unwrap();
-        Alert.alert('Success', 'Journal entry posted successfully!', [
-          {
-            text: 'OK',
-            onPress: () => {
-              dispatch(resetCurrentEntry());
-              navigation.goBack();
-            },
-          },
-        ]);
-      } catch (error: any) {
-        Alert.alert('Error', error.message || 'Failed to post entry');
-      }
+          lineItems: data.lineItems.map(item => ({
+            accountId: item.accountId,
+            account: item.account,
+            debit: item.debit || 0,
+            credit: item.credit || 0,
+            partyType: item.partyType,
+            partyId: item.partyId,
+            remarks: item.remarks,
+          })),
+          referenceNumber: data.referenceNumber,
+          narration: data.narration,
+          makeRecurring: data.makeRecurring || false,
+          recurringOptions: data.recurringOptions,
+        })
+      );
+      // @ts-ignore
+      navigation.navigate('Review');
     },
     [dispatch, navigation],
   );
@@ -205,9 +188,6 @@ const JournalEntryScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Voice Entry Banner */}
-          <VoiceEntryBanner onPress={handleVoiceEntry} />
-
           {/* Date Field */}
           <Controller
             control={control}
@@ -287,23 +267,61 @@ const JournalEntryScreen: React.FC = () => {
             />
           </View>
 
+          {/* Reference Number Section */}
+          <View style={styles.narrationSection}>
+            <Text style={styles.narrationLabel}>REFERENCE NUMBER / HAWALA NUMBER (Optional)</Text>
+            <Controller
+              control={control}
+              name="referenceNumber"
+              render={({ field: { onChange, value, onBlur } }) => (
+                <TextInput
+                  style={styles.referenceInput}
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  placeholder="e.g., INV-001, CHQ-123"
+                  placeholderTextColor={theme.colors.text.secondary}
+                />
+              )}
+            />
+          </View>
+
           {/* Recurring Entry Option */}
           <TouchableOpacity
-            style={styles.recurringButton}
+            style={[
+              styles.recurringButton,
+              makeRecurring && styles.recurringButtonActive,
+            ]}
             onPress={() => setShowRecurringModal(true)}
           >
-            <View style={styles.recurringIconContainer}>
-              <RepeatIcon size={20} color={theme.colors.primary} />
+            <View
+              style={[
+                styles.recurringIconContainer,
+                makeRecurring && styles.recurringIconContainerActive,
+              ]}
+            >
+              <RepeatIcon
+                size={20}
+                color={makeRecurring ? '#FFFFFF' : theme.colors.primary}
+              />
             </View>
             <View style={styles.recurringTextContainer}>
               <Text style={styles.recurringTitle}>
-                Make this a recurring entry
+                {makeRecurring
+                  ? recurringOptions?.entryName || 'Recurring Entry Set'
+                  : 'Make this a recurring entry'}
               </Text>
               <Text style={styles.recurringSubtitle}>
-                Isko bar bar record karein
+                {makeRecurring
+                  ? `${recurringOptions?.frequencyType} - Tap to edit`
+                  : 'Isko bar bar record karein'}
               </Text>
             </View>
-            <CaretRightIcon size={20} color={theme.colors.text.secondary} />
+            {makeRecurring ? (
+              <CheckCircleIcon size={20} color={theme.colors.success} weight="fill" />
+            ) : (
+              <CaretRightIcon size={20} color={theme.colors.text.secondary} />
+            )}
           </TouchableOpacity>
         </ScrollView>
 
@@ -359,13 +377,12 @@ const JournalEntryScreen: React.FC = () => {
             )}
           </View>
 
-          {/* Submit Button */}
+          {/* Continue Button */}
           <ActionButton
-            title="Post Entry / Entry darj karein"
-            onPress={handleSubmit(onSubmit)}
+            title="Continue to Review / Aagay chalein"
+            onPress={handleSubmit(handleContinueToReview)}
             variant="primary"
-            disabled={!totals.isBalanced || isSubmitting}
-            loading={isSubmitting}
+            disabled={!totals.isBalanced}
             icon={<CaretRightIcon size={20} color="#FFFFFF" weight="bold" />}
           />
         </View>
@@ -376,8 +393,9 @@ const JournalEntryScreen: React.FC = () => {
         visible={showRecurringModal}
         onClose={() => setShowRecurringModal(false)}
         onSave={handleRecurringSetup}
-        entryTitle="Office Rent / Daftar ka kiraya"
+        entryTitle={watch('narration') || 'Journal Entry'}
         entryAmount={totals.totalDebit}
+        initialSettings={recurringOptions}
       />
     </SafeAreaView>
   );
@@ -463,6 +481,16 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       minHeight: 60,
       textAlignVertical: 'top',
     },
+    referenceInput: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      fontSize: 14,
+      color: theme.colors.text.primary,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
     recurringButton: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -473,6 +501,10 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
+    recurringButtonActive: {
+      borderColor: theme.colors.primary,
+      backgroundColor: `${theme.colors.primary}08`,
+    },
     recurringIconContainer: {
       width: 40,
       height: 40,
@@ -481,6 +513,9 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: theme.spacing.md,
+    },
+    recurringIconContainerActive: {
+      backgroundColor: theme.colors.primary,
     },
     recurringTextContainer: {
       flex: 1,

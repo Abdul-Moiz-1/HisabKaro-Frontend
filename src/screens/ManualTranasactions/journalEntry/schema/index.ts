@@ -35,6 +35,8 @@ export const journalEntryLineItemSchema = z
     account: accountSchema.optional(),
     debit: z.number().min(0, 'Debit cannot be negative').default(0),
     credit: z.number().min(0, 'Credit cannot be negative').default(0),
+    partyType: z.enum(['Customer', 'Supplier']).optional(),
+    partyId: z.number().optional(),
     remarks: z.string().optional(),
   })
   .refine(data => data.debit > 0 || data.credit > 0, {
@@ -46,23 +48,27 @@ export const journalEntryLineItemSchema = z
     path: ['credit'],
   });
 
-// Recurring entry frequency
-export const recurringFrequencySchema = z.enum([
+// Recurring entry frequency type
+export const frequencyTypeSchema = z.enum([
+  'daily',
   'weekly',
   'monthly',
   'quarterly',
+  'yearly',
 ]);
 
-// Recurring entry execution mode
-export const executionModeSchema = z.enum(['remind', 'auto']);
-
-// Recurring entry settings schema
-export const recurringEntrySchema = z.object({
-  isRecurring: z.boolean().default(false),
-  frequency: recurringFrequencySchema.optional(),
+// Recurring options schema (matches API payload)
+export const recurringOptionsSchema = z.object({
+  entryName: z.string().min(1, 'Entry name is required'),
+  description: z.string().optional(),
+  frequencyType: frequencyTypeSchema,
+  frequencyInterval: z.number().min(1).default(1),
+  dayOfMonth: z.number().min(0).max(31).optional(),
+  startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().optional(),
-  occurrences: z.number().min(1).max(365).optional(),
-  executionMode: executionModeSchema.optional(),
+  autoGenerate: z.boolean().default(false),
+  autoPost: z.boolean().default(false),
+  generateDaysBefore: z.number().min(0).default(0),
 });
 
 // Main journal entry form schema
@@ -72,8 +78,10 @@ export const journalEntrySchema = z
     lineItems: z
       .array(journalEntryLineItemSchema)
       .min(2, 'At least 2 line items required'),
+    referenceNumber: z.string().optional(),
     narration: z.string().optional(),
-    recurring: recurringEntrySchema.optional(),
+    makeRecurring: z.boolean().default(false),
+    recurringOptions: recurringOptionsSchema.optional(),
   })
   .refine(
     data => {
@@ -95,9 +103,8 @@ export type JournalEntryFormValues = z.infer<typeof journalEntrySchema>;
 export type JournalEntryLineFormValues = z.infer<
   typeof journalEntryLineItemSchema
 >;
-export type RecurringEntryFormValues = z.infer<typeof recurringEntrySchema>;
-export type RecurringFrequency = z.infer<typeof recurringFrequencySchema>;
-export type ExecutionMode = z.infer<typeof executionModeSchema>;
+export type RecurringOptionsFormValues = z.infer<typeof recurringOptionsSchema>;
+export type FrequencyType = z.infer<typeof frequencyTypeSchema>;
 
 // Default values for new line item
 export const defaultLineItem: Partial<JournalEntryLineFormValues> = {
@@ -107,6 +114,20 @@ export const defaultLineItem: Partial<JournalEntryLineFormValues> = {
   remarks: '',
 };
 
+// Default recurring options
+export const defaultRecurringOptions: RecurringOptionsFormValues = {
+  entryName: '',
+  description: '',
+  frequencyType: 'monthly',
+  frequencyInterval: 1,
+  dayOfMonth: 1,
+  startDate: new Date().toISOString().split('T')[0],
+  endDate: '',
+  autoGenerate: false,
+  autoPost: false,
+  generateDaysBefore: 0,
+};
+
 // Default form values
 export const defaultFormValues: Partial<JournalEntryFormValues> = {
   postingDate: new Date().toISOString().split('T')[0],
@@ -114,8 +135,8 @@ export const defaultFormValues: Partial<JournalEntryFormValues> = {
     { accountId: 0, debit: 0, credit: 0 },
     { accountId: 0, debit: 0, credit: 0 },
   ],
+  referenceNumber: '',
   narration: '',
-  recurring: {
-    isRecurring: false,
-  },
+  makeRecurring: false,
+  recurringOptions: undefined,
 };

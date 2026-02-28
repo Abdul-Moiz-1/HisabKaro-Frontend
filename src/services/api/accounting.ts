@@ -210,10 +210,22 @@ export interface CreateAccountPayload {
   isGroup?: boolean;
 }
 
+export interface RecurringOptions {
+  entryName: string;
+  description?: string;
+  frequencyType: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  frequencyInterval: number;
+  dayOfMonth?: number;
+  startDate: string;
+  endDate?: string;
+  autoGenerate: boolean;
+  autoPost: boolean;
+  generateDaysBefore: number;
+}
+
 export interface CreateJournalEntryPayload {
-  postingDate: string;
   entryType?: string;
-  remarks?: string;
+  postingDate: string;
   entries: {
     accountId: number;
     debit: number;
@@ -222,6 +234,10 @@ export interface CreateJournalEntryPayload {
     partyType?: 'Customer' | 'Supplier';
     partyId?: number;
   }[];
+  referenceNumber?: string;
+  remarks?: string;
+  makeRecurring?: boolean;
+  recurringOptions?: RecurringOptions;
 }
 
 export interface AccountFilters {
