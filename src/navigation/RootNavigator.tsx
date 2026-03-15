@@ -86,6 +86,14 @@ import {
 import DirectoryScreen from '../screens/Directory/DirectoryScreen';
 import JournalEntryNavigator from '../screens/ManualTranasactions/journalEntry/JournalEntryNavigator';
 
+// Transaction Listing Screens
+import SalesInvoiceListScreen from '../screens/Transactions/SalesInvoiceListScreen';
+import SalesInvoiceDetailScreen from '../screens/Transactions/SalesInvoiceDetailScreen';
+import PurchaseInvoiceListScreen from '../screens/Transactions/PurchaseInvoiceListScreen';
+import PurchaseInvoiceDetailScreen from '../screens/Transactions/PurchaseInvoiceDetailScreen';
+import PaymentsListScreen from '../screens/Transactions/PaymentsListScreen';
+import PaymentDetailScreen from '../screens/Transactions/PaymentDetailScreen';
+
 // Report Screens
 import {
   GeneralJournalScreen,
@@ -317,6 +325,32 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen
           name={ROUTES.EDIT_PRODUCT}
           component={EditProductScreen}
+        />
+
+        {/* Transaction Listing Screens */}
+        <Stack.Screen
+          name={ROUTES.SALES_INVOICE_LIST}
+          component={SalesInvoiceListScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.SALES_INVOICE_DETAIL}
+          component={SalesInvoiceDetailScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.PURCHASE_INVOICE_LIST}
+          component={PurchaseInvoiceListScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.PURCHASE_INVOICE_DETAIL}
+          component={PurchaseInvoiceDetailScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.PAYMENTS_LIST}
+          component={PaymentsListScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.PAYMENT_DETAIL}
+          component={PaymentDetailScreen}
         />
 
         {/* Report Screens */}

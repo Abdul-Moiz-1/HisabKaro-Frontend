@@ -14,6 +14,7 @@ export type DateFilterOption = 'thisMonth' | 'lastMonth' | 'last30Days' | 'custo
 interface DateFilterTabsProps {
   selected: DateFilterOption;
   onSelect: (option: DateFilterOption) => void;
+  onCustomPress?: () => void;
   options?: { value: DateFilterOption; label: string }[];
   showCustomDate?: boolean;
   customDateLabel?: string;
@@ -28,6 +29,7 @@ const DEFAULT_OPTIONS: { value: DateFilterOption; label: string }[] = [
 const DateFilterTabs: React.FC<DateFilterTabsProps> = ({
   selected,
   onSelect,
+  onCustomPress,
   options = DEFAULT_OPTIONS,
   showCustomDate = false,
   customDateLabel,
@@ -49,7 +51,13 @@ const DateFilterTabs: React.FC<DateFilterTabsProps> = ({
           <TouchableOpacity
             key={option.value}
             style={[styles.tab, isSelected && styles.tabActive]}
-            onPress={() => onSelect(option.value)}
+            onPress={() => {
+              if (option.value === 'custom' && onCustomPress) {
+                onCustomPress();
+              } else {
+                onSelect(option.value);
+              }
+            }}
             activeOpacity={0.7}
           >
             {option.value === 'custom' && (

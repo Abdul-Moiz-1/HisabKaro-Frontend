@@ -117,12 +117,12 @@ const menuSections: MenuSection[] = [
         icon: '📘',
         route: ROUTES.ADD_JOURNAL_ENTRY,
       },
-      {
-        id: 'ledger-entry',
-        label: 'Gernerl Entry',
-        icon: '📘',
-        route: ROUTES.TRIAL_BALANCE,
-      },
+      // {
+      //   id: 'ledger-entry',
+      //   label: 'Gernerl Entry',
+      //   icon: '📘',
+      //   route: ROUTES.TRIAL_BALANCE,
+      // },
       // {
       //   id: 'stock-adjust',
       //   label: 'Adjust stock',

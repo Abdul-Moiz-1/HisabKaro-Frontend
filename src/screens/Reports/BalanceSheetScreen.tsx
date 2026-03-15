@@ -88,8 +88,8 @@ const BalanceSheetScreen: React.FC = () => {
   // Check if balanced
   const isBalanced = useMemo(() => {
     if (!report) return true;
-    const leftSide = report.totalAssets;
-    const rightSide = report.totalLiabilities + report.totalEquity;
+    const leftSide = Number(report.totalAssets) || 0;
+    const rightSide = (Number(report.totalLiabilities) || 0) + (Number(report.totalEquity) || 0);
     return Math.abs(leftSide - rightSide) < 0.01;
   }, [report]);
 
@@ -102,8 +102,9 @@ const BalanceSheetScreen: React.FC = () => {
   };
 
   // Format helpers
-  const formatCurrency = (amount: number) => {
-    return `PKR ${Math.abs(amount).toLocaleString()}`;
+  const formatCurrency = (amount: number | undefined | null) => {
+    const safe = Number(amount) || 0;
+    return `PKR ${Math.abs(safe).toLocaleString()}`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -265,7 +266,7 @@ const BalanceSheetScreen: React.FC = () => {
             <View style={styles.summaryCard}>
               <Text style={styles.summaryLabel}>LIAB. + EQUITY</Text>
               <Text style={[styles.summaryValue, { color: theme.colors.success }]}>
-                {formatCurrency(report.totalLiabilities + report.totalEquity)}
+                {formatCurrency((Number(report.totalLiabilities) || 0) + (Number(report.totalEquity) || 0))}
               </Text>
             </View>
           </View>
@@ -304,7 +305,7 @@ const BalanceSheetScreen: React.FC = () => {
           )}
 
           {/* Retained Earnings */}
-          {report.retainedEarnings !== 0 && (
+          {report.retainedEarnings != null && (Number(report.retainedEarnings) || 0) !== 0 && (
             <View style={styles.retainedEarnings}>
               <View style={styles.retainedLeft}>
                 <Text style={styles.retainedLabel}>Retained Earnings</Text>
@@ -315,13 +316,13 @@ const BalanceSheetScreen: React.FC = () => {
                   styles.retainedValue,
                   {
                     color:
-                      report.retainedEarnings >= 0
+                      (Number(report.retainedEarnings) || 0) >= 0
                         ? theme.colors.success
                         : theme.colors.error,
                   },
                 ]}
               >
-                {report.retainedEarnings >= 0 ? '+' : '-'}
+                {(Number(report.retainedEarnings) || 0) >= 0 ? '+' : '-'}
                 {formatCurrency(report.retainedEarnings)}
               </Text>
             </View>

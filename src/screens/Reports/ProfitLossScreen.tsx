@@ -26,6 +26,7 @@ import { useTheme } from '../../store/hooks';
 import { accountingApi, ProfitLoss } from '../../services/api/accounting';
 import DateFilterTabs, { DateFilterOption } from './components/DateFilterTabs';
 import ExportReportModal from './components/ExportReportModal';
+import CustomDateRangeModal from './components/CustomDateRangeModal';
 
 const ProfitLossScreen: React.FC = () => {
   const theme = useTheme();
@@ -38,6 +39,9 @@ const ProfitLossScreen: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dateFilter, setDateFilter] = useState<DateFilterOption>('thisMonth');
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showDateRangeModal, setShowDateRangeModal] = useState(false);
+  const [customFromDate, setCustomFromDate] = useState<string | undefined>();
+  const [customToDate, setCustomToDate] = useState<string | undefined>();
   const [expandedIncome, setExpandedIncome] = useState(true);
   const [expandedExpenses, setExpandedExpenses] = useState(true);
 
@@ -60,6 +64,12 @@ const ProfitLossScreen: React.FC = () => {
       case 'last30Days':
         fromDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
+      case 'custom':
+        if (customFromDate && customToDate) {
+          return { from: customFromDate, to: customToDate };
+        }
+        fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        break;
       default:
         fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
     }
@@ -68,7 +78,7 @@ const ProfitLossScreen: React.FC = () => {
       from: fromDate.toISOString().split('T')[0],
       to: today.toISOString().split('T')[0],
     };
-  }, []);
+  }, [customFromDate, customToDate]);
 
   // Fetch report
   const fetchReport = useCallback(
@@ -99,7 +109,22 @@ const ProfitLossScreen: React.FC = () => {
 
   useEffect(() => {
     fetchReport();
-  }, [dateFilter]);
+  }, [dateFilter, customFromDate, customToDate]);
+
+  const handleCustomDateApply = useCallback((from: string, to: string) => {
+    setCustomFromDate(from);
+    setCustomToDate(to);
+    setDateFilter('custom');
+  }, []);
+
+  const customDateLabel = useMemo(() => {
+    if (dateFilter === 'custom' && customFromDate && customToDate) {
+      const f = new Date(customFromDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      const t = new Date(customToDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      return `${f} - ${t}`;
+    }
+    return undefined;
+  }, [dateFilter, customFromDate, customToDate]);
 
   // Format helpers
   const formatCurrency = (amount: number) => {
@@ -142,7 +167,13 @@ const ProfitLossScreen: React.FC = () => {
       </View>
 
       {/* Date Filters */}
-      <DateFilterTabs selected={dateFilter} onSelect={setDateFilter} />
+      <DateFilterTabs
+        selected={dateFilter}
+        onSelect={setDateFilter}
+        onCustomPress={() => setShowDateRangeModal(true)}
+        showCustomDate={dateFilter === 'custom' && !!customDateLabel}
+        customDateLabel={customDateLabel}
+      />
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -372,6 +403,15 @@ const ProfitLossScreen: React.FC = () => {
         onClose={() => setShowExportModal(false)}
         reportTitle="Profit & Loss Statement"
         reportDateRange={getDateRangeLabel()}
+      />
+
+      {/* Custom Date Range Modal */}
+      <CustomDateRangeModal
+        visible={showDateRangeModal}
+        onClose={() => setShowDateRangeModal(false)}
+        onApply={handleCustomDateApply}
+        initialFromDate={customFromDate}
+        initialToDate={customToDate}
       />
     </SafeAreaView>
   );

@@ -72,6 +72,14 @@ export const ROUTES = {
 
   ADD_JOURNAL_ENTRY: 'AddJournalEntry',
 
+  // Transaction Listing Screens (Directory)
+  SALES_INVOICE_LIST: 'SalesInvoiceList',
+  SALES_INVOICE_DETAIL: 'SalesInvoiceDetail',
+  PURCHASE_INVOICE_LIST: 'PurchaseInvoiceList',
+  PURCHASE_INVOICE_DETAIL: 'PurchaseInvoiceDetail',
+  PAYMENTS_LIST: 'PaymentsList',
+  PAYMENT_DETAIL: 'PaymentDetail',
+
   // Report Screens
   GENERAL_JOURNAL: 'GeneralJournal',
   GENERAL_LEDGER: 'GeneralLedger',

@@ -1,60 +1,199 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  LayoutAnimation,
-  Platform,
-  UIManager,
+  TextInput,
+  Alert,
 } from 'react-native';
-import { NavigationProps } from '../../types';
-import { ROUTES, RouteName } from '../../constants/routes';
-import { Container, Avatar, MenuCard } from '../../components/common';
-import { BottomTabBar } from '../../components/navigation/BottomTabBar';
-import { useAppSelector, useTheme } from '../../store/hooks';
+import {
+  BuildingsIcon,
+  FileTextIcon,
+  UsersIcon,
+  ShieldCheckIcon,
+  ListBulletsIcon,
+  BookOpenIcon,
+  ScalesIcon,
+  ChartLineUpIcon,
+  ChartBarIcon,
+  BookBookmarkIcon,
+  ExportIcon,
+  CaretRightIcon,
+  MagnifyingGlassIcon,
+  SignOutIcon,
+} from 'phosphor-react-native';
+import { NavigationProps, RootStackParamList } from '../../types';
+import { ROUTES } from '../../constants/routes';
+import { Container, HeaderNavigation } from '../../components/common';
+import { useTheme, useAppDispatch } from '../../store/hooks';
+import { authApi } from '../../services/api/auth';
+import { logout } from '../../store/slices/userSlice';
 
-// Enable LayoutAnimation on Android
-if (
-  Platform.OS === 'android' &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-interface MenuItem {
+interface SettingsItem {
   id: string;
   title: string;
-  description: string;
+  subtitle: string;
   icon: React.ReactNode;
-  route?: RouteName;
+  route?: keyof RootStackParamList;
   onPress?: () => void;
 }
 
+interface SettingsSection {
+  title: string;
+  items: SettingsItem[];
+}
+
 const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
-  const user = useAppSelector(state => state.user.user);
   const theme = useTheme();
+  const dispatch = useAppDispatch();
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Create smooth layout animation
-  const createLayoutAnimation = () => {
-    LayoutAnimation.configureNext({
-      duration: 300,
-      create: {
-        type: LayoutAnimation.Types.easeInEaseOut,
-        property: LayoutAnimation.Properties.opacity,
+  const handleLogout = useCallback(async () => {
+    Alert.alert('Logout', 'Kya aap logout karna chahte hain?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await authApi.logout();
+            dispatch(logout());
+            navigation.replace(ROUTES.LOGIN);
+          } catch {
+            dispatch(logout());
+            navigation.replace(ROUTES.LOGIN);
+          }
+        },
       },
-      update: {
-        type: LayoutAnimation.Types.spring,
-        springDamping: 0.7,
-      },
-    });
-  };
+    ]);
+  }, [dispatch, navigation]);
 
-  const handleMenuCardPress = useCallback(
-    (item: MenuItem) => {
+  const iconColor = theme.colors.primary;
+  const iconSize = 22;
+
+  const sections: SettingsSection[] = useMemo(
+    () => [
+      {
+        title: 'BUSINESS SETTINGS',
+        items: [
+          {
+            id: 'business_profile',
+            title: 'Business Profile',
+            subtitle: 'Karobari Profile',
+            icon: <BuildingsIcon size={iconSize} color={iconColor} weight="fill" />,
+            route: ROUTES.PROFILE,
+          },
+          {
+            id: 'tax_ntn',
+            title: 'Tax & NTN',
+            subtitle: 'Tax ki Tafseelat',
+            icon: <FileTextIcon size={iconSize} color={iconColor} weight="fill" />,
+            onPress: () => console.log('Tax & NTN pressed'),
+          },
+        ],
+      },
+      {
+        title: 'USER MANAGEMENT',
+        items: [
+          {
+            id: 'staff_access',
+            title: 'Staff Access',
+            subtitle: 'Staff ki Pohanch',
+            icon: <UsersIcon size={iconSize} color={iconColor} weight="fill" />,
+            onPress: () => console.log('Staff Access pressed'),
+          },
+          {
+            id: 'permissions',
+            title: 'Permissions',
+            subtitle: 'Ikhtiyarat',
+            icon: <ShieldCheckIcon size={iconSize} color={iconColor} weight="fill" />,
+            onPress: () => console.log('Permissions pressed'),
+          },
+        ],
+      },
+      {
+        title: 'ACCOUNTING TOOLS',
+        items: [
+          {
+            id: 'chart_of_accounts',
+            title: 'Chart of Accounts',
+            subtitle: 'Hisab Kitab ki List',
+            icon: <ListBulletsIcon size={iconSize} color={iconColor} weight="bold" />,
+            onPress: () => console.log('Chart of Accounts pressed'),
+          },
+          {
+            id: 'journal_entries',
+            title: 'Journal Entries',
+            subtitle: 'Roznamcha',
+            icon: <BookOpenIcon size={iconSize} color={iconColor} weight="fill" />,
+            route: ROUTES.GENERAL_JOURNAL,
+          },
+          {
+            id: 'trial_balance',
+            title: 'Trial Balance',
+            subtitle: 'Mizania Aazmaaishi',
+            icon: <ScalesIcon size={iconSize} color={iconColor} weight="fill" />,
+            route: ROUTES.TRIAL_BALANCE,
+          },
+          {
+            id: 'profit_loss',
+            title: 'Profit / Loss',
+            subtitle: 'Nafa Nuqsan',
+            icon: <ChartLineUpIcon size={iconSize} color={iconColor} weight="bold" />,
+            route: ROUTES.PROFIT_LOSS,
+          },
+          {
+            id: 'balance_sheet',
+            title: 'Balance Sheet',
+            subtitle: 'Mizania',
+            icon: <ChartBarIcon size={iconSize} color={iconColor} weight="fill" />,
+            route: ROUTES.BALANCE_SHEET,
+          },
+          {
+            id: 'general_ledger',
+            title: 'General Ledger',
+            subtitle: 'Khaata Bahi',
+            icon: <BookBookmarkIcon size={iconSize} color={iconColor} weight="fill" />,
+            route: ROUTES.GENERAL_LEDGER,
+          },
+        ],
+      },
+      {
+        title: 'DATA MANAGEMENT',
+        items: [
+          {
+            id: 'export_excel',
+            title: 'Export to Excel',
+            subtitle: 'Excel mein export karein',
+            icon: <ExportIcon size={iconSize} color={iconColor} weight="bold" />,
+            onPress: () => console.log('Export to Excel pressed'),
+          },
+        ],
+      },
+    ],
+    [iconColor],
+  );
+
+  const filteredSections = useMemo(() => {
+    if (!searchQuery.trim()) return sections;
+    const q = searchQuery.toLowerCase();
+    return sections
+      .map(section => ({
+        ...section,
+        items: section.items.filter(
+          item =>
+            item.title.toLowerCase().includes(q) ||
+            item.subtitle.toLowerCase().includes(q),
+        ),
+      }))
+      .filter(section => section.items.length > 0);
+  }, [sections, searchQuery]);
+
+  const handleItemPress = useCallback(
+    (item: SettingsItem) => {
       if (item.route) {
-        createLayoutAnimation();
         navigation.navigate(item.route);
       } else if (item.onPress) {
         item.onPress();
@@ -63,7 +202,6 @@ const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
     [navigation],
   );
 
-  // Create styles first before using them
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -71,274 +209,182 @@ const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
           flex: 1,
           backgroundColor: theme.colors.background,
         },
-        header: {
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingHorizontal: theme.spacing.lg,
-          paddingVertical: theme.spacing.md,
-          borderBottomWidth: 1,
-          borderBottomColor: theme.colors.divider,
-        },
-        userInfo: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: theme.spacing.md,
-        },
-        userName: {
-          ...theme.typography.h3,
-          color: theme.colors.text.primary,
-          fontWeight: '500',
-        },
-        headerIcons: {
-          flexDirection: 'row',
-          gap: theme.spacing.md,
-        },
-        iconButton: {
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-        },
-        iconText: {
-          fontSize: 18,
-        },
-        notificationBadge: {
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          zIndex: 1,
-        },
-        notificationDot: {
-          width: 8,
-          height: 8,
-          borderRadius: 4,
-        },
         scrollView: {
           flex: 1,
         },
         scrollContent: {
-          padding: theme.spacing.md,
-          paddingBottom: theme.spacing.xl,
+          paddingHorizontal: theme.spacing.md,
+          paddingBottom: 100,
         },
-        menuGrid: {
+        searchContainer: {
           flexDirection: 'row',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-        },
-        menuCard: {
-          width: '48%',
-          marginBottom: theme.spacing.md,
-        },
-        gridIcon: {
-          width: 48,
-          height: 48,
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          alignContent: 'space-between',
-        },
-        gridDot: {
-          width: 8,
-          height: 8,
-          backgroundColor: theme.colors.text.primary,
-          borderRadius: 2,
-        },
-        dotsIcon: {
-          flexDirection: 'row',
-          gap: theme.spacing.xs,
           alignItems: 'center',
+          backgroundColor: theme.colors.surface,
+          borderRadius: 12,
+          marginHorizontal: theme.spacing.md,
+          marginVertical: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.md,
+          height: 44,
         },
-        dot: {
-          width: 8,
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: theme.colors.text.primary,
+        searchIcon: {
+          marginRight: theme.spacing.sm,
         },
-        gearIcon: {
-          width: 48,
-          height: 48,
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        gearIconText: {
-          fontSize: 28,
-        },
-        dataIcon: {
-          width: 48,
-          height: 48,
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        dataIconText: {
-          fontSize: 28,
+        searchInput: {
+          flex: 1,
+          ...theme.typography.body,
           color: theme.colors.text.primary,
+          padding: 0,
         },
-        lockIcon: {
-          width: 48,
-          height: 48,
+        sectionTitle: {
+          ...theme.typography.caption,
+          color: theme.colors.text.secondary,
+          fontWeight: '600',
+          letterSpacing: 0.5,
+          marginTop: theme.spacing.lg,
+          marginBottom: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.xs,
+        },
+        sectionCard: {
+          backgroundColor: theme.colors.surface,
+          borderRadius: 14,
+          overflow: 'hidden',
+        },
+        itemRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingVertical: 14,
+          paddingHorizontal: theme.spacing.md,
+        },
+        itemDivider: {
+          height: StyleSheet.hairlineWidth,
+          backgroundColor: theme.colors.divider,
+          marginLeft: 52,
+        },
+        iconWrapper: {
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          backgroundColor: theme.colors.primary + '18',
           alignItems: 'center',
           justifyContent: 'center',
+          marginRight: theme.spacing.md,
         },
-        lockIconText: {
-          fontSize: 28,
+        itemTextContainer: {
+          flex: 1,
+        },
+        itemTitle: {
+          ...theme.typography.body,
+          color: theme.colors.text.primary,
+          fontWeight: '500',
+          fontSize: 15,
+        },
+        itemSubtitle: {
+          ...theme.typography.caption,
+          color: theme.colors.text.secondary,
+          marginTop: 2,
+          fontSize: 12,
+        },
+        logoutContainer: {
+          marginTop: theme.spacing.xl,
+          paddingHorizontal: theme.spacing.xs,
+        },
+        logoutButton: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: theme.colors.text.primary,
+          borderRadius: 14,
+          paddingVertical: 14,
+          gap: theme.spacing.sm,
+        },
+        logoutText: {
+          ...theme.typography.body,
+          color: theme.colors.background,
+          fontWeight: '600',
+          fontSize: 15,
+        },
+        logoutSubtext: {
+          ...theme.typography.caption,
+          color: theme.colors.background + 'AA',
+          fontSize: 12,
         },
       }),
     [theme],
   );
 
-  // Menu items configuration
-  const menuItems: MenuItem[] = [
-    {
-      id: 'profile',
-      title: 'Profile',
-      description: 'Login, authenticator',
-      icon: (
-        <Avatar
-          firstName={user?.firstName || 'Farida'}
-          lastName={user?.lastName || 'Orujova'}
-          size={48}
-        />
-      ),
-      route: ROUTES.PROFILE,
-    },
-    {
-      id: 'appearance',
-      title: 'Appearance',
-      description: 'Widgets, Themes',
-      icon: (
-        <View style={styles.gridIcon}>
-          {Array.from({ length: 16 }).map((_, index) => (
-            <View key={index} style={styles.gridDot} />
-          ))}
+  const renderItem = (item: SettingsItem, isLast: boolean) => (
+    <View key={item.id}>
+      <TouchableOpacity
+        style={styles.itemRow}
+        activeOpacity={0.6}
+        onPress={() => handleItemPress(item)}
+      >
+        <View style={styles.iconWrapper}>{item.icon}</View>
+        <View style={styles.itemTextContainer}>
+          <Text style={styles.itemTitle}>{item.title}</Text>
+          <Text style={styles.itemSubtitle}>{item.subtitle}</Text>
         </View>
-      ),
-      onPress: () => {
-        // TODO: Navigate to Appearance screen
-        console.log('Appearance pressed');
-      },
-    },
-    {
-      id: 'general',
-      title: 'General',
-      description: 'Currency, clear data and more',
-      icon: (
-        <View style={styles.dotsIcon}>
-          <View style={styles.dot} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
-        </View>
-      ),
-      onPress: () => {
-        // TODO: Navigate to General settings screen
-        console.log('General pressed');
-      },
-    },
-    {
-      id: 'settings',
-      title: 'Settings',
-      description: 'Account settings, alerts & notifications',
-      icon: (
-        <View style={styles.gearIcon}>
-          <Text style={styles.gearIconText}>⚙️</Text>
-        </View>
-      ),
-      onPress: () => {
-        // TODO: Navigate to Settings screen
-        console.log('Settings pressed');
-      },
-    },
-    {
-      id: 'data',
-      title: 'Data',
-      description: 'Data management, export and import features',
-      icon: (
-        <View style={styles.dataIcon}>
-          <Text style={styles.dataIconText}>⇅</Text>
-        </View>
-      ),
-      onPress: () => {
-        // TODO: Navigate to Data management screen
-        console.log('Data pressed');
-      },
-    },
-    {
-      id: 'privacy',
-      title: 'Privacy',
-      description: 'Password management, privacy preferences',
-      icon: (
-        <View style={styles.lockIcon}>
-          <Text style={styles.lockIconText}>🔒</Text>
-        </View>
-      ),
-      route: ROUTES.BIOMETRIC_VERIFICATION,
-    },
-  ];
-
-  const userName =
-    user?.firstName && user?.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user?.name || 'Farida Orujova';
+        <CaretRightIcon size={18} color={theme.colors.text.secondary} weight="bold" />
+      </TouchableOpacity>
+      {!isLast && <View style={styles.itemDivider} />}
+    </View>
+  );
 
   return (
     <Container safeArea edges={['top']} style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <Avatar
-            firstName={user?.firstName || 'Farida'}
-            lastName={user?.lastName || 'Orujova'}
-            size={40}
-          />
-          <Text style={styles.userName}>{userName}</Text>
-        </View>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity
-            style={[
-              styles.iconButton,
-              { backgroundColor: theme.colors.surface },
-            ]}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate(ROUTES.NOTIFICATIONS)}
-          >
-            <View style={styles.notificationBadge}>
-              <View
-                style={[
-                  styles.notificationDot,
-                  { backgroundColor: theme.colors.error },
-                ]}
-              />
-            </View>
-            <Text style={styles.iconText}>🔔</Text>
-          </TouchableOpacity>
-        </View>
+      <HeaderNavigation
+        title="Settings & Tools"
+        onBackPress={() => navigation.goBack()}
+      />
+
+      <View style={styles.searchContainer}>
+        <MagnifyingGlassIcon
+          size={18}
+          color={theme.colors.text.secondary}
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search settings & tools"
+          placeholderTextColor={theme.colors.text.secondary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
       </View>
 
-      {/* Menu Cards */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.menuGrid}>
-          {menuItems.map(item => (
-            <MenuCard
-              key={item.id}
-              icon={item.icon}
-              title={item.title}
-              description={item.description}
-              onPress={() => handleMenuCardPress(item)}
-              style={styles.menuCard}
-            />
-          ))}
+        {filteredSections.map(section => (
+          <View key={section.title}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <View style={styles.sectionCard}>
+              {section.items.map((item, idx) =>
+                renderItem(item, idx === section.items.length - 1),
+              )}
+            </View>
+          </View>
+        ))}
+
+        <View style={styles.logoutContainer}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            activeOpacity={0.8}
+            onPress={handleLogout}
+          >
+            <SignOutIcon size={20} color={theme.colors.background} weight="bold" />
+            <Text style={styles.logoutText}>
+              Logout{'  '}
+              <Text style={styles.logoutSubtext}>(Log out Karein)</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </Container>
   );
 };
-
-// Styles are now created dynamically in the component
 
 export default MenuScreen;

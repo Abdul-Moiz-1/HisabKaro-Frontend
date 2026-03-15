@@ -93,6 +93,12 @@ export type RootStackParamList = {
   EditProduct: { productId: string };
   DirectoryTab: undefined;
   AddJournalEntry: undefined;
+  SalesInvoiceList: undefined;
+  SalesInvoiceDetail: { invoiceId: number };
+  PurchaseInvoiceList: undefined;
+  PurchaseInvoiceDetail: { invoiceId: number };
+  PaymentsList: undefined;
+  PaymentDetail: { paymentId: number };
   // Report Screens
   GeneralJournal: undefined;
   GeneralLedger: { accountId?: number } | undefined;

@@ -29,6 +29,7 @@ import { useTheme, useAppDispatch, useAppSelector } from '../../store/hooks';
 import { accountingApi, Account, GLReport, GLEntry } from '../../services/api/accounting';
 import DateFilterTabs, { DateFilterOption } from './components/DateFilterTabs';
 import ExportReportModal from './components/ExportReportModal';
+import CustomDateRangeModal from './components/CustomDateRangeModal';
 
 interface GroupedEntries {
   date: string;
@@ -51,6 +52,9 @@ const GeneralLedgerScreen: React.FC = () => {
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [accountSearchQuery, setAccountSearchQuery] = useState('');
+  const [showDateRangeModal, setShowDateRangeModal] = useState(false);
+  const [customFromDate, setCustomFromDate] = useState<string | undefined>();
+  const [customToDate, setCustomToDate] = useState<string | undefined>();
 
   // Calculate date range
   const getDateRange = useCallback((filter: DateFilterOption) => {
@@ -71,6 +75,12 @@ const GeneralLedgerScreen: React.FC = () => {
       case 'last30Days':
         fromDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
+      case 'custom':
+        if (customFromDate && customToDate) {
+          return { from: customFromDate, to: customToDate };
+        }
+        fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        break;
       default:
         fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
     }
@@ -79,7 +89,7 @@ const GeneralLedgerScreen: React.FC = () => {
       from: fromDate.toISOString().split('T')[0],
       to: today.toISOString().split('T')[0],
     };
-  }, []);
+  }, [customFromDate, customToDate]);
 
   // Fetch accounts
   const fetchAccounts = useCallback(async () => {
@@ -149,7 +159,22 @@ const GeneralLedgerScreen: React.FC = () => {
     if (selectedAccount) {
       fetchGLReport();
     }
-  }, [selectedAccount, dateFilter]);
+  }, [selectedAccount, dateFilter, customFromDate, customToDate]);
+
+  const handleCustomDateApply = useCallback((from: string, to: string) => {
+    setCustomFromDate(from);
+    setCustomToDate(to);
+    setDateFilter('custom');
+  }, []);
+
+  const customDateLabel = useMemo(() => {
+    if (dateFilter === 'custom' && customFromDate && customToDate) {
+      const f = new Date(customFromDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      const t = new Date(customToDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      return `${f} - ${t}`;
+    }
+    return undefined;
+  }, [dateFilter, customFromDate, customToDate]);
 
   // Group entries by date
   const groupedEntries = useMemo(() => {
@@ -365,7 +390,13 @@ const GeneralLedgerScreen: React.FC = () => {
       </TouchableOpacity>
 
       {/* Date Filters */}
-      <DateFilterTabs selected={dateFilter} onSelect={setDateFilter} />
+      <DateFilterTabs
+        selected={dateFilter}
+        onSelect={setDateFilter}
+        onCustomPress={() => setShowDateRangeModal(true)}
+        showCustomDate={dateFilter === 'custom' && !!customDateLabel}
+        customDateLabel={customDateLabel}
+      />
 
       {/* Summary Cards */}
       {glReport && (
@@ -445,6 +476,15 @@ const GeneralLedgerScreen: React.FC = () => {
         onClose={() => setShowExportModal(false)}
         reportTitle={`${selectedAccount?.accountName || 'General'} Ledger`}
         reportDateRange={getDateRangeLabel()}
+      />
+
+      {/* Custom Date Range Modal */}
+      <CustomDateRangeModal
+        visible={showDateRangeModal}
+        onClose={() => setShowDateRangeModal(false)}
+        onApply={handleCustomDateApply}
+        initialFromDate={customFromDate}
+        initialToDate={customToDate}
       />
     </SafeAreaView>
   );

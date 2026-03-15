@@ -101,9 +101,10 @@ const TrialBalanceScreen: React.FC = () => {
   }, [report]);
 
   // Format helpers
-  const formatCurrency = (amount: number) => {
-    if (amount === 0) return '-';
-    return `PKR ${amount.toLocaleString()}`;
+  const formatCurrency = (amount: number | undefined | null) => {
+    const safe = Number(amount) || 0;
+    if (safe === 0) return '-';
+    return `PKR ${safe.toLocaleString()}`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -297,11 +298,8 @@ const TrialBalanceScreen: React.FC = () => {
                 <View style={styles.totalsLabel}>
                   <Text style={styles.totalsLabelText}>GRAND TOTAL</Text>
                 </View>
-                <Text style={styles.totalDebit}>
+                <Text style={styles.totalValue}>
                   {formatCurrency(report.totalDebit)}
-                </Text>
-                <Text style={styles.totalCredit}>
-                  {formatCurrency(report.totalCredit)}
                 </Text>
               </View>
             }
@@ -536,15 +534,8 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       color: '#FFFFFF',
       letterSpacing: 0.5,
     },
-    totalDebit: {
-      flex: 1,
-      fontSize: 14,
-      fontWeight: '700',
-      color: '#FFFFFF',
-      textAlign: 'right',
-    },
-    totalCredit: {
-      flex: 1,
+    totalValue: {
+      flex: 2,
       fontSize: 14,
       fontWeight: '700',
       color: '#FFFFFF',

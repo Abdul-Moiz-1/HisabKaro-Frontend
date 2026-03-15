@@ -25,6 +25,7 @@ import Toast from 'react-native-toast-message';
 import { useTheme, useAppDispatch, useAppSelector } from '../../store/hooks';
 import { accountingApi, JournalEntry } from '../../services/api/accounting';
 import DateFilterTabs, { DateFilterOption } from './components/DateFilterTabs';
+import CustomDateRangeModal from './components/CustomDateRangeModal';
 
 interface GroupedEntries {
   date: string;
@@ -43,6 +44,9 @@ const GeneralJournalScreen: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dateFilter, setDateFilter] = useState<DateFilterOption>('thisMonth');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showDateRangeModal, setShowDateRangeModal] = useState(false);
+  const [customFromDate, setCustomFromDate] = useState<string | undefined>();
+  const [customToDate, setCustomToDate] = useState<string | undefined>();
 
   // Calculate date range
   const getDateRange = useCallback((filter: DateFilterOption) => {
@@ -63,6 +67,12 @@ const GeneralJournalScreen: React.FC = () => {
       case 'last30Days':
         fromDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
+      case 'custom':
+        if (customFromDate && customToDate) {
+          return { from: customFromDate, to: customToDate };
+        }
+        fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        break;
       default:
         fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
     }
@@ -71,7 +81,7 @@ const GeneralJournalScreen: React.FC = () => {
       from: fromDate.toISOString().split('T')[0],
       to: today.toISOString().split('T')[0],
     };
-  }, []);
+  }, [customFromDate, customToDate]);
 
   // Fetch entries
   const fetchEntries = useCallback(
@@ -106,7 +116,41 @@ const GeneralJournalScreen: React.FC = () => {
 
   useEffect(() => {
     fetchEntries();
-  }, [dateFilter]);
+  }, [dateFilter, customFromDate, customToDate]);
+
+  const handleCustomDateApply = useCallback((from: string, to: string) => {
+    setCustomFromDate(from);
+    setCustomToDate(to);
+    setDateFilter('custom');
+  }, []);
+
+  const customDateLabel = useMemo(() => {
+    if (dateFilter === 'custom' && customFromDate && customToDate) {
+      const f = new Date(customFromDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      const t = new Date(customToDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      return `${f} - ${t}`;
+    }
+    return undefined;
+  }, [dateFilter, customFromDate, customToDate]);
+
+  const formatDateShort = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  };
+  
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+  
+  const formatCurrency = (amount: number) => {
+    return `PKR ${amount.toLocaleString()}`;
+  };
+
 
   // Group entries by date
   const groupedEntries = useMemo(() => {
@@ -150,24 +194,7 @@ const GeneralJournalScreen: React.FC = () => {
       });
   }, [entries, searchQuery]);
 
-  // Format helpers
-  const formatDateShort = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-  };
 
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return `PKR ${amount.toLocaleString()}`;
-  };
 
   // Navigate to add entry
   const handleAddEntry = useCallback(() => {
@@ -277,7 +304,13 @@ const GeneralJournalScreen: React.FC = () => {
       </View>
 
       {/* Date Filters */}
-      <DateFilterTabs selected={dateFilter} onSelect={setDateFilter} />
+      <DateFilterTabs
+        selected={dateFilter}
+        onSelect={setDateFilter}
+        onCustomPress={() => setShowDateRangeModal(true)}
+        showCustomDate={dateFilter === 'custom' && !!customDateLabel}
+        customDateLabel={customDateLabel}
+      />
 
       {/* Content */}
       {isLoading ? (
@@ -319,6 +352,15 @@ const GeneralJournalScreen: React.FC = () => {
       >
         <PlusIcon size={24} color="#FFFFFF" weight="bold" />
       </TouchableOpacity>
+
+      {/* Custom Date Range Modal */}
+      <CustomDateRangeModal
+        visible={showDateRangeModal}
+        onClose={() => setShowDateRangeModal(false)}
+        onApply={handleCustomDateApply}
+        initialFromDate={customFromDate}
+        initialToDate={customToDate}
+      />
     </SafeAreaView>
   );
 };
