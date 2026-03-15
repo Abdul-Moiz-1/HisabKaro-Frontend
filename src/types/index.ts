@@ -92,6 +92,19 @@ export type RootStackParamList = {
   AddProduct: { fromFlow?: boolean } | undefined;
   EditProduct: { productId: string };
   DirectoryTab: undefined;
+  AddJournalEntry: undefined;
+  SalesInvoiceList: undefined;
+  SalesInvoiceDetail: { invoiceId: number };
+  PurchaseInvoiceList: undefined;
+  PurchaseInvoiceDetail: { invoiceId: number };
+  PaymentsList: undefined;
+  PaymentDetail: { paymentId: number };
+  // Report Screens
+  GeneralJournal: undefined;
+  GeneralLedger: { accountId?: number } | undefined;
+  ProfitLoss: undefined;
+  TrialBalance: undefined;
+  BalanceSheet: undefined;
 };
 
 declare global {

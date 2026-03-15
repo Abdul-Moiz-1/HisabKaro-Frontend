@@ -15,8 +15,10 @@ import {
   HandshakeIcon,
   PackageIcon,
   BankIcon,
-  PlusIcon,
   UserPlusIcon,
+  Receipt,
+  ShoppingCart,
+  CurrencyCircleDollar,
 } from 'phosphor-react-native';
 
 import { useTheme, useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -27,8 +29,6 @@ import {
   selectDashboardSummary,
   selectDashboardLoading,
   selectDirectoryCounts,
-  selectRecentActivity,
-  fetchRecentActivity,
 } from '../../store/slices/dashboardSlice';
 import { ROUTES } from '../../constants/routes';
 
@@ -39,7 +39,6 @@ const DirectoryScreen: React.FC = () => {
 
   const dashboardData = useAppSelector(selectDashboardSummary);
   const directoryCounts = useAppSelector(selectDirectoryCounts);
-  const recentActivity = useAppSelector(selectRecentActivity);
   const isLoading = useAppSelector(selectDashboardLoading);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,12 +46,10 @@ const DirectoryScreen: React.FC = () => {
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Fetch dashboard data on screen focus
   useFocusEffect(
     useCallback(() => {
       dispatch(fetchDashboardSummary());
       dispatch(fetchDirectoryCounts());
-      dispatch(fetchRecentActivity(5));
     }, [dispatch]),
   );
 
@@ -61,12 +58,63 @@ const DirectoryScreen: React.FC = () => {
     await Promise.all([
       dispatch(fetchDashboardSummary()),
       dispatch(fetchDirectoryCounts()),
-      dispatch(fetchRecentActivity(5)),
     ]);
     setIsRefreshing(false);
   }, [dispatch]);
 
-  const masterDataSections = useMemo(
+  const transactionTiles = useMemo(
+    () => [
+      {
+        id: 'sales',
+        title: 'Sales Invoices',
+        subtitle: 'Bikri Bills',
+        icon: Receipt,
+        iconColor: theme.colors.primary,
+        backgroundColor: `${theme.colors.primary}15`,
+        route: ROUTES.SALES_INVOICE_LIST,
+        statusLabel: 'New Sale',
+        statusColor: theme.colors.success,
+        value: dashboardData?.monthly_sales
+          ? `${Math.round(dashboardData.monthly_sales).toLocaleString()}`
+          : '0',
+        valueLabel: 'Monthly Total',
+        watermarkOpacity: 0.06,
+      },
+      {
+        id: 'purchase',
+        title: 'Purchase Bills',
+        subtitle: 'Kharidari Bills',
+        icon: ShoppingCart,
+        iconColor: '#FF6B35',
+        backgroundColor: '#FF6B3515',
+        route: ROUTES.PURCHASE_INVOICE_LIST,
+        statusLabel: dashboardData?.overdue_invoices_count
+          ? `${dashboardData.overdue_invoices_count} Overdue`
+          : undefined,
+        statusColor: '#E65100',
+        value: `PKR ${((dashboardData?.total_payables || 0) / 1000000).toFixed(1)}M`,
+        valueLabel: 'Pending Payments',
+        watermarkOpacity: 0.06,
+      },
+      {
+        id: 'payments',
+        title: 'Payments',
+        subtitle: 'Wusoliyaan',
+        icon: CurrencyCircleDollar,
+        iconColor: '#8B5CF6',
+        backgroundColor: '#8B5CF615',
+        route: ROUTES.PAYMENTS_LIST,
+        statusLabel: undefined,
+        statusColor: undefined,
+        value: `PKR ${((dashboardData?.total_receivables || 0) / 1000000).toFixed(1)}M`,
+        valueLabel: 'Collections',
+        watermarkOpacity: 0.06,
+      },
+    ],
+    [dashboardData, theme],
+  );
+
+  const directorySections = useMemo(
     () => [
       {
         id: 'customers',
@@ -76,12 +124,7 @@ const DirectoryScreen: React.FC = () => {
         iconColor: theme.colors.primary,
         backgroundColor: `${theme.colors.primary}15`,
         count: directoryCounts.customersCount,
-        statusLabel: 'Active',
-        statusColor: theme.colors.success,
         route: ROUTES.CUSTOMERS_LIST,
-        detail: `PKR ${(
-          dashboardData?.total_receivables || 0
-        ).toLocaleString()} Due`,
       },
       {
         id: 'suppliers',
@@ -91,14 +134,7 @@ const DirectoryScreen: React.FC = () => {
         iconColor: '#FF6B35',
         backgroundColor: '#FF6B3515',
         count: directoryCounts.suppliersCount,
-        statusLabel: directoryCounts.pendingSuppliersCount
-          ? `${directoryCounts.pendingSuppliersCount} Pending`
-          : undefined,
-        statusColor: '#FF6B35',
         route: ROUTES.SUPPLIERS_LIST,
-        detail: `PKR ${(
-          dashboardData?.total_payables || 0
-        ).toLocaleString()} Payable`,
       },
       {
         id: 'inventory',
@@ -108,12 +144,7 @@ const DirectoryScreen: React.FC = () => {
         iconColor: '#4169E1',
         backgroundColor: '#4169E115',
         count: directoryCounts.productsCount,
-        statusLabel: dashboardData?.low_stock_count
-          ? `${dashboardData.low_stock_count} Low`
-          : undefined,
-        statusColor: theme.colors.error,
         route: ROUTES.INVENTORY_LIST,
-        detail: `${directoryCounts.productsCount} SKUs`,
       },
       {
         id: 'banks',
@@ -123,98 +154,19 @@ const DirectoryScreen: React.FC = () => {
         iconColor: '#8B5CF6',
         backgroundColor: '#8B5CF615',
         count: directoryCounts.bankAccountsCount,
-        statusLabel: 'Live',
-        statusColor: theme.colors.success,
         route: ROUTES.BANK_ACCOUNTS_LIST,
-        detail: `${directoryCounts.bankAccountsCount} Linked`,
       },
     ],
-    [directoryCounts, dashboardData, theme],
+    [directoryCounts, theme],
   );
 
-  const handleSectionPress = useCallback(
+  const handlePress = useCallback(
     (route: string) => {
       // @ts-ignore
       navigation.navigate(route);
     },
     [navigation],
   );
-
-  const renderSectionCard = useCallback(
-    (section: (typeof masterDataSections)[0]) => (
-      <TouchableOpacity
-        key={section.id}
-        style={styles.sectionCard}
-        onPress={() => handleSectionPress(section.route)}
-        activeOpacity={0.7}
-      >
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: section.backgroundColor },
-          ]}
-        >
-          <section.icon size={32} color={section.iconColor} weight="fill" />
-        </View>
-
-        {section.statusLabel && (
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: `${section.statusColor}15` },
-            ]}
-          >
-            <Text style={[styles.statusText, { color: section.statusColor }]}>
-              {section.statusLabel}
-            </Text>
-          </View>
-        )}
-
-        <View style={styles.sectionContent}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-          <Text style={styles.sectionSubtitle}>{section.subtitle}</Text>
-
-          <Text style={styles.sectionCount}>
-            {section.count} <Text style={styles.countLabel}>Total</Text>
-          </Text>
-
-          {section.detail && (
-            <Text style={styles.sectionDetail}>{section.detail}</Text>
-          )}
-        </View>
-      </TouchableOpacity>
-    ),
-    [styles, handleSectionPress],
-  );
-
-  const renderRecentActivity = () => {
-    if (!recentActivity || recentActivity.length === 0) {
-      return null;
-    }
-
-    return (
-      <View style={styles.recentSection}>
-        <View style={styles.recentHeader}>
-          <Text style={styles.recentTitle}>Recent Activity</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>See all</Text>
-          </TouchableOpacity>
-        </View>
-
-        {recentActivity.slice(0, 3).map(activity => (
-          <View key={activity.id} style={styles.activityItem}>
-            <View style={styles.activityIcon}>
-              <UserPlusIcon size={18} color={theme.colors.primary} />
-            </View>
-            <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>{activity.title}</Text>
-              <Text style={styles.activitySubtitle}>{activity.subtitle}</Text>
-            </View>
-          </View>
-        ))}
-      </View>
-    );
-  };
 
   if (isLoading && !dashboardData) {
     return (
@@ -235,8 +187,8 @@ const DirectoryScreen: React.FC = () => {
           <Text style={styles.headerIconText}>✨</Text>
         </View>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Directory</Text>
-          <Text style={styles.headerSubtitle}>Master Data</Text>
+          <Text style={styles.headerTitle}>Master Directory</Text>
+          <Text style={styles.headerSubtitle}>BUSINESS DATA HUB</Text>
         </View>
         <TouchableOpacity style={styles.profileButton}>
           <UserPlusIcon size={24} color={theme.colors.text.primary} />
@@ -253,31 +205,103 @@ const DirectoryScreen: React.FC = () => {
             tintColor={theme.colors.primary}
             colors={[theme.colors.primary]}
           />
-        }
-      >
+        }>
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search or say 'Naya customer'..."
+            placeholder="Search or say 'Bikri bill dikhao'..."
             onClear={() => setSearchQuery('')}
           />
         </View>
 
-        {/* Main Business Lists Title */}
-        <View style={styles.titleSection}>
-          <Text style={styles.mainTitle}>Main Business Lists</Text>
-          <Text style={styles.mainSubtitle}>Asli Karobar / Directories</Text>
+        {/* Transactions Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Transactions</Text>
+          <Text style={styles.sectionSubtitle}>Bikri aur Kharidari / Bills</Text>
         </View>
 
-        {/* Master Data Grid */}
-        <View style={styles.grid}>
-          {masterDataSections.map(renderSectionCard)}
+        {transactionTiles.map(tile => (
+          <TouchableOpacity
+            key={tile.id}
+            style={styles.transactionCard}
+            onPress={() => handlePress(tile.route)}
+            activeOpacity={0.7}>
+            <View style={styles.transactionCardInner}>
+              <View style={styles.transactionCardTop}>
+                <View
+                  style={[
+                    styles.tileIconContainer,
+                    { backgroundColor: tile.backgroundColor },
+                  ]}>
+                  <tile.icon size={28} color={tile.iconColor} weight="fill" />
+                </View>
+                {tile.statusLabel && (
+                  <View
+                    style={[
+                      styles.tileBadge,
+                      { backgroundColor: `${tile.statusColor}15` },
+                    ]}>
+                    <Text
+                      style={[styles.tileBadgeText, { color: tile.statusColor }]}>
+                      {tile.statusLabel}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <Text style={styles.tileTitle}>{tile.title}</Text>
+              <Text style={styles.tileSubtitle}>{tile.subtitle}</Text>
+
+              <Text style={styles.tileValue}>{tile.value}</Text>
+              <Text style={styles.tileValueLabel}>{tile.valueLabel}</Text>
+            </View>
+
+            {/* Watermark icon */}
+            <View style={styles.watermarkContainer}>
+              <tile.icon
+                size={100}
+                color={tile.iconColor}
+                weight="fill"
+                style={{ opacity: tile.watermarkOpacity }}
+              />
+            </View>
+          </TouchableOpacity>
+        ))}
+
+        {/* Directory Section */}
+        <View style={[styles.sectionHeader, { marginTop: 8 }]}>
+          <Text style={styles.sectionTitle}>Directory</Text>
+          <Text style={styles.sectionSubtitle}>
+            Karobari Details / Master Data
+          </Text>
         </View>
 
-        {/* Recent Activity */}
-        {renderRecentActivity()}
+        <View style={styles.directoryGrid}>
+          {directorySections.map(section => (
+            <TouchableOpacity
+              key={section.id}
+              style={styles.directoryCard}
+              onPress={() => handlePress(section.route)}
+              activeOpacity={0.7}>
+              <View
+                style={[
+                  styles.directoryIconContainer,
+                  { backgroundColor: section.backgroundColor },
+                ]}>
+                <section.icon
+                  size={24}
+                  color={section.iconColor}
+                  weight="fill"
+                />
+              </View>
+              <Text style={styles.directoryTitle}>{section.title}</Text>
+              <Text style={styles.directorySubtitle}>{section.subtitle}</Text>
+              <Text style={styles.directoryCount}>{section.count}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -308,28 +332,30 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       borderBottomColor: theme.colors.border,
     },
     headerIcon: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
       backgroundColor: `${theme.colors.primary}15`,
       alignItems: 'center',
       justifyContent: 'center',
-      marginRight: theme.spacing.md,
+      marginRight: theme.spacing.sm,
     },
     headerIconText: {
-      fontSize: 24,
+      fontSize: 20,
     },
     headerContent: {
       flex: 1,
     },
     headerTitle: {
-      fontSize: 24,
+      fontSize: 20,
       fontWeight: '700',
       color: theme.colors.text.primary,
     },
     headerSubtitle: {
-      fontSize: 14,
-      color: theme.colors.primary,
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.colors.text.secondary,
+      letterSpacing: 1,
     },
     profileButton: {
       width: 40,
@@ -346,143 +372,115 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
     searchContainer: {
       marginVertical: theme.spacing.md,
     },
-    titleSection: {
-      marginBottom: theme.spacing.lg,
-    },
-    mainTitle: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: theme.colors.text.primary,
-      marginBottom: 4,
-    },
-    mainSubtitle: {
-      fontSize: 14,
-      color: theme.colors.primary,
-    },
-    grid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: theme.spacing.sm,
-      marginBottom: theme.spacing.xl,
-    },
-    sectionCard: {
-      width: '48%',
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.xl,
-      padding: theme.spacing.md,
-      ...theme.shadows.sm,
-      position: 'relative',
-    },
-    iconContainer: {
-      width: 64,
-      height: 64,
-      borderRadius: 16,
-      alignItems: 'center',
-      justifyContent: 'center',
+    sectionHeader: {
       marginBottom: theme.spacing.md,
     },
-    statusBadge: {
-      position: 'absolute',
-      top: theme.spacing.sm,
-      right: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.sm,
-      paddingVertical: 4,
-      borderRadius: theme.borderRadius.sm,
-    },
-    statusText: {
-      fontSize: 10,
-      fontWeight: '600',
-    },
-    sectionContent: {
-      flex: 1,
-    },
     sectionTitle: {
-      fontSize: 16,
+      fontSize: 20,
       fontWeight: '700',
       color: theme.colors.text.primary,
       marginBottom: 2,
     },
     sectionSubtitle: {
-      fontSize: 12,
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing.sm,
-    },
-    sectionCount: {
-      fontSize: 32,
-      fontWeight: '700',
-      color: theme.colors.primary,
-      marginBottom: 4,
-    },
-    countLabel: {
-      fontSize: 14,
-      fontWeight: '400',
-      color: theme.colors.text.disabled,
-    },
-    sectionDetail: {
-      fontSize: 12,
+      fontSize: 13,
       color: theme.colors.text.secondary,
     },
-    recentSection: {
-      marginTop: theme.spacing.lg,
+    transactionCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: 20,
+      padding: 20,
+      marginBottom: 12,
+      overflow: 'hidden',
+      position: 'relative',
+      ...theme.shadows.sm,
     },
-    recentHeader: {
+    transactionCardInner: {
+      zIndex: 1,
+    },
+    transactionCardTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: theme.spacing.md,
+      alignItems: 'flex-start',
+      marginBottom: 12,
     },
-    recentTitle: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: theme.colors.text.primary,
-    },
-    seeAll: {
-      fontSize: 14,
-      color: theme.colors.primary,
-      fontWeight: '600',
-    },
-    activityItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.lg,
-      padding: theme.spacing.md,
-      marginBottom: theme.spacing.sm,
-      ...theme.shadows.xs,
-    },
-    activityIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: `${theme.colors.primary}15`,
+    tileIconContainer: {
+      width: 52,
+      height: 52,
+      borderRadius: 14,
       alignItems: 'center',
       justifyContent: 'center',
-      marginRight: theme.spacing.md,
     },
-    activityContent: {
-      flex: 1,
+    tileBadge: {
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 8,
     },
-    activityTitle: {
-      fontSize: 14,
+    tileBadgeText: {
+      fontSize: 11,
       fontWeight: '600',
+    },
+    tileTitle: {
+      fontSize: 18,
+      fontWeight: '700',
       color: theme.colors.text.primary,
       marginBottom: 2,
     },
-    activitySubtitle: {
-      fontSize: 12,
+    tileSubtitle: {
+      fontSize: 13,
       color: theme.colors.text.secondary,
+      marginBottom: 12,
     },
-    fab: {
+    tileValue: {
+      fontSize: 28,
+      fontWeight: '700',
+      color: theme.colors.primary,
+    },
+    tileValueLabel: {
+      fontSize: 13,
+      color: theme.colors.text.disabled,
+      fontStyle: 'italic',
+    },
+    watermarkContainer: {
       position: 'absolute',
-      bottom: 80,
-      right: theme.spacing.md,
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      backgroundColor: theme.colors.primary,
+      right: 10,
+      bottom: 10,
+      zIndex: 0,
+    },
+    directoryGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+      marginBottom: theme.spacing.xl,
+    },
+    directoryCard: {
+      width: '48%',
+      backgroundColor: theme.colors.surface,
+      borderRadius: 16,
+      padding: 16,
+      ...theme.shadows.sm,
+    },
+    directoryIconContainer: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
-      ...theme.shadows.lg,
+      marginBottom: 10,
+    },
+    directoryTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: theme.colors.text.primary,
+    },
+    directorySubtitle: {
+      fontSize: 11,
+      color: theme.colors.text.secondary,
+      marginBottom: 8,
+    },
+    directoryCount: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: theme.colors.primary,
     },
   });
 

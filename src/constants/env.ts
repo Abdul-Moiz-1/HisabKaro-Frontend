@@ -20,7 +20,7 @@ export const ENV_CONFIG = {
    * API Configuration
    */
   API: {
-    BASE_URL: 'http://192.168.100.4:3000/api/v1',
+    BASE_URL: 'http://146.190.142.109:3000/api/v1',
     TIMEOUT: 15000,
   },
 

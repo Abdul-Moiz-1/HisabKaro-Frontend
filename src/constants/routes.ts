@@ -69,6 +69,23 @@ export const ROUTES = {
   BANK_ACCOUNT_DETAIL: 'BankAccountDetail',
   ADD_BANK_ACCOUNT: 'AddBankAccount',
   EDIT_BANK_ACCOUNT: 'EditBankAccount',
+
+  ADD_JOURNAL_ENTRY: 'AddJournalEntry',
+
+  // Transaction Listing Screens (Directory)
+  SALES_INVOICE_LIST: 'SalesInvoiceList',
+  SALES_INVOICE_DETAIL: 'SalesInvoiceDetail',
+  PURCHASE_INVOICE_LIST: 'PurchaseInvoiceList',
+  PURCHASE_INVOICE_DETAIL: 'PurchaseInvoiceDetail',
+  PAYMENTS_LIST: 'PaymentsList',
+  PAYMENT_DETAIL: 'PaymentDetail',
+
+  // Report Screens
+  GENERAL_JOURNAL: 'GeneralJournal',
+  GENERAL_LEDGER: 'GeneralLedger',
+  PROFIT_LOSS: 'ProfitLoss',
+  TRIAL_BALANCE: 'TrialBalance',
+  BALANCE_SHEET: 'BalanceSheet',
 } as const;
 
 export type RouteName = (typeof ROUTES)[keyof typeof ROUTES];
