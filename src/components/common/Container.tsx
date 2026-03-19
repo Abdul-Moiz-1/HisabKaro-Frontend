@@ -37,7 +37,8 @@ export const Container: React.FC<ContainerProps> = ({
   const content = (
     <KeyboardAvoidingView
       style={styles.keyboardView}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       {scrollable ? (
         <ScrollView
@@ -45,6 +46,8 @@ export const Container: React.FC<ContainerProps> = ({
           contentContainerStyle={[styles.content, style]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          bounces={true}
+          overScrollMode="always"
         >
           {children}
         </ScrollView>
@@ -69,7 +72,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
   },
 });
 

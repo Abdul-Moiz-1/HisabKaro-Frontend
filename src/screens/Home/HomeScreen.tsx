@@ -363,7 +363,7 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
               color={theme.colors.text.primary}
               weight="regular"
             />
-            {summary?.pending_invoices_count &&
+            {!!summary?.pending_invoices_count &&
               summary.pending_invoices_count > 0 && (
                 <View style={styles.notificationDot} />
               )}
@@ -404,7 +404,7 @@ const HomeScreen: React.FC<NavigationProps<'Home'>> = ({ navigation }) => {
         }
       >
         {/* Last Updated Indicator */}
-        {lastUpdated && (
+        {!!lastUpdated && (
           <View style={styles.lastUpdatedContainer}>
             <ArrowsClockwiseIcon size={12} color={theme.colors.text.disabled} />
             <Text style={styles.lastUpdatedText}>

@@ -80,6 +80,10 @@ export const ROUTES = {
   PAYMENTS_LIST: 'PaymentsList',
   PAYMENT_DETAIL: 'PaymentDetail',
 
+  // Email Account Screens
+  EMAIL_ACCOUNTS_LIST: 'EmailAccountsList',
+  EMAIL_ACCOUNT_DETAIL: 'EmailAccountDetail',
+
   // Report Screens
   GENERAL_JOURNAL: 'GeneralJournal',
   GENERAL_LEDGER: 'GeneralLedger',

@@ -86,6 +86,12 @@ import {
 import DirectoryScreen from '../screens/Directory/DirectoryScreen';
 import JournalEntryNavigator from '../screens/ManualTranasactions/journalEntry/JournalEntryNavigator';
 
+// Email Account Screens
+import {
+  EmailAccountsListScreen,
+  EmailAccountDetailScreen,
+} from '../screens/EmailAccounts';
+
 // Transaction Listing Screens
 import SalesInvoiceListScreen from '../screens/Transactions/SalesInvoiceListScreen';
 import SalesInvoiceDetailScreen from '../screens/Transactions/SalesInvoiceDetailScreen';
@@ -351,6 +357,16 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen
           name={ROUTES.PAYMENT_DETAIL}
           component={PaymentDetailScreen}
+        />
+
+        {/* Email Account Screens */}
+        <Stack.Screen
+          name={ROUTES.EMAIL_ACCOUNTS_LIST}
+          component={EmailAccountsListScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.EMAIL_ACCOUNT_DETAIL}
+          component={EmailAccountDetailScreen}
         />
 
         {/* Report Screens */}

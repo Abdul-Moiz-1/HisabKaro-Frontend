@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Keyboard } from 'react-native';
 import { NavigationProps } from '../../types';
 import { ROUTES } from '../../constants/routes';
@@ -23,6 +23,26 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
   const [passwordError, setPasswordError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [loading, setLocalLoading] = useState(false);
+
+  const handleFullNameChange = useCallback((text: string) => {
+    setFullName(text);
+    setFullNameError((prev) => prev ? '' : prev);
+  }, []);
+
+  const handleEmailChange = useCallback((text: string) => {
+    setEmail(text);
+    setEmailError((prev) => prev ? '' : prev);
+  }, []);
+
+  const handlePasswordChange = useCallback((text: string) => {
+    setPassword(text);
+    setPasswordError((prev) => prev ? '' : prev);
+  }, []);
+
+  const handlePhoneChange = useCallback((text: string) => {
+    setPhoneNumber(text);
+    setPhoneError((prev) => prev ? '' : prev);
+  }, []);
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -137,10 +157,7 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
             label="Full name*"
             placeholder="Enter your full name"
             value={fullName}
-            onChangeText={(text) => {
-              setFullName(text);
-              if (fullNameError) setFullNameError('');
-            }}
+            onChangeText={handleFullNameChange}
             error={fullNameError}
             autoCapitalize="words"
             autoComplete="name"
@@ -150,10 +167,7 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
             label="Email"
             placeholder="Enter your email"
             value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              if (emailError) setEmailError('');
-            }}
+            onChangeText={handleEmailChange}
             error={emailError}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -164,10 +178,7 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
             label="Password"
             placeholder="Enter your password"
             value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              if (passwordError) setPasswordError('');
-            }}
+            onChangeText={handlePasswordChange}
             error={passwordError}
             secureTextEntry
             showPasswordToggle
@@ -179,10 +190,7 @@ const SignupScreen: React.FC<NavigationProps<'Signup'>> = ({ navigation }) => {
             label="Phone number"
             placeholder="Enter your number"
             value={phoneNumber}
-            onChangeText={(text) => {
-              setPhoneNumber(text);
-              if (phoneError) setPhoneError('');
-            }}
+            onChangeText={handlePhoneChange}
             error={phoneError}
             keyboardType="phone-pad"
             autoComplete="tel"
@@ -215,7 +223,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: theme.spacing.xl,
     paddingTop: theme.spacing.xl,
   },

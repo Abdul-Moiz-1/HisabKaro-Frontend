@@ -23,6 +23,7 @@ import {
   CaretRightIcon,
   MagnifyingGlassIcon,
   SignOutIcon,
+  EnvelopeIcon,
 } from 'phosphor-react-native';
 import { NavigationProps, RootStackParamList } from '../../types';
 import { ROUTES } from '../../constants/routes';
@@ -91,6 +92,13 @@ const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
             subtitle: 'Tax ki Tafseelat',
             icon: <FileTextIcon size={iconSize} color={iconColor} weight="fill" />,
             onPress: () => console.log('Tax & NTN pressed'),
+          },
+          {
+            id: 'email_accounts',
+            title: 'Email Accounts',
+            subtitle: 'Email se Transaction nikalna',
+            icon: <EnvelopeIcon size={iconSize} color={iconColor} weight="fill" />,
+            route: ROUTES.EMAIL_ACCOUNTS_LIST,
           },
         ],
       },

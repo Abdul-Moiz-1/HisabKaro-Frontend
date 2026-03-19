@@ -214,14 +214,14 @@ export const fetchDirectoryCounts = createAsyncThunk<
       customersApi.getAll({ limit: 1 }),
       suppliersApi.getAll({ limit: 1 }),
       productsApi.getAll({ limit: 1 }),
-      bankAccountsApi.getAll({ limit: 1 }),
+      bankAccountsApi.getAll(),
     ]);
 
     return {
       customersCount: customers.total || 0,
       suppliersCount: suppliers.total || 0,
       productsCount: products.total || 0,
-      bankAccountsCount: bankAccounts.total || 0,
+      bankAccountsCount: (bankAccounts as any).total || bankAccounts.data?.length || 0,
       pendingSuppliersCount: 0, // Would need to be calculated from suppliers with payables
     };
   } catch (error: any) {

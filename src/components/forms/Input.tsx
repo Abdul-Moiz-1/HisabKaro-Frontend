@@ -35,6 +35,8 @@ const InputComponent: React.FC<InputProps> = ({
   disabled = false,
   required = false,
   style,
+  onFocus,
+  onBlur,
   ...textInputProps
 }) => {
   const theme = useTheme();
@@ -45,17 +47,22 @@ const InputComponent: React.FC<InputProps> = ({
     setIsPasswordVisible((prev) => !prev);
   }, []);
 
-  const handleFocus = useCallback(() => {
+  const handleFocus = useCallback((e: any) => {
     setIsFocused(true);
-  }, []);
+    if (onFocus) onFocus(e);
+  }, [onFocus]);
 
-  const handleBlur = useCallback(() => {
+  const handleBlur = useCallback((e: any) => {
     setIsFocused(false);
-  }, []);
+    if (onBlur) onBlur(e);
+  }, [onBlur]);
 
-  const displaySecureTextEntry = showPasswordToggle 
-    ? !isPasswordVisible && secureTextEntry 
-    : secureTextEntry;
+  const displaySecureTextEntry = useMemo(() => {
+    if (showPasswordToggle) {
+      return !isPasswordVisible && secureTextEntry;
+    }
+    return secureTextEntry;
+  }, [showPasswordToggle, isPasswordVisible, secureTextEntry]);
 
   const styles = useMemo(() => StyleSheet.create({
     container: {
@@ -80,24 +87,9 @@ const InputComponent: React.FC<InputProps> = ({
       flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1.5,
-      borderColor: error 
-        ? theme.colors.error 
-        : isFocused 
-          ? theme.colors.primary 
-          : theme.colors.border,
       borderRadius: theme.borderRadius.lg,
-      backgroundColor: disabled 
-        ? theme.colors.divider 
-        : theme.colors.surface,
       paddingHorizontal: theme.spacing.md,
       minHeight: 52,
-      ...(isFocused && !error && {
-        shadowColor: theme.colors.primary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 2,
-      }),
     },
     leftIconContainer: {
       marginRight: theme.spacing.sm,
@@ -105,7 +97,6 @@ const InputComponent: React.FC<InputProps> = ({
     input: {
       flex: 1,
       fontSize: 16,
-      color: disabled ? theme.colors.text.disabled : theme.colors.text.primary,
       paddingVertical: theme.spacing.sm,
       fontWeight: '400',
     },
@@ -136,7 +127,23 @@ const InputComponent: React.FC<InputProps> = ({
       fontSize: 12,
       color: theme.colors.text.secondary,
     },
-  }), [theme, isFocused, error, disabled]);
+  }), [theme]);
+
+  // Dynamic wrapper style (simplified, no elevation/shadow)
+  const inputWrapperStyle = {
+    borderColor: error 
+      ? theme.colors.error 
+      : isFocused 
+        ? theme.colors.primary 
+        : theme.colors.border,
+    backgroundColor: disabled 
+      ? theme.colors.divider 
+      : theme.colors.surface,
+  };
+
+  const inputTextStyle = {
+    color: disabled ? theme.colors.text.disabled : theme.colors.text.primary,
+  };
 
   return (
     <View style={styles.container}>
@@ -147,7 +154,7 @@ const InputComponent: React.FC<InputProps> = ({
         </View>
       )}
       
-      <View style={styles.inputWrapper}>
+      <View style={[styles.inputWrapper, inputWrapperStyle]}>
         {leftIcon && (
           <View style={styles.leftIconContainer}>
             {leftIcon}
@@ -155,13 +162,13 @@ const InputComponent: React.FC<InputProps> = ({
         )}
         
         <TextInput
-          style={[styles.input, style]}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
           placeholderTextColor={theme.colors.text.disabled}
-          secureTextEntry={displaySecureTextEntry}
           editable={!disabled}
           {...textInputProps}
+          secureTextEntry={displaySecureTextEntry}
+          style={[styles.input, inputTextStyle, style]}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
         />
         
         {showPasswordToggle && (
