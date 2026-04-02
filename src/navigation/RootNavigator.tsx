@@ -100,6 +100,10 @@ import PurchaseInvoiceDetailScreen from '../screens/Transactions/PurchaseInvoice
 import PaymentsListScreen from '../screens/Transactions/PaymentsListScreen';
 import PaymentDetailScreen from '../screens/Transactions/PaymentDetailScreen';
 
+// Bank Feed Screens
+import BankFeedScreen from '../screens/BankFeed/BankFeedScreen';
+import ReviewTransactionScreen from '../screens/BankFeed/ReviewTransactionScreen';
+
 // Report Screens
 import {
   GeneralJournalScreen,
@@ -367,6 +371,16 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen
           name={ROUTES.EMAIL_ACCOUNT_DETAIL}
           component={EmailAccountDetailScreen}
+        />
+
+        {/* Bank Feed Screens */}
+        <Stack.Screen
+          name={ROUTES.BANK_FEED}
+          component={BankFeedScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.REVIEW_TRANSACTION}
+          component={ReviewTransactionScreen}
         />
 
         {/* Report Screens */}

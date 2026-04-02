@@ -103,6 +103,10 @@ export type RootStackParamList = {
   EmailAccountsList: undefined;
   EmailAccountDetail: { accountId: number };
 
+  // Bank Feed / Pending Transactions
+  BankFeed: undefined;
+  ReviewTransaction: { transaction: any };
+
   // Report Screens
   GeneralJournal: undefined;
   GeneralLedger: { accountId?: number } | undefined;

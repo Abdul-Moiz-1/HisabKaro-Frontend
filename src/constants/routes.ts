@@ -84,6 +84,10 @@ export const ROUTES = {
   EMAIL_ACCOUNTS_LIST: 'EmailAccountsList',
   EMAIL_ACCOUNT_DETAIL: 'EmailAccountDetail',
 
+  // Bank Feed / Pending Transactions
+  BANK_FEED: 'BankFeed',
+  REVIEW_TRANSACTION: 'ReviewTransaction',
+
   // Report Screens
   GENERAL_JOURNAL: 'GeneralJournal',
   GENERAL_LEDGER: 'GeneralLedger',

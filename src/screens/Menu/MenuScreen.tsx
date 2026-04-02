@@ -24,6 +24,7 @@ import {
   MagnifyingGlassIcon,
   SignOutIcon,
   EnvelopeIcon,
+  ClockCounterClockwiseIcon,
 } from 'phosphor-react-native';
 import { NavigationProps, RootStackParamList } from '../../types';
 import { ROUTES } from '../../constants/routes';
@@ -165,6 +166,13 @@ const MenuScreen: React.FC<NavigationProps<'Menu'>> = ({ navigation }) => {
             subtitle: 'Khaata Bahi',
             icon: <BookBookmarkIcon size={iconSize} color={iconColor} weight="fill" />,
             route: ROUTES.GENERAL_LEDGER,
+          },
+          {
+            id: 'pending_transactions',
+            title: 'Pending Transactions',
+            subtitle: 'Zayr e Ghour Lein Dein',
+            icon: <ClockCounterClockwiseIcon size={iconSize} color={iconColor} weight="fill" />,
+            route: ROUTES.BANK_FEED,
           },
         ],
       },
