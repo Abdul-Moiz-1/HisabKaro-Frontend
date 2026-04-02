@@ -86,6 +86,12 @@ import {
 import DirectoryScreen from '../screens/Directory/DirectoryScreen';
 import JournalEntryNavigator from '../screens/ManualTranasactions/journalEntry/JournalEntryNavigator';
 
+// Email Account Screens
+import {
+  EmailAccountsListScreen,
+  EmailAccountDetailScreen,
+} from '../screens/EmailAccounts';
+
 // Transaction Listing Screens
 import SalesInvoiceListScreen from '../screens/Transactions/SalesInvoiceListScreen';
 import SalesInvoiceDetailScreen from '../screens/Transactions/SalesInvoiceDetailScreen';
@@ -93,6 +99,10 @@ import PurchaseInvoiceListScreen from '../screens/Transactions/PurchaseInvoiceLi
 import PurchaseInvoiceDetailScreen from '../screens/Transactions/PurchaseInvoiceDetailScreen';
 import PaymentsListScreen from '../screens/Transactions/PaymentsListScreen';
 import PaymentDetailScreen from '../screens/Transactions/PaymentDetailScreen';
+
+// Bank Feed Screens
+import BankFeedScreen from '../screens/BankFeed/BankFeedScreen';
+import ReviewTransactionScreen from '../screens/BankFeed/ReviewTransactionScreen';
 
 // Report Screens
 import {
@@ -351,6 +361,26 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen
           name={ROUTES.PAYMENT_DETAIL}
           component={PaymentDetailScreen}
+        />
+
+        {/* Email Account Screens */}
+        <Stack.Screen
+          name={ROUTES.EMAIL_ACCOUNTS_LIST}
+          component={EmailAccountsListScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.EMAIL_ACCOUNT_DETAIL}
+          component={EmailAccountDetailScreen}
+        />
+
+        {/* Bank Feed Screens */}
+        <Stack.Screen
+          name={ROUTES.BANK_FEED}
+          component={BankFeedScreen}
+        />
+        <Stack.Screen
+          name={ROUTES.REVIEW_TRANSACTION}
+          component={ReviewTransactionScreen}
         />
 
         {/* Report Screens */}

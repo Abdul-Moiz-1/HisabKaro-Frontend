@@ -131,6 +131,8 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
     [dispatch, navigation],
   );
 
+  // Auto-login for demo purposes removed to prevent focus interference
+  /*
   useEffect(() => {
     const data: LoginFormValues = {
       email: 'kashif2@yopmail.com',
@@ -139,6 +141,7 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
     };
     onSubmit(data);
   }, []);
+  */
 
   // Handle biometric login
   const handleBiometricLogin = async () => {
@@ -235,10 +238,6 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
         backgroundColor={theme.colors.background}
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
         <View style={styles.content}>
           {/* Header with Theme Toggle */}
           <View style={styles.header}>
@@ -441,7 +440,6 @@ const LoginScreen: React.FC<NavigationProps<'Login'>> = ({ navigation }) => {
             </Text>
           </View>
         </View>
-      </KeyboardAvoidingView>
     </Container>
   );
 };
@@ -455,7 +453,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) =>
       flex: 1,
     },
     content: {
-      flex: 1,
+      flexGrow: 1,
       paddingHorizontal: theme.spacing.xl,
       paddingTop: theme.spacing.lg,
       paddingBottom: theme.spacing.xl,

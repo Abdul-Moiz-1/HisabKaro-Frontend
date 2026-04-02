@@ -20,6 +20,7 @@ import {
   NavigationState,
   ParamListBase,
 } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   BottomTabNavigationEventMap,
   BottomTabNavigationProp,
@@ -126,12 +127,14 @@ const BottomTabBarComponent: React.FC<BottomTabBarProps> = ({
     [activeTab, onTabPress],
   );
 
+  const insets = useSafeAreaInsets();
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
         container: {
           backgroundColor: theme.colors.background,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 20) : Math.max(insets.bottom, 8),
         },
         tabBar: {
           flexDirection: 'row',

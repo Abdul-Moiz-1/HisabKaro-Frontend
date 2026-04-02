@@ -184,6 +184,19 @@ export type {
   QuickOverdue,
 } from './ai';
 
+// Email Accounts API
+export { emailAccountsApi } from './emailAccounts';
+export type {
+  EmailAccount,
+  EmailAccountStats,
+  EmailProcessingLog,
+  EmailProvider,
+  EmailAccountStatus,
+  LogStatus,
+  OAuthUrlResponse,
+  GetLogsParams,
+} from './emailAccounts';
+
 // Default exports for convenience
 export default {
   auth: () => import('./auth').then(m => m.authApi),

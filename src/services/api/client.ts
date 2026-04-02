@@ -39,22 +39,45 @@ class ApiClient {
   }
 
   private setupInterceptors() {
-    // Request interceptor - add auth token
+    // Request interceptor - add auth token and logging
     this.client.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
+        console.log('API Req:', {
+          url: config.url,
+          method: config.method,
+          data: config.data,
+          headers: config.headers,
+        });
+
         const token = await AsyncStorage.getItem('access_token');
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
-      error => Promise.reject(error),
+      error => {
+        console.error('API Req Error:', error);
+        return Promise.reject(error);
+      },
     );
 
-    // Response interceptor - handle errors and token refresh
+    // Response interceptor - handle logging, errors and token refresh
     this.client.interceptors.response.use(
-      response => response,
+      response => {
+        console.log('API Res:', {
+          url: response.config.url,
+          status: response.status,
+          data: response.data,
+        });
+        return response;
+      },
       async (error: AxiosError) => {
+        console.error('API Res Error:', {
+          url: error.config?.url,
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message,
+        });
         const originalRequest = error.config as InternalAxiosRequestConfig & {
           _retry?: boolean;
         };
@@ -116,9 +139,6 @@ class ApiClient {
 
   private normalizeError(error: AxiosError): ApiError {
     const response = error.response;
-    console.log(error.request);
-    console.log(error.response);
-    console.log(error.message);
     if (!response) {
       if (error.code === 'ECONNABORTED') {
         return {
@@ -154,7 +174,6 @@ class ApiClient {
   }
 
   async post<T>(url: string, data?: unknown): Promise<T> {
-    console.log(url);
     const response = await this.client.post<T>(url, data);
     return response.data;
   }

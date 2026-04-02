@@ -195,7 +195,9 @@ export const productsApi = {
   // Get all products with filters
   getAll: async (
     filters?: ProductFilters,
-  ): Promise<{ data: PaginatedResponse<Product> }> => {
+  ): Promise<{
+    total: number; data: PaginatedResponse<Product>
+  }> => {
     if (ENV_CONFIG.USE_MOCK_DATA) {
       await mockDelay();
       let filtered = [...MOCK_PRODUCTS];

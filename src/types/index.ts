@@ -99,6 +99,14 @@ export type RootStackParamList = {
   PurchaseInvoiceDetail: { invoiceId: number };
   PaymentsList: undefined;
   PaymentDetail: { paymentId: number };
+  // Email Account Screens
+  EmailAccountsList: undefined;
+  EmailAccountDetail: { accountId: number };
+
+  // Bank Feed / Pending Transactions
+  BankFeed: undefined;
+  ReviewTransaction: { transaction: any };
+
   // Report Screens
   GeneralJournal: undefined;
   GeneralLedger: { accountId?: number } | undefined;
